@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NHV Cam · OBS</title>
+<meta name="description" content="Página que o OBS abre como fonte Navegador: recebe a câmera do celular por WebRTC.">
+<style>
+html,body{margin:0;height:100%;background:#000;overflow:hidden}
+#stage{position:fixed;inset:0;background:#000;overflow:hidden}
+video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform-origin:50% 50%;will-change:transform;background:transparent}
+#hud{position:fixed;left:16px;top:16px;font:500 14px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#fff;background:rgba(0,0,0,.55);padding:8px 12px;border-radius:10px;letter-spacing:.2px;pointer-events:none;max-width:80vw;white-space:pre-line}
+#hud.oculto{display:none}
+</style>
+</head>
+<body>
+<div id="stage"><video id="v" autoplay playsinline muted></video></div>
+<div id="hud" class="oculto"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="core.js"></script>
+<script>
+(() => {
+  'use strict';
+  const { Signal, LoteIce, limparSala, transformCss, ordenarCodecs } = window.NHVCam;
+  const CFG = window.NHVCAM_CONFIG;
+  const q = new URL(location.href).searchParams;
+  const sala = limparSala(q.get('r') || q.get('sala')) || 'cam1';
+  const preview = q.get('preview') === '1';          // prévia do painel: pede meia resolução
+  const hudModo = q.get('hud') || 'auto';             // 1 sempre, 0 nunca, auto só desconectado
+  const codecPref = (q.get('codec') || 'auto').toLowerCase();
+  const fitParam = q.get('fit');                      // cover | contain (vence o que o celular manda)
+  const noObs = /\bOBS\//.test(navigator.userAgent);
+  const querAudio = noObs || q.get('audio') === '1';
+  const noPai = window.parent && window.parent !== window;
+  const v = document.getElementById('v'), hud = document.getElementById('hud');
+  if (q.get('bg')) document.getElementById('stage').style.background = /^[0-9a-f]{3,8}$/i.test(q.get('bg')) ? '#' + q.get('bg') : q.get('bg');
+
+  const view = { scale: 1, x: 0, y: 0, mirror: false, fit: fitParam || 'cover' };
+  let sig = null, pc = null, dc = null, lote = null, origem = null, pendentes = [];
+  let timerHello = null, timerDesc = null, conectado = false;
+  let ultimoFrames = -1, semFrames = 0, bytesAnt = 0, tAnt = 0;
+
+  function aplicarView() { v.style.transform = transformCss(view); v.style.objectFit = view.fit === 'contain' ? 'contain' : 'cover'; }
+  function estado(nome, detalhe) {
+    if (!noPai) return;
+    try { window.parent.postMessage({ nhvcam: 'estado', sala, estado: nome, detalhe: detalhe || '' }, '*'); } catch (e) {}
+  }
+  function setHud(texto) {
+    const mostrar = hudModo === '1' ? true : hudModo === '0' ? false : !conectado;
+    hud.textContent = texto || '';
+    hud.classList.toggle('oculto', !mostrar || !texto);
+  }
+  function tocar() {
+    v.play().catch(() => {});
+    if (querAudio) { v.muted = false; v.play().catch(() => { v.muted = true; v.play().catch(() => {}); }); }
+  }
+  function pedir() { if (sig && sig.status === 'SUBSCRIBED') sig.enviar('hello', { preview }); }
+  function iniciarHello() {
+    clearInterval(timerHello); pedir();
+    timerHello = setInterval(() => { if (conectado) clearInterval(timerHello); else pedir(); }, 2500);
+  }
+  function limparPc() {
+    clearTimeout(timerDesc);
+    if (pc) { try { pc.onconnectionstatechange = null; pc.ontrack = null; pc.close(); } catch (e) {} }
+    pc = null; dc = null; pendentes = []; conectado = false; ultimoFrames = -1; semFrames = 0; bytesAnt = 0; tAnt = 0;
+  }
+  function caiu(msg) { limparPc(); setHud('NHV Cam · ' + sala + ' · ' + msg); estado('aguardando', msg); iniciarHello(); }
+  function drenar() {
+    if (!pc || !pc.remoteDescription) return;
+    const fila = pendentes; pendentes = [];
+    for (const c of fila) pc.addIceCandidate(c).catch((e) => console.warn('ice', e));
+  }
+
+  async function aoOferta(m) {
+    limparPc();
+    clearInterval(timerHello);
+    origem = m.from;
+    const meu = new RTCPeerConnection({ iceServers: CFG.iceServers, bundlePolicy: 'max-bundle' });
+    pc = meu;
+    lote = new LoteIce((cands) => sig.enviar('ice', { candidates: cands }, origem));
+    meu.onicecandidate = (e) => { if (e.candidate) lote.add(e.candidate.toJSON()); else lote.flush(); };
+    meu.ontrack = (e) => {
+      const ms = (e.streams && e.streams[0]) || new MediaStream([e.track]);
+      if (v.srcObject !== ms) v.srcObject = ms;
+      tocar();
+    };
+    meu.ondatachannel = (e) => {
+      dc = e.channel;
+      dc.onmessage = (ev) => {
+        try {
+          const d = JSON.parse(ev.data);
+          if (d.type === 'view') { Object.assign(view, d); if (fitParam) view.fit = fitParam; aplicarView(); }
+        } catch (err) {}
+      };
+    };
+    meu.onconnectionstatechange = () => {
+      if (pc !== meu) return;
+      const st = meu.connectionState;
+      if (st === 'connected') { conectado = true; clearInterval(timerHello); clearTimeout(timerDesc); setHud(''); estado('conectado'); }
+      else if (st === 'failed' || st === 'closed') caiu('conexão caiu, reconectando');
+      else if (st === 'disconnected') { clearTimeout(timerDesc); timerDesc = setTimeout(() => { if (pc === meu && meu.connectionState !== 'connected') caiu('conexão caiu, reconectando'); }, 5000); }
+    };
+    await meu.setRemoteDescription(m.data.sdp);
+    if (pc !== meu) return;
+    try {
+      if (window.RTCRtpReceiver && RTCRtpReceiver.getCapabilities) {
+        const caps = RTCRtpReceiver.getCapabilities('video');
+        for (const t of meu.getTransceivers()) {
+          if (t.receiver && t.receiver.track && t.receiver.track.kind === 'video' && t.setCodecPreferences) t.setCodecPreferences(ordenarCodecs(caps.codecs, codecPref));
+        }
+      }
+    } catch (e) { console.warn('codec', e); }
+    const resposta = await meu.createAnswer();
+    if (pc !== meu) return;
+    await meu.setLocalDescription(resposta);
+    if (pc !== meu) return;
+    sig.enviar('answer', { sdp: { type: meu.localDescription.type, sdp: meu.localDescription.sdp } }, origem);
+    drenar();
+    setHud('NHV Cam · ' + sala + ' · conectando ao celular');
+  }
+
+  function aoReceber(m) {
+    if (m.role !== 'cam') return;
+    if (m.kind === 'offer') aoOferta(m).catch((e) => { console.warn(e); setHud('NHV Cam · ' + sala + ' · erro: ' + e.message); estado('erro', e.message); });
+    else if (m.kind === 'ice') { if (m.from !== origem) return; pendentes.push.apply(pendentes, m.data.candidates || []); drenar(); }
+    else if (m.kind === 'hello') { if (!conectado || m.from !== origem) pedir(); }  // celular (re)entrou: pede oferta nova
+    else if (m.kind === 'bye') { if (m.from === origem) caiu('celular saiu, aguardando'); }
+  }
+
+  // estatísticas (HUD, painel e retorno ao celular) e vigia de imagem parada
+  setInterval(async () => {
+    if (!pc || !conectado) return;
+    try {
+      const st = await pc.getStats();
+      let inb = null;
+      st.forEach((r) => { if (r.type === 'inbound-rtp' && (r.kind === 'video' || r.mediaType === 'video')) inb = r; });
+      if (!inb) return;
+      const agora = performance.now();
+      const bps = tAnt ? (inb.bytesReceived - bytesAnt) * 8 / ((agora - tAnt) / 1000) : 0;
+      bytesAnt = inb.bytesReceived; tAnt = agora;
+      const frames = inb.framesDecoded || 0;
+      if (frames === ultimoFrames) { semFrames++; if (semFrames >= 10) { caiu('sem imagem, reconectando'); return; } }
+      else semFrames = 0;
+      ultimoFrames = frames;
+      const w = inb.frameWidth || v.videoWidth, h = inb.frameHeight || v.videoHeight;
+      const fps = Math.round(inb.framesPerSecond || 0);
+      const info = w + 'x' + h + ' · ' + fps + ' fps · ' + (bps / 1e6).toFixed(1) + ' Mbps';
+      if (hudModo === '1') setHud(sala + ' · ' + info);
+      estado('conectado', info);
+      if (dc && dc.readyState === 'open') dc.send(JSON.stringify({ type: 'rx', w, h, fps }));
+    } catch (e) {}
+  }, 1000);
+
+  (async () => {
+    aplicarView();
+    setHud('NHV Cam · ' + sala + ' · conectando ao sinal');
+    estado('conectando');
+    try {
+      sig = new Signal(sala, 'view');
+    } catch (e) { setHud('NHV Cam · ' + sala + ' · ' + e.message); estado('erro', e.message); return; }
+    sig.onmessage = aoReceber;
+    sig.onstatus = (st) => {
+      if (st === 'SUBSCRIBED') { if (!conectado) { setHud('NHV Cam · ' + sala + ' · aguardando o celular'); estado('aguardando'); iniciarHello(); } }
+      else if (st === 'CHANNEL_ERROR' || st === 'TIMED_OUT') { setHud('NHV Cam · ' + sala + ' · sinal indisponível (' + st + ')'); estado('erro', st); }
+    };
+    try { await sig.conectar(); }
+    catch (e) { setHud('NHV Cam · ' + sala + ' · falha no sinal: ' + ((e && e.message) || e)); estado('erro', String(e)); }
+  })();
+
+  window.addEventListener('pagehide', () => { if (sig && origem) sig.enviar('bye', {}, origem); });
+  // clique na página: destrava o som quando o navegador bloqueou autoplay com áudio
+  document.addEventListener('click', () => { if (querAudio) { v.muted = false; v.play().catch(() => {}); } });
+})();
+</script>
+</body>
+</html>

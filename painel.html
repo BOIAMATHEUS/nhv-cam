@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NHV Cam · Painel</title>
+<meta name="description" content="Painel do PC: prévia das câmeras, link do OBS e QR para abrir no celular.">
+<link rel="icon" type="image/png" href="icon-192.png">
+<style>
+:root{--bg:#0b0b0c;--panel:#141416;--panel2:#1c1c1f;--line:#2a2a2f;--text:#f3f0ea;--muted:#9b978f;--accent:#c98a3c;--ok:#4cc38a;--warn:#e9b949;--err:#e5484d}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 -apple-system,BlinkMacSystemFont,Inter,"Segoe UI",Roboto,sans-serif}
+header{padding:22px 28px 6px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+h1{margin:0;font-size:22px;letter-spacing:-.3px}
+header p{margin:0;color:var(--muted)}
+main{padding:12px 28px 40px;display:grid;grid-template-columns:repeat(auto-fit,minmax(460px,1fr));gap:18px;align-items:start}
+.nova{grid-column:1/-1;display:flex;gap:8px;align-items:center;color:var(--muted);font-size:14px;flex-wrap:wrap}
+.nova input{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:9px 10px;color:var(--text);font:inherit}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px;display:grid;grid-template-columns:200px minmax(0,1fr);gap:16px}
+.card>div{min-width:0}
+.card h2{margin:0 0 2px;font-size:17px}
+.estado{font-size:13px;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.estado i{width:8px;height:8px;border-radius:50%;background:var(--muted);display:inline-block;flex:none}
+.estado.ok i{background:var(--ok)}.estado.warn i{background:var(--warn)}.estado.err i{background:var(--err)}
+.previa{position:relative;width:200px;aspect-ratio:9/16;background:#000;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+.previa iframe{width:100%;height:100%;border:0;display:block;background:#000}
+.previa .pausada{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;text-align:center;padding:12px;background:#000}
+.previa .pausada[hidden]{display:none}
+.linha{margin-top:10px}
+.linha label{display:block;font-size:12px;color:var(--muted);font-weight:600;margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px}
+.copiar{display:flex;gap:6px}
+.copiar input{flex:1;min-width:0;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:9px 10px;color:var(--text);font:13px ui-monospace,SFMono-Regular,Menlo,monospace}
+button{font:inherit;color:inherit;border:0;cursor:pointer;border-radius:10px;padding:9px 12px;background:var(--panel2);font-weight:600}
+button.p{background:var(--accent);color:#1a1206}
+button.x{background:none;color:var(--muted);padding:4px 8px}
+select{font:inherit;color:inherit;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.opcoes{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.qr{display:flex;gap:14px;align-items:center;margin-top:12px}
+.qr .cod{background:#fff;padding:8px;border-radius:10px;line-height:0;flex:none}
+.qr small{color:var(--muted);font-size:12px}
+.ajuda{grid-column:1/-1;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px 20px;color:var(--muted);font-size:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}
+.ajuda h3{margin:0 0 8px;color:var(--text);font-size:15px}
+.ajuda ol,.ajuda ul{margin:0;padding-left:20px}
+.ajuda li{margin:4px 0}
+.ajuda b{color:var(--text)}
+.ajuda code{font:12px ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--panel2);padding:2px 6px;border-radius:6px;color:var(--text)}
+@media (max-width:560px){main{grid-template-columns:1fr;padding:12px 16px 30px}.card{grid-template-columns:1fr}.previa{width:100%;max-width:240px}header{padding:18px 16px 4px}}
+@media (max-width:1000px){main{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><h1>NHV Cam · painel</h1><p>Até 5 celulares como câmera no OBS. Prévia, link do OBS e QR para abrir no celular.</p></header>
+<main id="main">
+  <div class="nova">Salas: <span id="salasAtivas"></span> <input id="novaSala" placeholder="outra sala (ex.: cam6)" autocapitalize="off" spellcheck="false"> <button id="btNova">Adicionar</button> <button id="btTodas">Pausar todas as prévias</button></div>
+  <section class="ajuda" id="ajuda">
+    <div>
+      <h3>No OBS</h3>
+      <ol>
+        <li>Fontes, botão +, <b>Navegador</b>.</li>
+        <li>URL: o <b>link para o OBS</b> da câmera (copie acima).</li>
+        <li>Largura <b>1080</b>, altura <b>1920</b>. FPS: deixe o padrão ou marque 60 se a câmera estiver em 60.</li>
+        <li>Deixe <b>desmarcado</b> "Desligar a fonte quando não estiver visível" (senão ela reconecta a cada troca de cena).</li>
+        <li>Se for usar o microfone do celular, marque "Controlar áudio via OBS".</li>
+      </ol>
+    </div>
+    <div>
+      <h3>No iPhone</h3>
+      <ol>
+        <li>Leia o QR (ou abra o link) no <b>Safari</b>.</li>
+        <li>Escolha qual CAM (1 a 5) é aquele celular e toque em <b>Iniciar câmera</b>. Permita a câmera.</li>
+        <li>Pinça dá zoom, arrastar move o enquadramento, toque duplo volta ao 1x.</li>
+        <li>Feche Camo e Iriun antes: eles seguram a câmera.</li>
+        <li>Mantenha o Safari aberto em primeiro plano e o celular na vertical.</li>
+      </ol>
+    </div>
+    <div>
+      <h3>Dicas</h3>
+      <ul>
+        <li>Celular e PC no <b>mesmo Wi-Fi</b> (de preferência 5 GHz): conexão direta, qualidade máxima. Com 5 celulares a 8 Mbps são 40 Mbps chegando no PC.</li>
+        <li><b>Por cabo:</b> ligue o Acesso Pessoal no iPhone e conecte pelo USB. O Windows ganha uma rede pelo cabo e a câmera passa por ela. Cuidado: o PC pode passar a usar a internet do celular; confira antes de ir ao ar.</li>
+        <li>A prévia deste painel pede um segundo vídeo ao celular (meia resolução). <b>Pause as prévias durante a live</b> para poupar os iPhones e o Wi-Fi.</li>
+        <li>Uma fonte Navegador por câmera, cada uma com a sua sala (<code>?r=cam1</code> a <code>?r=cam5</code>). Troque de câmera trocando de cena ou de fonte no OBS.</li>
+        <li>Parâmetros do link: <code>&codec=h264</code>, <code>&fit=contain</code>, <code>&hud=1</code> (mostra resolução e bitrate), <code>&hud=0</code> (nunca mostra texto).</li>
+        <li>Imagem pesada no OBS: Configurações, Avançado, ligue "Aceleração de hardware da fonte Navegador".</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<template id="tplCard">
+  <section class="card">
+    <div>
+      <div class="previa"><iframe allow="autoplay" title="prévia"></iframe><div class="pausada" hidden>Prévia pausada</div></div>
+      <div class="opcoes"><button class="btPrevia">Pausar prévia</button></div>
+    </div>
+    <div>
+      <h2></h2>
+      <div class="estado"><i></i><span>conectando</span></div>
+      <div class="linha"><label>Link para o OBS (fonte Navegador, 1080 x 1920)</label><div class="copiar"><input readonly class="inObs"><button class="p btObs">Copiar</button></div></div>
+      <div class="opcoes">
+        <select class="selCodec"><option value="auto">Codec auto (H264)</option><option value="h264">H264</option><option value="vp9">VP9</option><option value="vp8">VP8</option></select>
+        <select class="selFit"><option value="cover">Preencher 9:16</option><option value="contain">Caber (barras)</option></select>
+      </div>
+      <div class="linha"><label>Abrir no celular</label><div class="copiar"><input readonly class="inCel"><button class="btCel">Copiar</button></div></div>
+      <div class="qr"><div class="cod"></div><small>Aponte a câmera do iPhone para o QR e abra no Safari. Depois toque em Iniciar câmera.</small></div>
+    </div>
+  </section>
+</template>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+(() => {
+  'use strict';
+  const CHAVE = 'nhvcam.painel.salas';
+  const base = location.href.split('#')[0].split('?')[0].replace(/[^/]*$/, '');
+  const limpar = (s) => String(s || '').trim().toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 32);
+  const main = document.getElementById('main'), ajuda = document.getElementById('ajuda'), tpl = document.getElementById('tplCard');
+  const cards = new Map();
+
+  const FIXAS = ['cam1', 'cam2', 'cam3', 'cam4', 'cam5'];
+  let salas = FIXAS.slice();
+  try { const extra = JSON.parse(localStorage.getItem(CHAVE)) || []; for (const s of extra) if (!salas.includes(s)) salas.push(s); } catch (e) {}
+  for (const s of new URL(location.href).searchParams.getAll('r')) { const l = limpar(s); if (l && !salas.includes(l)) salas.push(l); }
+  function salvarExtras() { try { localStorage.setItem(CHAVE, JSON.stringify(salas.filter((s) => !FIXAS.includes(s)))); } catch (e) {} }
+
+  function copiar(t, bt) {
+    navigator.clipboard.writeText(t).then(() => { const o = bt.textContent; bt.textContent = 'Copiado'; setTimeout(() => { bt.textContent = o; }, 1200); }).catch(() => prompt('Copie:', t));
+  }
+
+  function criarCard(sala) {
+    const n = tpl.content.firstElementChild.cloneNode(true);
+    n.dataset.sala = sala;
+    const iframe = n.querySelector('iframe'), pausada = n.querySelector('.pausada'), btPrevia = n.querySelector('.btPrevia');
+    const estado = n.querySelector('.estado'), inObs = n.querySelector('.inObs'), inCel = n.querySelector('.inCel');
+    const selCodec = n.querySelector('.selCodec'), selFit = n.querySelector('.selFit');
+    const rotulo = /^cam[1-5]$/.test(sala) ? 'CAM ' + sala.slice(3) : sala.toUpperCase();
+    n.querySelector('h2').textContent = rotulo + ' (sala ' + sala + ')';
+    if (!FIXAS.includes(sala)) {
+      const x = document.createElement('button'); x.className = 'x'; x.textContent = 'Remover'; x.title = 'Tirar do painel';
+      n.querySelector('h2').append(' ', x);
+      x.addEventListener('click', () => { salas = salas.filter((s) => s !== sala); salvarExtras(); n.remove(); cards.delete(sala); pintarAtivas(); });
+    }
+    const linkObs = () => base + 'view.html?r=' + encodeURIComponent(sala) + (selCodec.value !== 'auto' ? '&codec=' + selCodec.value : '') + (selFit.value !== 'cover' ? '&fit=' + selFit.value : '');
+    const linkCel = base + '?r=' + encodeURIComponent(sala);
+    const atualizar = () => { inObs.value = linkObs(); };
+    selCodec.addEventListener('change', atualizar); selFit.addEventListener('change', atualizar);
+    atualizar(); inCel.value = linkCel;
+    n.querySelector('.btObs').addEventListener('click', (e) => copiar(linkObs(), e.currentTarget));
+    n.querySelector('.btCel').addEventListener('click', (e) => copiar(linkCel, e.currentTarget));
+    try { new QRCode(n.querySelector('.cod'), { text: linkCel, width: 128, height: 128, correctLevel: QRCode.CorrectLevel.M }); } catch (e) {}
+
+    const srcPrevia = base + 'view.html?r=' + encodeURIComponent(sala) + '&preview=1&hud=1';
+    let ligada = true;
+    const setPrevia = (on) => {
+      ligada = on;
+      iframe.src = on ? srcPrevia : 'about:blank';
+      pausada.hidden = on; btPrevia.textContent = on ? 'Pausar prévia' : 'Ligar prévia';
+      if (!on) setEstado('warn', 'prévia pausada');
+    };
+    btPrevia.addEventListener('click', () => setPrevia(!ligada));
+    const setEstado = (tipo, texto) => { estado.className = 'estado ' + tipo; estado.querySelector('span').textContent = texto; };
+    setPrevia(true);
+    cards.set(sala, { iframe, setEstado, setPrevia, ligada: () => ligada });
+    main.insertBefore(n, ajuda);
+  }
+
+  const btTodas = document.getElementById('btTodas');
+  btTodas.addEventListener('click', () => {
+    const algumaLigada = Array.from(cards.values()).some((c) => c.ligada());
+    for (const c of cards.values()) c.setPrevia(!algumaLigada);
+    btTodas.textContent = algumaLigada ? 'Ligar todas as prévias' : 'Pausar todas as prévias';
+  });
+
+  window.addEventListener('message', (e) => {
+    const d = e.data; if (!d || d.nhvcam !== 'estado') return;
+    for (const [, c] of cards) {
+      if (c.iframe.contentWindow !== e.source) continue;
+      const mapa = { conectado: 'ok', aguardando: 'warn', conectando: 'warn', erro: 'err' };
+      const texto = d.estado === 'conectado' ? 'celular conectado' + (d.detalhe ? ' · ' + d.detalhe : '') : d.estado === 'aguardando' ? 'aguardando o celular' + (d.detalhe ? ' (' + d.detalhe + ')' : '') : d.estado === 'erro' ? 'erro: ' + d.detalhe : 'conectando';
+      c.setEstado(mapa[d.estado] || 'warn', texto);
+    }
+  });
+
+  function pintarAtivas() { document.getElementById('salasAtivas').textContent = salas.join(', '); }
+  document.getElementById('btNova').addEventListener('click', () => {
+    const s = limpar(document.getElementById('novaSala').value);
+    if (!s || salas.includes(s)) return;
+    salas.push(s); salvarExtras(); criarCard(s); pintarAtivas(); document.getElementById('novaSala').value = '';
+  });
+  document.getElementById('novaSala').addEventListener('keydown', (e) => { if (e.key === 'Enter') document.getElementById('btNova').click(); });
+
+  salas.forEach(criarCard);
+  pintarAtivas();
+})();
+</script>
+</body>
+</html>
