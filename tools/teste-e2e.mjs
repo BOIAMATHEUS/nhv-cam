@@ -151,11 +151,12 @@ await senders.cam3.locator('#stObs', { hasText: 'OBS conectado' }).waitFor({ tim
 const painel = await ctxPc.newPage();
 await painel.setViewportSize({ width: 1400, height: 1000 });
 await painel.goto(BASE + 'painel.html?k=' + CHAVE);
-ok((await painel.locator('.card').count()) === N, 'painel: ' + N + ' cartões');
+ok((await painel.locator('.card[data-sala]').count()) === N, 'painel: ' + N + ' cartões de câmera');
 ok((await painel.locator('#inChave').inputValue()) === CHAVE, 'painel: chave da equipe = ' + CHAVE);
-ok((await painel.locator('.card').nth(0).locator('.inObs').inputValue()) === BASE + 'view.html?r=cam1&k=' + CHAVE, 'painel: link do OBS da CAM 1 leva a chave');
-ok((await painel.locator('.card').nth(0).locator('.inCel').inputValue()) === BASE + '?r=cam1&k=' + CHAVE, 'painel: link do celular da CAM 1 leva a chave');
-ok((await painel.locator('.card').nth(4).locator('.qr img, .qr canvas').count()) >= 1, 'painel: QR gerado na CAM 5');
+ok((await painel.locator('.card[data-sala]').nth(0).locator('.inObs').inputValue()) === BASE + 'view.html?r=cam1&k=' + CHAVE, 'painel: link do OBS da CAM 1 leva a chave');
+ok((await painel.locator('.card[data-sala]').nth(0).locator('.inCel').inputValue()) === BASE + '?r=cam1&k=' + CHAVE, 'painel: link do celular da CAM 1 leva a chave');
+ok((await painel.locator('.card[data-sala]').nth(4).locator('.qr img, .qr canvas').count()) >= 1, 'painel: QR gerado na CAM 5');
+ok((await painel.locator('#inCollab').inputValue()) === BASE + 'collab.html?a=cam1&b=cam2&k=' + CHAVE, 'painel: link da fonte com duas câmeras leva a chave');
 for (const sala of SALAS) {
   const card = painel.locator('.card[data-sala="' + sala + '"]');
   await card.locator('.estado', { hasText: 'celular conectado' }).waitFor({ timeout: 30000 }).then(

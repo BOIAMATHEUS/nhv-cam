@@ -38,6 +38,17 @@ select{font:inherit;color:inherit;background:var(--panel2);border:1px solid var(
 .qr{display:flex;gap:14px;align-items:center;margin-top:12px}
 .qr .cod{background:#fff;padding:8px;border-radius:10px;line-height:0;flex:none}
 .qr small{color:var(--muted);font-size:12px}
+.tiles{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.tiles:empty{display:none}
+.tile{position:relative;width:120px;aspect-ratio:9/16;border-radius:10px;overflow:hidden;background:#000;border:1px solid var(--line)}
+.tile video{width:100%;height:100%;object-fit:cover;display:block}
+.tile span{position:absolute;left:0;right:0;bottom:0;font-size:12px;font-weight:600;padding:3px 6px;background:rgba(0,0,0,.6);color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#salaCard{grid-column:1/-1;grid-template-columns:1fr}
+#salaCard p{margin:6px 0 10px;color:var(--muted)}
+#salaCard p b{color:var(--text)}
+#salaCard label.chk{display:flex;align-items:center;gap:6px;color:var(--muted)}
+#salaCard small{color:var(--muted);display:block;margin-top:6px}
+#salaCard small code{font:12px ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--panel2);padding:2px 6px;border-radius:6px;color:var(--text)}
 .ajuda{grid-column:1/-1;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px 20px;color:var(--muted);font-size:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}
 .ajuda h3{margin:0 0 8px;color:var(--text);font-size:15px}
 .ajuda ol,.ajuda ul{margin:0;padding-left:20px}
@@ -53,6 +64,24 @@ select{font:inherit;color:inherit;background:var(--panel2);border:1px solid var(
 <main id="main">
   <div class="nova">Chave da equipe: <input id="inChave" autocapitalize="off" spellcheck="false" style="width:110px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace"> <button id="btNovaChave">Gerar nova</button> <span>Vai no QR e no link do OBS. Só quem tem a chave entra nas câmeras; troque a chave e todo mundo precisa reabrir.</span></div>
   <div class="nova">Salas: <span id="salasAtivas"></span> <input id="novaSala" placeholder="outra sala (ex.: cam6)" autocapitalize="off" spellcheck="false"> <button id="btNova">Adicionar</button> <button id="btTodas">Pausar todas as prévias</button></div>
+  <section class="card" id="salaCard">
+    <div>
+      <h2>Sala da equipe e collab de longe</h2>
+      <div class="estado"><i></i><span>PC fora da sala</span></div>
+      <p>Quem tocar em <b>Sala</b> no celular (com esta chave) passa a ver e ouvir os outros celulares da equipe na hora, como numa chamada, enquanto o OBS continua pegando cada câmera separada. É assim que uma convidada entra de longe: ela abre o link de uma CAM livre, toca em Iniciar câmera e em Sala. Fone nos celulares, senão dá eco.</p>
+      <div class="opcoes"><button class="p" id="btSalaPc">Entrar na sala com este PC (ouvir e falar; use fone)</button><label class="chk"><input type="checkbox" id="chkFalar" checked> microfone do PC</label></div>
+      <div id="salaPcTiles" class="tiles"></div>
+      <div class="linha"><label>Duas câmeras numa fonte só do OBS (Navegador, 1080 x 1920)</label>
+        <div class="opcoes" style="margin-top:0">
+          <select id="colA" title="Câmera A"></select>
+          <select id="colB" title="Câmera B"></select>
+          <select id="colLayout" title="Layout"><option value="dividido">Dividido: A em cima, B embaixo</option><option value="pip">A inteira, B pequena no canto</option><option value="lado">Lado a lado</option></select>
+        </div>
+        <div class="copiar" style="margin-top:8px"><input readonly id="inCollab"><button class="p" id="btCollab">Copiar</button></div>
+        <small>Use esta fonte no lugar das fontes separadas dessas duas câmeras (cada fonte a mais é um vídeo a mais que o celular manda). Para escrever os nomes na tela, acrescente <code>&amp;na=Sanny&amp;nb=Convidada</code> ao link.</small>
+      </div>
+    </div>
+  </section>
   <section class="ajuda" id="ajuda">
     <h2 style="grid-column:1/-1;margin:0;font-size:17px;color:var(--text)">Como montar e manter no ar</h2>
     <div>
@@ -108,6 +137,17 @@ select{font:inherit;color:inherit;background:var(--panel2);border:1px solid var(
       </ol>
     </div>
     <div>
+      <h3>Collab de longe (Sala)</h3>
+      <ol>
+        <li>Mande para a convidada, pelo WhatsApp, o link "Abrir no celular" de uma CAM livre (ex.: CAM 3). Ela abre no Safari, toca em <b>Iniciar câmera</b> e depois em <b>Sala</b>; em Config, <b>Rede fraca</b> poupa a internet de casa dela.</li>
+        <li>No iPhone de quem apresenta, toque em <b>Sala</b> também. Os dois se veem e se ouvem na hora; toque na vinheta para ver a pessoa grande.</li>
+        <li><b>Fone nos dois</b> (AirPods serve). Sem fone, o som do outro sai no alto-falante, entra no microfone e vira eco. Em Config, "Qual microfone" deixa o microfone do iPhone na live mesmo com o fone ligado.</li>
+        <li>No OBS: use a fonte <b>Duas câmeras numa fonte só</b> (link no alto da página) com "Controlar áudio via OBS", no lugar das fontes separadas dessas duas câmeras. O público ouve as duas pelo OBS.</li>
+        <li>A convidada não assiste à live pelo Instagram enquanto fala: chega com 10 a 20 s de atraso.</li>
+        <li>Este painel pode entrar na sala para ouvir e falar com quem está nela, fora do ar (com fone no PC).</li>
+      </ol>
+    </div>
+    <div>
       <h3>Dicas</h3>
       <ul>
         <li>Celular e PC no <b>mesmo Wi-Fi</b> (de preferência 5 GHz): conexão direta, qualidade máxima. Com 5 celulares a 8 Mbps são 40 Mbps chegando no PC.</li>
@@ -142,6 +182,9 @@ select{font:inherit;color:inherit;background:var(--panel2);border:1px solid var(
   </section>
 </template>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="core.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
 (() => {
@@ -232,7 +275,72 @@ select{font:inherit;color:inherit;background:var(--panel2);border:1px solid var(
     }
   });
 
-  function pintarAtivas() { document.getElementById('salasAtivas').textContent = salas.join(', '); }
+  // Sala da equipe no PC: ouvir (e falar) com quem ligou "Sala" nos celulares. Fone no PC, senão o
+  // som do alto-falante volta pelo microfone do celular de quem apresenta.
+  const salaEstado = document.querySelector('#salaCard .estado'), tilesPc = document.getElementById('salaPcTiles'), btSalaPc = document.getElementById('btSalaPc');
+  let salaPc = null, micPc = null;
+  const setSalaEstado = (tipo, t) => { salaEstado.className = 'estado ' + tipo; salaEstado.querySelector('span').textContent = t; };
+  function rotuloMembro(meta) {
+    meta = meta || {};
+    if (meta.tipo === 'pc') return meta.nome || 'PC';
+    const cam = /^cam[1-9]$/.test(meta.cam || '') ? 'CAM ' + meta.cam.slice(3) : (meta.cam || '');
+    return meta.nome && meta.nome !== cam ? meta.nome + ' · ' + cam : (cam || meta.nome || 'celular');
+  }
+  function pintarSalaPc() {
+    if (!salaPc) { setSalaEstado('', 'PC fora da sala'); return; }
+    const m = salaPc.membros();
+    if (salaPc.status !== 'SUBSCRIBED') setSalaEstado('warn', 'conectando ao sinal');
+    else if (!m.length) setSalaEstado('warn', 'PC na sala; ninguém mais ainda (toque em Sala nos celulares)');
+    else setSalaEstado(m.every((x) => x.estado === 'connected') ? 'ok' : 'warn', 'na sala: ' + m.map((x) => rotuloMembro(x.meta) + (x.estado === 'connected' ? '' : ' (conectando)')).join(', '));
+  }
+  function sairSalaPc() {
+    if (salaPc) { salaPc.sair(); salaPc = null; }
+    if (micPc) { micPc.getTracks().forEach((t) => t.stop()); micPc = null; }
+    tilesPc.innerHTML = '';
+    btSalaPc.textContent = 'Entrar na sala com este PC (ouvir e falar; use fone)';
+    pintarSalaPc();
+  }
+  btSalaPc.addEventListener('click', async () => {
+    if (salaPc) { sairSalaPc(); return; }
+    if (!window.NHVCam) { alert('A biblioteca de sinal não carregou (sem internet?)'); return; }
+    if (document.getElementById('chkFalar').checked) {
+      try { micPc = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } }); }
+      catch (e) { micPc = null; alert('Sem microfone no PC (' + e.name + '): entrando só para ouvir.'); }
+    }
+    salaPc = new window.NHVCam.Sala({
+      nome: 'sala-' + chave, meta: { tipo: 'pc', nome: 'PC do painel' }, enviar: { video: false, audio: !!micPc },
+      tracks: () => ({ video: null, audio: micPc ? micPc.getAudioTracks()[0] : null }),
+      onEntrou: (id, meta, stream) => {
+        const d = document.createElement('div'); d.className = 'tile'; d.dataset.id = id;
+        const v = document.createElement('video'); v.autoplay = true; v.playsInline = true; v.srcObject = stream;
+        const s = document.createElement('span'); s.textContent = rotuloMembro(meta);
+        d.append(v, s); tilesPc.append(d); v.play().catch(() => {});
+      },
+      onSaiu: (id) => { const d = tilesPc.querySelector('[data-id="' + id + '"]'); if (d) d.remove(); },
+      onMeta: (id, meta) => { const s = tilesPc.querySelector('[data-id="' + id + '"] span'); if (s) s.textContent = rotuloMembro(meta); pintarSalaPc(); },
+      onEstado: pintarSalaPc,
+    });
+    btSalaPc.textContent = 'Sair da sala';
+    try { await salaPc.entrar(); }
+    catch (e) { alert('Não conectou ao sinal: ' + ((e && e.message) || e)); sairSalaPc(); return; }
+    pintarSalaPc();
+  });
+  window.addEventListener('pagehide', () => { if (salaPc) salaPc.sair(); });
+
+  // Duas câmeras numa fonte só do OBS (collab.html)
+  const colA = document.getElementById('colA'), colB = document.getElementById('colB'), colLayout = document.getElementById('colLayout'), inCollab = document.getElementById('inCollab');
+  function pintarCollab() {
+    [[colA, 'cam1'], [colB, 'cam2']].forEach(([sel, padrao]) => {
+      const atual = sel.value || padrao; sel.innerHTML = '';
+      for (const s of salas) { const o = document.createElement('option'); o.value = s; o.textContent = /^cam[1-5]$/.test(s) ? 'CAM ' + s.slice(3) : s; sel.append(o); }
+      sel.value = salas.includes(atual) ? atual : salas[0];
+    });
+    inCollab.value = comChave(base + 'collab.html?a=' + encodeURIComponent(colA.value) + '&b=' + encodeURIComponent(colB.value)) + (colLayout.value !== 'dividido' ? '&layout=' + colLayout.value : '');
+  }
+  [colA, colB, colLayout].forEach((s) => s.addEventListener('change', pintarCollab));
+  document.getElementById('btCollab').addEventListener('click', (e) => copiar(inCollab.value, e.currentTarget));
+
+  function pintarAtivas() { document.getElementById('salasAtivas').textContent = salas.join(', '); pintarCollab(); }
   document.getElementById('btNova').addEventListener('click', () => {
     const s = limpar(document.getElementById('novaSala').value);
     if (!s || salas.includes(s)) return;

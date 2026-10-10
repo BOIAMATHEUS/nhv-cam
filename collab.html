@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NHV Cam · Collab</title>
+<meta name="description" content="Duas câmeras do NHV Cam numa única fonte Navegador 1080x1920 do OBS: dividido, uma pequena no canto ou lado a lado.">
+<style>
+html,body{margin:0;height:100%;background:#000;overflow:hidden}
+#stage{position:fixed;inset:0;background:#000}
+.cam{position:absolute;overflow:hidden;background:#000}
+.cam iframe{width:100%;height:100%;border:0;display:block;background:#000}
+.nome{position:absolute;left:3%;bottom:3%;font:600 1.5vw/1 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#fff;background:rgba(0,0,0,.55);padding:.7em 1em;border-radius:999px;letter-spacing:.02em;white-space:nowrap;max-width:60%;overflow:hidden;text-overflow:ellipsis}
+.nome:empty{display:none}
+/* dividido: A em cima, B embaixo, cada metade 1080x958 com uma linha preta de 4 px entre elas */
+.dividido .a{left:0;top:0;width:100%;height:calc(50% - 2px)}
+.dividido .b{left:0;top:calc(50% + 2px);width:100%;height:calc(50% - 2px)}
+/* pip: A inteira; B em 360x640 no canto direito, acima da área que o Instagram cobre com os comentários */
+.pip .a{left:0;top:0;width:100%;height:100%}
+.pip .b{left:64.8%;top:43.75%;width:33.3%;height:33.3%;border-radius:18px;box-shadow:0 0 0 3px rgba(255,255,255,.92)}
+.pip .b .nome{font-size:1.2vw;left:6%;bottom:5%}
+/* lado a lado: duas metades de 540x960 (9:16 exatos, sem corte) centralizadas */
+.lado .a{left:0;top:25%;width:50%;height:50%}
+.lado .b{left:50%;top:25%;width:50%;height:50%}
+#aviso{position:fixed;left:16px;top:16px;font:500 14px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#fff;background:rgba(0,0,0,.55);padding:8px 12px;border-radius:10px;pointer-events:none;display:none}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="cam a"><iframe allow="autoplay" title="câmera A"></iframe><div class="nome" id="na"></div></div>
+  <div class="cam b"><iframe allow="autoplay" title="câmera B"></iframe><div class="nome" id="nb"></div></div>
+</div>
+<div id="aviso"></div>
+<script>
+// Monta duas páginas do OBS (view.html) numa fonte só. Parâmetros:
+//   a=cam1  b=cam2  k=chave  layout=dividido|pip|lado  na=Nome A  nb=Nome B
+//   codec=h264  buffer=150  audio=1 (fora do OBS, para ouvir no navegador)
+(() => {
+  'use strict';
+  const q = new URL(location.href).searchParams;
+  const limpar = (s) => String(s || '').trim().toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 32);
+  const a = limpar(q.get('a')) || 'cam1', b = limpar(q.get('b')) || 'cam2', k = limpar(q.get('k'));
+  const layouts = ['dividido', 'pip', 'lado'];
+  const layout = layouts.includes(q.get('layout')) ? q.get('layout') : 'dividido';
+  document.getElementById('stage').className = layout;
+  document.getElementById('na').textContent = (q.get('na') || '').slice(0, 30);
+  document.getElementById('nb').textContent = (q.get('nb') || '').slice(0, 30);
+  const extra = (q.get('codec') ? '&codec=' + encodeURIComponent(q.get('codec')) : '') + (q.get('buffer') ? '&buffer=' + encodeURIComponent(q.get('buffer')) : '') + (q.get('audio') === '1' ? '&audio=1' : '');
+  const src = (sala) => 'view.html?r=' + encodeURIComponent(sala) + (k ? '&k=' + encodeURIComponent(k) : '') + '&cheio=1' + extra;
+  const frames = document.querySelectorAll('iframe');
+  frames[0].src = src(a);
+  frames[1].src = src(b);
+  // a fonte precisa ser 1080x1920: fora disso o layout sai torto
+  const aviso = document.getElementById('aviso');
+  function conferir() {
+    const w = window.innerWidth, h = window.innerHeight;
+    const ok = Math.abs(w / h - 9 / 16) < 0.01 && w >= 1080;
+    aviso.textContent = ok ? '' : 'NHV Cam collab · fonte em ' + w + 'x' + h + ': nas propriedades da fonte, largura 1080 e altura 1920';
+    aviso.style.display = ok ? 'none' : 'block';
+  }
+  window.addEventListener('resize', conferir);
+  conferir();
+  window.addEventListener('pagehide', () => { for (const f of frames) { try { f.contentWindow.postMessage({ nhvcam: 'fechar' }, '*'); } catch (e) {} } });
+  window.__nhvcamCollab = { a, b, layout };
+})();
+</script>
+</body>
+</html>

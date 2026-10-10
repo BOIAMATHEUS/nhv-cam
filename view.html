@@ -44,6 +44,7 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transfor
   const hudModo = q.get('hud') || 'auto';             // 1 sempre, 0 nunca, auto só antes da primeira conexão
   const codecPref = (q.get('codec') || 'auto').toLowerCase();
   const fitParam = q.get('fit');                      // cover | contain (vence o que o celular manda)
+  const cheio = q.get('cheio') === '1';               // preenche a fonte inteira, seja qual for a proporção (collab.html)
   const noObs = /\bOBS\//.test(navigator.userAgent);
   const querAudio = noObs || q.get('audio') === '1';
   const noPai = window.parent && window.parent !== window;
@@ -63,9 +64,10 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transfor
   function ajustarQuadro() {
     const w = window.innerWidth, h = window.innerHeight;
     let qw, qh;
-    if (w / h > 9 / 16) { qh = h; qw = Math.round(h * 9 / 16); } else { qw = w; qh = Math.round(w * 16 / 9); }
+    if (cheio) { qw = w; qh = h; }
+    else if (w / h > 9 / 16) { qh = h; qw = Math.round(h * 9 / 16); } else { qw = w; qh = Math.round(w * 16 / 9); }
     quadro.style.width = qw + 'px'; quadro.style.height = qh + 'px';
-    fonte.w = w; fonte.h = h; fonte.ok = Math.abs(w / h - 9 / 16) < 0.01 && w >= 1080;
+    fonte.w = w; fonte.h = h; fonte.ok = cheio || (Math.abs(w / h - 9 / 16) < 0.01 && w >= 1080);
   }
   window.addEventListener('resize', ajustarQuadro);
   ajustarQuadro();
