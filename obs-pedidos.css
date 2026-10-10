@@ -6,7 +6,12 @@ body{font-size:18px}
 
 /* cabeçalho: só a marca e o placar, grande */
 header.topo{display:grid;grid-template-columns:1fr;gap:16px;padding:30px 36px 22px}
-.abas,.legenda,.filtro-cupom,.selo-demo{display:none !important}
+.abas,.selo-demo{display:none !important}
+/* filtros de faixa e de cupom ficam visíveis: são eles que explicam "só aparece 1 pedido" */
+.legenda{font-size:15px;gap:12px}
+.legenda button.faixa{font-size:15px;padding:8px 14px}
+.legenda i{width:14px;height:14px}
+.filtro-cupom{font-size:15px;padding:8px 14px}
 /* a luz de status fica: é ela que diz "ao vivo", "ao vivo · 2s" ou "sem atualização há 20s" */
 .luz{font-size:16px;gap:10px;font-weight:500}
 .bolinha{width:12px;height:12px}
