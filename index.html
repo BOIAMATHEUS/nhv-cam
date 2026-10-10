@@ -81,6 +81,9 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
 .acao.l{grid-column:span 4;flex-direction:row;min-height:44px;gap:8px;padding:8px}
 .acao svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
 .acao.on{color:var(--accent2);border-color:rgba(201,138,60,.55);background:rgba(201,138,60,.1)}
+.acao .corte{display:none}
+.acao.mudo{color:#f08a8e;border-color:rgba(229,72,77,.55);background:rgba(229,72,77,.1)}
+.acao.mudo .corte{display:block}
 .acao select{position:absolute;inset:0;opacity:0;width:100%;height:100%}
 .acao .sub{font-size:12px;font-weight:500;color:var(--muted);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #folha{position:fixed;inset:0;display:none;z-index:20}
@@ -169,8 +172,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
       Espelhar
     </button>
     <button type="button" class="acao" id="btAudio">
-      <svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg>
-      Áudio
+      <svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/><path class="corte" d="M4 3l16 18"/></svg>
+      Áudio<span class="sub" id="subAudio">off</span>
     </button>
     <button type="button" class="acao l" id="btGuia">
       <svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 9h16M4 15h16M10 3v18M14 3v18"/></svg>
@@ -201,6 +204,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
       <select id="cfgCodec"><option value="auto">Auto (H264)</option><option value="h264">H264</option><option value="vp9">VP9</option><option value="vp8">VP8</option><option value="av1">AV1</option></select></div>
     <div class="linha"><label>Ajuste no OBS<small>Preencher corta sobras; Caber deixa barras</small></label>
       <select id="cfgFit"><option value="cover">Preencher</option><option value="contain">Caber</option></select></div>
+    <div class="linha"><label>Microfone do celular<small>Desligado, a fonte do OBS fica sem som. Ligado, o botão Áudio alterna o mudo na hora</small></label><input type="checkbox" id="cfgMic"></div>
     <div class="linha"><label>Manter a tela ligada<small id="cfgWakeSt">Pede ao iPhone para não apagar a tela (iOS 16.4 ou mais novo)</small></label><input type="checkbox" id="cfgWake" checked></div>
     <div class="linha"><label>Inverter largura e altura<small>Use se a imagem chegar deitada no OBS</small></label><input type="checkbox" id="cfgSwap"></div>
     <div class="linha"><label>Link do OBS<small id="cfgLink"></small></label><button type="button" class="btn sec" style="width:auto;margin:0;padding:9px 12px" id="btCopiar">Copiar</button></div>
@@ -227,7 +231,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
   const $ = (s) => document.querySelector(s);
 
   const QUAL = { '4k': { w: 3840, h: 2160, nome: '4K' }, '1080': { w: 1920, h: 1080, nome: '1080p' }, '720': { w: 1280, h: 720, nome: '720p' } };
-  const PADRAO = { sala: 'cam1', chave: '', facing: 'environment', deviceId: '', qualidade: '1080', fps: 30, bitrateMbps: 6, codec: 'auto', swap: false, mirror: false, audio: false, zoomModo: 'digital', fit: 'cover', guia: false, telaLigada: true };
+  const PADRAO = { sala: 'cam1', chave: '', facing: 'environment', deviceId: '', qualidade: '1080', fps: 30, bitrateMbps: 6, codec: 'auto', swap: false, mirror: false, audio: false, mudo: false, zoomModo: 'digital', fit: 'cover', guia: false, telaLigada: true };
   const CHAVE_LS = 'nhvcam.celular';
   const NOMES = { 'back camera': 'Traseira', 'front camera': 'Frontal', 'back dual wide camera': 'Traseira dupla', 'back dual camera': 'Traseira dupla', 'back triple camera': 'Traseira tripla', 'back ultra wide camera': 'Ultra wide', 'back telephoto camera': 'Teleobjetiva' };
   const NEGOCIACAO_MS = 10000;   // janela em que um "oi" repetido do mesmo OBS é ignorado
@@ -346,6 +350,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
     }
     const antigos = stream ? stream.getTracks() : [];
     stream = novo; videoTrack = novo.getVideoTracks()[0]; audioTrack = novo.getAudioTracks()[0] || null;
+    if (audioTrack) audioTrack.enabled = !S.mudo; // mudo = manda silêncio sem soltar o microfone
     el.preview.srcObject = new MediaStream([videoTrack]);
     el.preview.play().catch(() => {});
     for (const p of peers.values()) {
@@ -390,7 +395,10 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
   }
   function pintarBotoes() {
     el.btEspelho.classList.toggle('on', !!view.mirror);
-    el.btAudio.classList.toggle('on', !!(S.audio && audioTrack));
+    const mic = !!(S.audio && audioTrack);
+    el.btAudio.classList.toggle('on', mic && !S.mudo);
+    el.btAudio.classList.toggle('mudo', mic && !!S.mudo);
+    $('#subAudio').textContent = !mic ? 'off' : (S.mudo ? 'mudo' : 'ligado');
     el.btGuia.classList.toggle('on', !!S.guia);
     el.guia.hidden = !S.guia;
   }
@@ -492,10 +500,19 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
 
   /* ---------- espelho, áudio, guia, tela escura ---------- */
   el.btEspelho.addEventListener('click', () => { view.mirror = !view.mirror; S.mirror = view.mirror; salvar(); aplicarPreview(); enviarView(); pintarBotoes(); });
+  // Áudio: o primeiro toque liga o microfone (pede permissão e refaz a captura uma vez);
+  // depois disso o mesmo botão alterna o mudo na hora, sem mexer na câmera. Desligar de vez: Config.
   el.btAudio.addEventListener('click', async () => {
-    S.audio = !S.audio; salvar();
-    try { await abrirCamera(); toast(S.audio ? 'Microfone ligado. No OBS, ative o áudio da fonte.' : 'Microfone desligado'); }
-    catch (e) { S.audio = false; salvar(); mostrarErro(e); }
+    if (!S.audio || !audioTrack) {
+      S.audio = true; S.mudo = false; salvar();
+      try { await abrirCamera(); toast('Microfone ligado. No OBS, marque "Controlar áudio via OBS" na fonte.', 4000); }
+      catch (e) { S.audio = false; salvar(); mostrarErro(e); }
+    } else {
+      S.mudo = !S.mudo; salvar();
+      audioTrack.enabled = !S.mudo;
+      toast(S.mudo ? 'Microfone no mudo' : 'Microfone aberto');
+    }
+    pintarBotoes();
   });
   el.btGuia.addEventListener('click', () => { S.guia = !S.guia; salvar(); pintarBotoes(); });
   $('#btEscuro').addEventListener('click', () => { el.escuro.classList.add('on'); });
@@ -712,7 +729,15 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
     $('#cfgSala').value = S.sala; $('#cfgChave').value = S.chave || ''; $('#cfgBitrate').value = String(S.bitrateMbps); $('#cfgFps').value = String(S.fps);
     $('#cfgCodec').value = S.codec; $('#cfgFit').value = view.fit; $('#cfgSwap').checked = !!S.swap; $('#cfgLink').textContent = linkObs();
     $('#cfgWake').checked = S.telaLigada !== false; pintarWake();
+    $('#cfgMic').checked = !!S.audio;
   }
+  $('#cfgMic').addEventListener('change', async () => {
+    S.audio = $('#cfgMic').checked; S.mudo = false; salvar();
+    if (!rodando) { pintarBotoes(); return; }
+    try { await abrirCamera(); toast(S.audio ? 'Microfone ligado' : 'Microfone desligado'); }
+    catch (e) { S.audio = false; salvar(); $('#cfgMic').checked = false; mostrarErro(e); }
+    pintarBotoes();
+  });
   $('#btConfig').addEventListener('click', () => { pintarConfig(); el.folha.classList.add('on'); });
   $('#folhaFundo').addEventListener('click', fecharFolha);
   $('#btFechar').addEventListener('click', fecharFolha);

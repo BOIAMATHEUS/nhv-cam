@@ -19,7 +19,7 @@ Site: https://boiamatheus.github.io/nhv-cam/
 - **Câmera:** lista todas as lentes (traseira, frontal, ultra wide, teleobjetiva). **Qualidade:** 4K, 1080p ou 720p, o que o iPhone aceitar.
 - **Linha de estatísticas** (acima do zoom): resolução, fps, bitrate, o que o OBS está recebendo, **por onde o vídeo passa** (direto na rede local, direto pelo Acesso Pessoal, via internet, via relay) e a **latência** em ms. Em amarelo quando está indo pela internet ou por relay.
 - **Config:** sala, chave da equipe, bitrate (4 a 30 Mbps, padrão 8), 30 ou 60 fps, codec (H264 usa o chip do iPhone), preencher ou caber no 9:16, **manter a tela ligada** (com o estado do pedido), inverter largura e altura, link do OBS, reconectar.
-- **Áudio:** manda o microfone do celular junto (desligado por padrão). No OBS, marque "Controlar áudio via OBS" na fonte se for usar.
+- **Áudio:** desligado por padrão (a fonte do OBS fica sem som). O primeiro toque em Áudio liga o microfone do celular (pede permissão); depois disso o mesmo botão alterna o **mudo** na hora, sem interromper a imagem ("off", "ligado", "mudo"). Desligar o microfone de vez: Config, "Microfone do celular". No OBS, marque "Controlar áudio via OBS" na fonte se for usar o som do celular; o mute do mixer do OBS também serve.
 
 ## Live de horas: o que o sistema faz sozinho e o que é checklist
 
