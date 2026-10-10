@@ -24,7 +24,7 @@ const browser = await chromium.launch({
   args: ['--use-fake-device-for-media-stream=fps=30', '--use-fake-ui-for-media-stream', '--autoplay-policy=no-user-gesture-required'],
 });
 const ctxCel = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, permissions: ['camera', 'microphone'] });
-const ctxPc = await browser.newContext({ viewport: { width: 540, height: 960 } });
+const ctxPc = await browser.newContext({ viewport: { width: 1080, height: 1920 } }); // igual à fonte Navegador do OBS
 for (const c of [ctxCel, ctxPc]) c.on('weberror', (e) => console.log('  erro de página:', e.error().message));
 
 // 1) OBS abre as 5 fontes antes dos celulares (ordem mais comum numa live)
@@ -176,6 +176,19 @@ const bit = await senders.cam1.locator('#stBit').textContent();
 ok(/\d+x\d+/.test(bit) && /fps/.test(bit), 'cam1: estatísticas no celular: ' + bit);
 ok(/direto/.test(bit), 'cam1: caminho identificado como direto (' + (bit.match(/direto[^·]*/) || ['?'])[0].trim() + ')');
 ok(/\d+ ms/.test(bit), 'cam1: latência de ida e volta exibida');
+
+// 8b) fonte do OBS no tamanho errado (padrão 800x600): a página desenha um quadro 9:16 e o celular avisa
+const errado = await ctxPc.newPage();
+await errado.setViewportSize({ width: 800, height: 600 });
+await errado.goto(BASE + 'view.html?r=cam5&k=' + CHAVE);
+await errado.waitForFunction(() => document.getElementById('v').videoWidth > 0, null, { timeout: 30000 });
+const q = await errado.evaluate(() => { const r = document.getElementById('quadro').getBoundingClientRect(); return { w: Math.round(r.width), h: Math.round(r.height) }; });
+ok(q.w === 338 && q.h === 600, 'fonte 800x600: quadro desenhado em 9:16 centralizado (' + q.w + 'x' + q.h + ')');
+await senders.cam5.locator('#stFonte', { hasText: '800x600' }).waitFor({ timeout: 10000 }).then(
+  async () => ok(true, 'cam5: celular avisa o tamanho errado da fonte: ' + (await senders.cam5.locator('#stFonte').textContent())),
+  () => ok(false, 'cam5: celular não avisou a fonte em 800x600'));
+ok(await senders.cam1.locator('#stFonte').isHidden(), 'cam1: sem aviso quando a fonte está em 1080x1920');
+await errado.close();
 
 // 9) opção de manter a tela ligada (wake lock) na Config
 await senders.cam1.click('#btConfig');

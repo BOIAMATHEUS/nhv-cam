@@ -135,6 +135,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
   <div class="info">
     <span class="pill" id="stCap" hidden><i></i></span>
     <span class="pill" id="stBit" hidden><i></i></span>
+    <span class="pill" id="stFonte" hidden><i></i></span>
   </div>
   <div class="zoom">
     <span class="lbl">Zoom</span>
@@ -239,7 +240,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
 
   const el = {
     palco: $('#palco'), quadro: $('#quadro'), preview: $('#preview'), inicio: $('#inicio'), controles: $('#controles'), guia: $('#guia'),
-    stSinal: $('#stSinal'), stObs: $('#stObs'), stCap: $('#stCap'), stBit: $('#stBit'), escuro: $('#escuro'), escuroSt: $('#escuroSt'),
+    stSinal: $('#stSinal'), stObs: $('#stObs'), stCap: $('#stCap'), stBit: $('#stBit'), stFonte: $('#stFonte'), escuro: $('#escuro'), escuroSt: $('#escuroSt'),
     zoom: $('#zoom'), zoomVal: $('#zoomVal'), zoomModo: $('#zoomModo'),
     selCamera: $('#selCamera'), subCamera: $('#subCamera'), selQual: $('#selQual'), subQual: $('#subQual'),
     btEspelho: $('#btEspelho'), btAudio: $('#btAudio'), btGuia: $('#btGuia'), folha: $('#folha'), toast: $('#toast'),
@@ -659,7 +660,12 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
     let alvo = null;
     for (const p of peers.values()) if (p.pc.connectionState === 'connected' && !p.preview) { alvo = p; break; }
     if (!alvo) for (const p of peers.values()) if (p.pc.connectionState === 'connected') { alvo = p; break; }
-    if (!alvo) { el.stBit.hidden = true; el.stCap.hidden = !videoTrack; return; }
+    if (!alvo) { el.stBit.hidden = true; el.stFonte.hidden = true; el.stCap.hidden = !videoTrack; return; }
+    // a fonte do OBS está no tamanho certo? (o OBS manda o tamanho que deu à página)
+    let fonteErrada = null;
+    for (const p of peers.values()) if (!p.preview && p.rx && p.rx.vw && p.rx.fonteOk === false) { fonteErrada = p.rx; break; }
+    if (fonteErrada) pill(el.stFonte, 'Fonte do OBS em ' + fonteErrada.vw + 'x' + fonteErrada.vh + ': nas propriedades da fonte, largura 1080 e altura 1920', 'warn');
+    else el.stFonte.hidden = true;
     try {
       const st = await alvo.pc.getStats();
       let out = null;

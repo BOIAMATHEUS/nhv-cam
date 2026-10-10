@@ -8,13 +8,15 @@
 <style>
 html,body{margin:0;height:100%;background:#000;overflow:hidden}
 #stage{position:fixed;inset:0;background:#000;overflow:hidden}
+/* quadro sempre 9:16, centralizado: se a fonte do OBS não estiver em 1080x1920 a imagem continua em pé */
+#quadro{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);overflow:hidden;background:#000}
 video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform-origin:50% 50%;will-change:transform;background:transparent}
 #hud{position:fixed;left:16px;top:16px;font:500 14px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#fff;background:rgba(0,0,0,.55);padding:8px 12px;border-radius:10px;letter-spacing:.2px;pointer-events:none;max-width:80vw;white-space:pre-line}
 #hud.oculto{display:none}
 </style>
 </head>
 <body>
-<div id="stage"><video id="v" autoplay playsinline muted></video></div>
+<div id="stage"><div id="quadro"><video id="v" autoplay playsinline muted></video></div></div>
 <div id="hud" class="oculto"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
@@ -43,6 +45,20 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transfor
   const NEGOCIACAO_MS = 10000;  // enquanto negocia, não repete o "oi"
   const DESCONECTADO_MS = 12000; // tempo para o celular recuperar por reinício de ICE antes de recomeçar do zero
   const SEM_IMAGEM_S = 15;       // conectado mas sem quadro novo por tanto tempo: recomeça
+
+  // Tamanho que o OBS deu à fonte. O certo é 1080x1920 (ou outro 9:16 de pelo menos 1080 de largura).
+  const quadro = document.getElementById('quadro');
+  const fonte = { w: 0, h: 0, ok: true };
+  function ajustarQuadro() {
+    const w = window.innerWidth, h = window.innerHeight;
+    let qw, qh;
+    if (w / h > 9 / 16) { qh = h; qw = Math.round(h * 9 / 16); } else { qw = w; qh = Math.round(w * 16 / 9); }
+    quadro.style.width = qw + 'px'; quadro.style.height = qh + 'px';
+    fonte.w = w; fonte.h = h; fonte.ok = Math.abs(w / h - 9 / 16) < 0.01 && w >= 1080;
+  }
+  window.addEventListener('resize', ajustarQuadro);
+  ajustarQuadro();
+  function avisoFonte() { return fonte.ok ? '' : ' · fonte em ' + fonte.w + 'x' + fonte.h + ', defina largura 1080 e altura 1920'; }
 
   const view = { scale: 1, x: 0, y: 0, mirror: false, fit: fitParam || 'cover' };
   let sig = null, pc = null, dc = null, lote = null, origem = null, pendentes = [];
@@ -192,7 +208,7 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transfor
       const info = w + 'x' + h + ' · ' + fps + ' fps · ' + (bps / 1e6).toFixed(1) + ' Mbps' + (cam.nome ? ' · ' + cam.nome : '') + (rtt != null ? ' · ' + rtt + ' ms' : '');
       if (hudModo === '1') setHud(rotulo + ' · ' + info);
       estado('conectado', info);
-      if (dc && dc.readyState === 'open') dc.send(JSON.stringify({ type: 'rx', w, h, fps, caminho: cam.nome, grau: cam.grau, rtt }));
+      if (dc && dc.readyState === 'open') dc.send(JSON.stringify({ type: 'rx', w, h, fps, caminho: cam.nome, grau: cam.grau, rtt, vw: fonte.w, vh: fonte.h, fonteOk: fonte.ok }));
     } catch (e) {}
   }, 1000);
 
@@ -205,7 +221,7 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transfor
     } catch (e) { setHud('NHV Cam · ' + rotulo + ' · ' + e.message); estado('erro', e.message); return; }
     sig.onmessage = aoReceber;
     sig.onstatus = (st) => {
-      if (st === 'SUBSCRIBED') { if (!conectado) { setHud('NHV Cam · ' + rotulo + ' · aguardando o celular'); estado('aguardando'); iniciarHello(); } }
+      if (st === 'SUBSCRIBED') { if (!conectado) { setHud('NHV Cam · ' + rotulo + ' · aguardando o celular' + avisoFonte()); estado('aguardando'); iniciarHello(); } }
       else if (st === 'CHANNEL_ERROR' || st === 'TIMED_OUT') { setHud('NHV Cam · ' + rotulo + ' · sinal indisponível (' + st + ')'); estado('erro', st); }
     };
     try { await sig.conectar(); }
