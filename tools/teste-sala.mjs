@@ -157,6 +157,13 @@ ok(await cels.cam1.evaluate(() => Array.from(document.querySelectorAll('#salaTil
 await cels.cam1.click('#cfgOuvir');
 await espera(200);
 ok(await cels.cam1.evaluate(() => Array.from(document.querySelectorAll('#salaTiles .tile video')).every((v) => !v.muted)), 'cam1: som da sala ligado de novo');
+// 12) "Ver os outros" desligado esconde as vinhetas, mas o som segue e a pessoa continua na sala
+await cels.cam1.click('#cfgVer');
+await espera(200);
+ok(await cels.cam1.evaluate(() => { const c = document.getElementById('salaTiles'); const v = c.querySelector('.tile video'); return c.classList.contains('oculto') && getComputedStyle(c).opacity === '0' && v && !v.muted && !v.paused && document.getElementById('btSala').classList.contains('on'); }), 'cam1: vinhetas escondidas, som tocando, ainda na sala');
+await cels.cam1.click('#cfgVer');
+await espera(200);
+ok(await cels.cam1.evaluate(() => !document.getElementById('salaTiles').classList.contains('oculto')), 'cam1: vinhetas de volta');
 await cels.cam1.click('#btFechar');
 
 console.log('\nTempos até OBS conectado (ms):', tempos);

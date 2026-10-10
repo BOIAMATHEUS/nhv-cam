@@ -54,6 +54,7 @@ button{border:0;background:none;cursor:pointer}
 .pill.big{font-size:14px;padding:8px 12px}
 #salaTiles{position:absolute;left:10px;bottom:10px;display:flex;gap:6px;z-index:4;max-width:calc(100% - 20px);overflow-x:auto;scrollbar-width:none}
 #salaTiles:empty{display:none}
+#salaTiles.oculto{opacity:0;pointer-events:none;width:1px;height:1px;overflow:hidden} /* escondido, mas o som continua tocando */
 .tile{position:relative;flex:none;width:84px;aspect-ratio:9/16;border-radius:10px;overflow:hidden;background:#000;box-shadow:0 0 0 1px rgba(255,255,255,.3)}
 .tile video{width:100%;height:100%;object-fit:cover;display:block}
 .tile span{position:absolute;left:0;right:0;bottom:0;font-size:12px;font-weight:600;padding:3px 5px;background:rgba(0,0,0,.55);color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -238,6 +239,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
     <div class="linha"><label>Lente<small>Traseira, frontal, ultra wide ou teleobjetiva, conforme o iPhone. O botão Virar alterna frontal e traseira</small></label><select id="cfgLente"></select></div>
     <div class="linha"><label>Seu nome na sala<small>Aparece nos outros celulares quando a Sala está ligada</small></label><input type="text" id="cfgNome" placeholder="ex.: Sanny" maxlength="18" autocapitalize="words"></div>
     <div class="linha"><label>Ouvir a sala neste celular<small>Desligue se o som dos outros estiver voltando pelo microfone (eco). Você continua sendo vista e ouvida</small></label><input type="checkbox" id="cfgOuvir" checked></div>
+    <div class="linha"><label>Ver os outros neste celular<small>Desligue para a prévia ficar só com a sua câmera. Você continua vista, ouvida e ouvindo; no OBS nada muda</small></label><input type="checkbox" id="cfgVer" checked></div>
     <div class="linha"><label>Manter a tela ligada<small id="cfgWakeSt">Pede ao iPhone para não apagar a tela (iOS 16.4 ou mais novo)</small></label><input type="checkbox" id="cfgWake" checked></div>
     <div class="linha"><label>Inverter largura e altura<small>Use se a imagem chegar deitada no OBS</small></label><input type="checkbox" id="cfgSwap"></div>
     <div class="linha"><label>Link do OBS<small id="cfgLink"></small></label><button type="button" class="btn sec" style="width:auto;margin:0;padding:9px 12px" id="btCopiar">Copiar</button></div>
@@ -264,7 +266,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
   const $ = (s) => document.querySelector(s);
 
   const QUAL = { '4k': { w: 3840, h: 2160, nome: '4K' }, '1080': { w: 1920, h: 1080, nome: '1080p' }, '720': { w: 1280, h: 720, nome: '720p' } };
-  const PADRAO = { sala: 'cam1', chave: '', facing: 'environment', deviceId: '', qualidade: '1080', fps: 30, bitrateMbps: 6, codec: 'auto', swap: false, mirror: false, audio: false, mudo: false, zoomModo: 'digital', fit: 'cover', guia: false, telaLigada: true, colab: false, nome: '', micId: '', ouvir: true };
+  const PADRAO = { sala: 'cam1', chave: '', facing: 'environment', deviceId: '', qualidade: '1080', fps: 30, bitrateMbps: 6, codec: 'auto', swap: false, mirror: false, audio: false, mudo: false, zoomModo: 'digital', fit: 'cover', guia: false, telaLigada: true, colab: false, nome: '', micId: '', ouvir: true, ver: true };
   const CHAVE_LS = 'nhvcam.celular';
   const NOMES = { 'back camera': 'Traseira', 'front camera': 'Frontal', 'back dual wide camera': 'Traseira dupla', 'back dual camera': 'Traseira dupla', 'back triple camera': 'Traseira tripla', 'back ultra wide camera': 'Ultra wide', 'back telephoto camera': 'Teleobjetiva' };
   const NEGOCIACAO_MS = 10000;   // janela em que um "oi" repetido do mesmo OBS é ignorado
@@ -602,7 +604,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
       onMeta: (id, meta) => { const t = tiles.get(id); if (t) { t.meta = meta; t.rot.textContent = rotuloCurto(meta); } pintarSalaEq(); },
       onEstado: pintarSalaEq,
     });
-    salaEq = s; S.colab = true; salvar(); pintarBotoes();
+    salaEq = s; S.colab = true; salvar(); pintarBotoes(); aplicarVer();
     try { await s.entrar(); }
     catch (e) { salaEq = null; S.colab = false; salvar(); pintarBotoes(); pintarSalaEq(); throw e; }
     pintarSalaEq();
@@ -661,6 +663,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
     el.subSala.textContent = m.length ? m.length + (m.length === 1 ? ' pessoa' : ' pessoas') : 'ligada';
   }
   function aplicarOuvir() { for (const t of tiles.values()) t.video.muted = S.ouvir === false; }
+  function aplicarVer() { const esconder = S.ver === false; if (esconder && grandeId) mostrarGrande(null); el.salaTiles.classList.toggle('oculto', esconder); }
   el.btSala.addEventListener('click', () => {
     if (salaEq) { sairSalaEq(); toast('Saiu da sala'); return; }
     entrarSalaEq().then(() => toast('Na sala. Quem ligar Sala com a mesma chave aparece aqui. Use fone para não dar eco.', 5000)).catch(mostrarErro);
@@ -880,9 +883,11 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
     $('#cfgMic').checked = !!S.audio;
     $('#cfgNome').value = S.nome || '';
     $('#cfgOuvir').checked = S.ouvir !== false;
+    $('#cfgVer').checked = S.ver !== false;
     listarMics();
   }
   $('#cfgOuvir').addEventListener('change', () => { S.ouvir = $('#cfgOuvir').checked; salvar(); aplicarOuvir(); toast(S.ouvir ? 'Som da sala ligado neste celular' : 'Som da sala desligado neste celular (você continua sendo ouvida)'); });
+  $('#cfgVer').addEventListener('change', () => { S.ver = $('#cfgVer').checked; salvar(); aplicarVer(); toast(S.ver ? 'Os outros aparecem na prévia' : 'Prévia só com a sua câmera (você continua na sala)'); });
   $('#cfgNome').addEventListener('change', () => { S.nome = $('#cfgNome').value.trim().slice(0, 18); salvar(); if (salaEq) salaEq.atualizarMeta(metaSalaEq()); });
   $('#cfgMicSel').addEventListener('change', () => { S.micId = $('#cfgMicSel').value; salvar(); if (rodando && S.audio) abrirCamera().catch(mostrarErro); });
   $('#cfgMic').addEventListener('change', async () => {
