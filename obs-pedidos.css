@@ -1,0 +1,62 @@
+/* NHV Cam · roupa do "Pedidos ao vivo" para a fonte Navegador do OBS em 1080 x 1920.
+   Cole este texto inteiro no campo "CSS personalizado" da fonte. */
+::-webkit-scrollbar{display:none}
+html,body{overflow-y:auto !important;background:var(--creme) !important}
+body{font-size:18px}
+
+/* cabeçalho: só a marca e o placar, grande */
+header.topo{display:grid;grid-template-columns:1fr;gap:16px;padding:30px 36px 22px}
+.abas,.legenda,.filtro-cupom,.luz,.selo-demo{display:none !important}
+.botoes{gap:10px}
+button.tog{font-size:16px;padding:10px 18px}
+.marca{font-size:14px;letter-spacing:.18em}
+.marca b{font-size:32px;margin-top:4px}
+.placar{margin:0;display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;align-items:stretch}
+.placar > div{text-align:left;background:var(--papel);border:1px solid var(--borda);border-radius:18px;padding:16px 20px}
+.placar .rot,.placar .val{background:none;border:0;padding:0;border-radius:0;box-shadow:none;text-align:left}
+.placar .rot{font-size:14px;letter-spacing:.14em}
+.placar .val{font-size:58px;font-weight:600;line-height:1.05;margin-top:4px}
+.placar .destaque{border-color:var(--faixa-top);box-shadow:0 0 0 4px rgba(232,129,28,.13)}
+
+/* grade: dois cartões por linha, tudo maior para clicar na janela Interagir */
+main{padding:22px 36px 160px;gap:18px;grid-template-columns:1fr 1fr}
+article.p{padding:20px 22px 18px;border-radius:20px;gap:12px}
+.p .num,.p time{font-size:14px}
+.p .nome{font-size:26px}
+.p .total{font-size:36px}
+.pill{font-size:13px;padding:5px 11px}
+.p .meta{font-size:16px}
+.p li{font-size:17px}
+.p .mais{font-size:15px}
+article.p .sorteado{font-size:15px}
+.vazio{font-size:22px}
+
+/* painel do sorteio: pedido em cima, roleta grande embaixo */
+#painel{padding:40px}
+.painel-caixa{width:1000px;max-height:1840px;padding:36px;border-radius:28px}
+.fechar{font-size:36px;top:18px;right:22px}
+.painel-grade{grid-template-columns:1fr;gap:30px}
+.lado-pedido{padding:26px 28px}
+.lado-pedido .num,.lado-pedido .meta{font-size:16px}
+.lado-pedido .nome{font-size:40px}
+.lado-pedido .valor{font-size:44px}
+.lado-pedido li{font-size:19px}
+.lado-roleta{gap:28px}
+#painel .rol{width:760px;--rol-borda:34px;--rol-anel:9px}
+.rol-eixo{font-size:26px;letter-spacing:.16em}
+.rol-agulha{width:60px;height:70px;top:-12px}
+.rol-agulha::after{width:26px;height:26px;top:6px}
+.qual-roleta{font-size:18px}
+.resultado{min-height:120px;gap:8px}
+.resultado .rot{font-size:16px}
+.resultado .premio{font-size:40px}
+.resultado .chance{font-size:18px}
+
+/* revelação: foto grande, nome em destaque */
+#revelacao{padding:60px 48px}
+.rev-caixa{gap:28px}
+.rev-caixa img{max-width:960px;max-height:1100px;border-radius:28px}
+.rev-caixa .rot{font-size:20px;letter-spacing:.3em}
+.rev-caixa .rev-nome{font-size:72px}
+.rev-caixa .quem{font-size:28px}
+.rev-fechar{font-size:44px;top:24px;right:30px}
