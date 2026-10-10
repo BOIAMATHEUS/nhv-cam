@@ -198,7 +198,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
     <div class="linha"><label>Manter a tela ligada<small id="cfgWakeSt">Pede ao iPhone para não apagar a tela (iOS 16.4 ou mais novo)</small></label><input type="checkbox" id="cfgWake" checked></div>
     <div class="linha"><label>Inverter largura e altura<small>Use se a imagem chegar deitada no OBS</small></label><input type="checkbox" id="cfgSwap"></div>
     <div class="linha"><label>Link do OBS<small id="cfgLink"></small></label><button type="button" class="btn sec" style="width:auto;margin:0;padding:9px 12px" id="btCopiar">Copiar</button></div>
-    <button type="button" class="btn sec" id="btReconectar">Reconectar</button>
+    <button type="button" class="btn sec" id="btReligar">Religar a câmera (se travou depois de ligação ou Siri)</button>
+    <button type="button" class="btn sec" id="btReconectar">Reconectar o sinal</button>
     <button type="button" class="btn" id="btFechar">Fechar</button>
     <div class="ajuda"><b>Como usar.</b> No OBS, adicione uma fonte Navegador com o link acima, largura 1080 e altura 1920. Celular e PC no mesmo Wi-Fi conectam direto. Pinça na imagem dá zoom, arrastar move o enquadramento, toque duplo volta ao 1x. O Guia 9:16 mostra onde o Instagram cobre a imagem na live. Escurecer apaga a prévia para o celular ficar no tripé sem brilhar (a câmera continua). A linha acima do zoom mostra por onde o vídeo passa (direto, internet ou relay) e a latência. <b>Para a live:</b> Modo Avião com Wi-Fi ligado (ligação derruba a câmera), bloqueio de orientação em retrato, carregador na tomada, Safari em primeiro plano.</div>
   </div>
@@ -317,16 +318,17 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
     return { video, audio };
   }
 
-  // Pede a câmera nova ANTES de soltar a antiga (no iOS a antiga termina sozinha; em outros
-  // aparelhos, se a câmera recusar por estar ocupada, solta a antiga e tenta de novo).
+  // Solta a captura atual ANTES de pedir a nova: no iOS um segundo getUserMedia com o primeiro
+  // ainda vivo deixa o primeiro mudo sem volta (WebKit), então nunca pedir dois ao mesmo tempo.
   async function abrirCamera() {
     let c = montarConstraints();
+    pararTudo();
     let novo;
     try {
       novo = await navigator.mediaDevices.getUserMedia(c);
     } catch (e) {
       if (e.name === 'NotReadableError' || e.name === 'AbortError') {
-        pararTudo();
+        await new Promise((r) => setTimeout(r, 700)); // a câmera pode levar um instante para ser liberada
         try { novo = await navigator.mediaDevices.getUserMedia(c); } catch (e2) { e = e2; }
       }
       if (!novo && S.deviceId && (e.name === 'OverconstrainedError' || e.name === 'NotFoundError' || e.name === 'NotReadableError')) {
@@ -717,9 +719,10 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
   $('#cfgWake').addEventListener('change', () => { S.telaLigada = $('#cfgWake').checked; salvar(); if (S.telaLigada) acordar(); else soltar(); });
   $('#btCopiar').addEventListener('click', () => copiar(linkObs()));
   $('#btReconectar').addEventListener('click', () => { fecharFolha(); conectarSinal().then(() => toast('Sinal reconectado')).catch(mostrarErro); });
+  $('#btReligar').addEventListener('click', () => { fecharFolha(); tentativasReligar = 0; ultimaReligada = 0; abrirCamera().then(() => toast('Câmera religada')).catch(mostrarErro); });
 
   /* ---------- tela ligada e volta do segundo plano ---------- */
-  const RESERVA = 'Para garantir: Ajustes > Tela e Brilho > Bloqueio Automático > Nunca durante a live.';
+  const RESERVA = 'No iOS 17 ou mais novo o Safari já segura a tela enquanto a câmera está ligada. Para garantir: Ajustes > Tela e Brilho > Bloqueio Automático > Nunca durante a live.';
   let wakeStatus = 'Ainda não pedido.';
   function pintarWake() {
     const s = $('#cfgWakeSt'); if (s) s.textContent = wakeStatus;

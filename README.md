@@ -31,10 +31,11 @@ O que acontece sozinho:
 - OBS recarregou a fonte ou o celular recarregou a página: reconecta em cerca de 1 s.
 
 Checklist antes de ir ao ar:
-- **Modo Avião com Wi-Fi ligado** em cada iPhone (uma ligação recebida derruba a câmera no Safari). Não Perturbe também ajuda.
+- **Modo Avião com Wi-Fi ligado** em cada iPhone: ligação ou Siri mudam a câmera no Safari sem aviso (bug conhecido do WebKit; o celular religa sozinho e Config tem "Religar a câmera"). Não Perturbe e Siri desligada por cima. Com Acesso Pessoal por USB, Modo Avião não dá.
+- **Acesso Guiado** (triplo clique no botão lateral) prende o iPhone no Safari. Trocar de app, abrir a Central de Notificações ou bloquear a tela pausa a câmera.
 - **Bloqueio de orientação** em retrato na Central de Controle antes de pôr no tripé.
-- **Carregador na tomada** o tempo todo. Modo de Baixo Consumo desligado. Feche os outros apps.
-- Config no celular: **Manter a tela ligada** ativo. Se o iOS negar, Ajustes, Tela e Brilho, Bloqueio Automático, Nunca. Use **Escurecer** no tripé.
+- **Carregador de 20 W na tomada**, não na porta do PC. Modo de Baixo Consumo desligado (força a tela a apagar em 30 s). Feche os outros apps. Tire a capa: se esquentar, o iOS baixa os fps e pode desligar a câmera; caia para 720p em Qualidade.
+- Config no celular: **Manter a tela ligada** ativo. No iOS 17 ou mais novo o Safari já segura a tela enquanto a câmera está ligada; por garantia, Ajustes, Tela e Brilho, Bloqueio Automático, Nunca. Use **Escurecer** no tripé.
 - A mesma **chave da equipe** em tudo (QR e links do OBS). Depois de conferir, **pause as prévias** do painel.
 - Linha de estatísticas em verde com "direto" e poucos ms. Se aparecer "via internet" ou "via relay", celular e PC não estão na mesma rede.
 - Não recarregue as fontes do OBS no ar. "Desligar a fonte quando não estiver visível" desmarcado.
@@ -47,9 +48,16 @@ Checklist antes de ir ao ar:
 - A prévia do painel pede um segundo vídeo ao celular (meia resolução). Pause as prévias durante a live.
 - No OBS, se a imagem vier pesada: Configurações, Avançado, "Aceleração de hardware da fonte Navegador" ligada.
 
-## USB (Acesso Pessoal por cabo)
+## Por cabo (USB)
 
-Ver a seção "USB" do painel e a memória do projeto; resumo: ligue o Acesso Pessoal no iPhone, conecte pelo cabo no PC (com o app Apple Devices ou o iTunes instalado para o driver de rede), confira que o Windows continua usando a internet de casa (métrica da interface do iPhone alta) e abra o site normalmente. O indicador de caminho confirma se o vídeo está indo pelo cabo.
+O Safari não manda vídeo pelo USB: a Apple não implementa WebUSB nem nada parecido, e todo "iPhone como webcam USB" no Windows (Camo, DroidCam, iVCam) é app no iPhone + driver no PC. Para um site, o cabo só serve como rede. Duas formas:
+
+1. **Adaptador USB-C (ou Lightning) para Ethernet no iPhone, ligado no roteador.** A melhor: o iPhone entra na rede de casa por cabo, sem plano de dados e sem mexer no Windows (é o que o VDO.Ninja recomenda). Adaptador com entrada de energia carrega junto. Estatísticas mostram "direto na rede local".
+2. **Acesso Pessoal por USB.** Exige plano com hotspot liberado pela operadora (compartilha só os dados móveis, nunca o Wi-Fi), o app Apple Devices ou o iTunes no PC e "Confiar" no iPhone. O PC ganha um adaptador "Apple Mobile Device Ethernet" (rede 172.20.10.x) e as estatísticas mostram "direto pelo Acesso Pessoal". Pelo protocolo o vídeo vai pelo cabo (candidatos host dos dois lados; o OBS resolve o nome mDNS do Safari com o cliente mDNS do próprio Chromium), mas não existe relato público desse arranjo: testar antes da live. Modo Avião não combina com essa opção.
+
+Risco da opção 2: o Windows pode mandar a internet do PC (e a transmissão do OBS) pelo 4G do iPhone, por dois mecanismos (métrica automática e o Gerenciador de Conexões, que prefere qualquer "Ethernet" e desliga o Wi-Fi automático). Subir a métrica do adaptador não é conserto confiável. O que resolve: no adaptador do iPhone, IP fixo `172.20.10.14`, máscara `255.255.255.240`, sem gateway e sem DNS, IPv6 desmarcado; conferir com `Get-NetRoute -DestinationPrefix 0.0.0.0/0,::/0` que a rota padrão é só a rede de casa; conectar o Wi-Fi manualmente na sessão.
+
+Nos dois casos o Firewall do Windows precisa permitir o OBS em redes privadas (mDNS, UDP 5353), senão a conexão cai para "via internet" ou não fecha.
 
 ## Parâmetros do link do OBS
 

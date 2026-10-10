@@ -77,20 +77,31 @@ select{font:inherit;color:inherit;background:var(--panel2);border:1px solid var(
     <div>
       <h3>Live de horas: checklist</h3>
       <ul>
-        <li><b>Modo Avião com Wi-Fi ligado</b> em cada iPhone: ligação recebida derruba a câmera no Safari. Não Perturbe também ajuda.</li>
+        <li><b>Modo Avião com Wi-Fi ligado</b> em cada iPhone: ligação ou Siri mudam a câmera no Safari sem aviso (bug conhecido do WebKit; o celular religa sozinho, e Config tem "Religar a câmera"). Não Perturbe e Siri desligada por cima. Se for usar Acesso Pessoal por USB, Modo Avião não dá: fique com Não Perturbe.</li>
+        <li><b>Acesso Guiado</b> (triplo clique no botão lateral) prende o iPhone no Safari: nem toque errado, nem Central de Notificações, nem troca de app. Trocar de app ou bloquear a tela pausa a câmera.</li>
         <li><b>Bloqueio de orientação</b> em retrato (Central de Controle) antes de pôr no tripé.</li>
-        <li><b>Carregador na tomada</b> o tempo todo. Modo de Baixo Consumo desligado. Feche os outros apps.</li>
-        <li>No celular, Config: <b>Manter a tela ligada</b> ativo (se o iOS negar, Ajustes, Tela e Brilho, Bloqueio Automático, Nunca). Use <b>Escurecer</b> no tripé.</li>
+        <li><b>Carregador de 20 W na tomada</b>, não na porta do PC. Modo de Baixo Consumo desligado (ele força a tela a apagar em 30 s). Feche os outros apps. Tire a capa: se esquentar, o iOS baixa os fps e pode desligar a câmera; nesse caso caia para 720p em Qualidade.</li>
+        <li>No celular, Config: <b>Manter a tela ligada</b> ativo. No iOS 17 ou mais novo o Safari já segura a tela enquanto a câmera está ligada; por garantia, Ajustes, Tela e Brilho, Bloqueio Automático, Nunca. Use <b>Escurecer</b> no tripé.</li>
         <li>Mesma <b>chave da equipe</b> em tudo; pause as prévias deste painel depois de conferir.</li>
         <li>Se o Wi-Fi oscilar, a conexão se recupera sozinha (reinício de ICE em 5 s, recomeço completo em 12 s) e o OBS segura o último quadro, sem texto na tela.</li>
         <li>Não recarregue as fontes do OBS no ar; "Desligar a fonte quando não estiver visível" desmarcado.</li>
       </ul>
     </div>
     <div>
+      <h3>Por cabo (USB)</h3>
+      <ul>
+        <li>O Safari não manda vídeo pelo USB (a Apple não implementa WebUSB; só apps como Camo fazem isso, com driver). Para um site, o cabo só serve como <b>rede</b>. Duas formas:</li>
+        <li><b>Melhor: adaptador USB-C (ou Lightning) para Ethernet</b> no iPhone, ligado no roteador. O iPhone entra na rede de casa por cabo, sem plano de dados e sem mexer no Windows. É o que o VDO.Ninja recomenda. Adaptador com entrada de energia carrega junto. A linha de estatísticas mostra "direto na rede local".</li>
+        <li><b>Alternativa: Acesso Pessoal por USB.</b> Exige plano com hotspot liberado pela operadora (compartilha só os dados móveis, nunca o Wi-Fi), o app Apple Devices ou o iTunes no PC e "Confiar" no iPhone. O PC ganha um adaptador "Apple Mobile Device Ethernet" (rede 172.20.10.x) e a linha de estatísticas mostra "direto pelo Acesso Pessoal". Não há relato público de iPhone por USB tethering no OBS via WebRTC: pelo protocolo deve funcionar, mas <b>teste antes da live</b>.</li>
+        <li>Risco do Acesso Pessoal: o Windows pode mandar a internet do PC (e a transmissão do OBS) pelo 4G do iPhone, e só subir a métrica do adaptador não resolve. Conserto que não depende de métrica: no adaptador do iPhone (Conexões de Rede, Propriedades, IPv4), IP fixo <code>172.20.10.14</code>, máscara <code>255.255.255.240</code>, <b>sem gateway</b> e sem DNS; e desmarque o IPv6 nesse adaptador. Depois confira no PowerShell: <code>Get-NetRoute -DestinationPrefix 0.0.0.0/0,::/0</code> deve listar só o Wi-Fi ou a Ethernet de casa. Conecte o Wi-Fi manualmente na sessão: o Windows desliga Wi-Fi automático quando aparece uma "Ethernet".</li>
+      </ul>
+    </div>
+    <div>
       <h3>Dicas</h3>
       <ul>
         <li>Celular e PC no <b>mesmo Wi-Fi</b> (de preferência 5 GHz): conexão direta, qualidade máxima. Com 5 celulares a 8 Mbps são 40 Mbps chegando no PC.</li>
-        <li><b>Por cabo:</b> ligue o Acesso Pessoal no iPhone e conecte pelo USB. O Windows ganha uma rede pelo cabo e a câmera passa por ela. Cuidado: o PC pode passar a usar a internet do celular; confira antes de ir ao ar.</li>
+        <li><b>Por cabo:</b> veja o bloco "Por cabo (USB)" ao lado. Resumo: o melhor cabo é um adaptador Ethernet no iPhone; o Acesso Pessoal por USB funciona, mas exige cuidado com o roteamento do Windows.</li>
+        <li>O <b>Firewall do Windows</b> precisa permitir o OBS em redes privadas: o navegador do OBS descobre o iPhone por mDNS (UDP 5353). Bloqueado, a conexão cai para "via internet" ou não fecha.</li>
         <li>A prévia deste painel pede um segundo vídeo ao celular (meia resolução). <b>Pause as prévias durante a live</b> para poupar os iPhones e o Wi-Fi.</li>
         <li>Uma fonte Navegador por câmera, cada uma com a sua sala (<code>?r=cam1</code> a <code>?r=cam5</code>). Troque de câmera trocando de cena ou de fonte no OBS.</li>
         <li>Parâmetros do link: <code>&codec=h264</code>, <code>&fit=contain</code>, <code>&hud=1</code> (mostra resolução e bitrate), <code>&hud=0</code> (nunca mostra texto).</li>
