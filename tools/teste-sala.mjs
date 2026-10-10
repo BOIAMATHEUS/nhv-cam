@@ -147,6 +147,18 @@ await cels.cam1.click('#btAudio');
 ok(await cels.cam1.evaluate(() => window.__nhvcam.estado().mudo === true && document.getElementById('subAudio').textContent === 'mudo'), 'cam1: Áudio alterna o mudo com a Sala ligada');
 await cels.cam1.click('#btAudio');
 
+// 11) "Ouvir a sala" desligado silencia as vinhetas neste celular sem sair da sala; ligado de novo, volta
+await cels.cam1.click('#btConfig');
+await espera(300);
+ok(await cels.cam1.locator('#cfgOuvir').isChecked(), 'cam1: "Ouvir a sala" vem ligado');
+await cels.cam1.click('#cfgOuvir');
+await espera(200);
+ok(await cels.cam1.evaluate(() => Array.from(document.querySelectorAll('#salaTiles .tile video')).every((v) => v.muted) && window.__nhvcam.sala() && document.getElementById('btSala').classList.contains('on')), 'cam1: som da sala desligado, vinhetas mudas, ainda na sala');
+await cels.cam1.click('#cfgOuvir');
+await espera(200);
+ok(await cels.cam1.evaluate(() => Array.from(document.querySelectorAll('#salaTiles .tile video')).every((v) => !v.muted)), 'cam1: som da sala ligado de novo');
+await cels.cam1.click('#btFechar');
+
 console.log('\nTempos até OBS conectado (ms):', tempos);
 console.log(falhas.length ? '\n' + falhas.length + ' FALHA(S):\n - ' + falhas.join('\n - ') : '\nTUDO PASSOU');
 await browser.close();
