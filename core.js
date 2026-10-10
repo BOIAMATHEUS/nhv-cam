@@ -110,5 +110,35 @@
       .concat(codecs.filter(aux));
   }
 
-  window.NHVCam = { Signal, LoteIce, uid, limparSala, transformCss, ordenarCodecs };
+  // Par de candidatos ICE em uso (por onde o vídeo está passando) e a latência de ida e volta.
+  function parSelecionado(st) {
+    let par = null;
+    st.forEach((r) => { if (!par && r.type === 'transport' && r.selectedCandidatePairId) par = st.get(r.selectedCandidatePairId); });
+    if (!par) st.forEach((r) => { if (!par && r.type === 'candidate-pair' && (r.selected || (r.nominated && r.state === 'succeeded'))) par = r; });
+    if (!par) return null;
+    return {
+      par,
+      loc: st.get(par.localCandidateId) || null,
+      rem: st.get(par.remoteCandidateId) || null,
+      rtt: typeof par.currentRoundTripTime === 'number' ? Math.round(par.currentRoundTripTime * 1000) : null,
+    };
+  }
+
+  // Classifica o caminho: direto pelo Acesso Pessoal (172.20.10.x), direto na rede local,
+  // pela internet (NAT) ou por relay (TURN). Endereços .local (mDNS) não dizem nada, então
+  // cai no tipo do candidato.
+  const PRIVADO = /^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|169\.254\.|127\.|fe80:|fd|fc|::1$)/i;
+  function caminho(loc, rem) {
+    const tipos = [loc && loc.candidateType, rem && rem.candidateType].filter(Boolean);
+    if (tipos.indexOf('relay') >= 0) return { nome: 'via relay (TURN)', grau: 'relay' };
+    const ips = [loc && (loc.address || loc.ip), rem && (rem.address || rem.ip)].filter((a) => a && !/\.local$/i.test(a));
+    if (ips.some((a) => /^172\.20\.10\./.test(a))) return { nome: 'direto pelo Acesso Pessoal', grau: 'direto' };
+    if (ips.length && ips.every((a) => PRIVADO.test(a))) return { nome: 'direto na rede local', grau: 'direto' };
+    if (tipos.indexOf('srflx') >= 0) return { nome: 'via internet (NAT)', grau: 'internet' };
+    if (tipos.length && tipos.every((t) => t === 'host')) return { nome: 'direto na rede local', grau: 'direto' };
+    if (tipos.indexOf('prflx') >= 0) return { nome: 'direto (provável)', grau: 'direto' };
+    return { nome: '', grau: '' };
+  }
+
+  window.NHVCam = { Signal, LoteIce, uid, limparSala, transformCss, ordenarCodecs, parSelecionado, caminho };
 })();

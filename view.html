@@ -23,12 +23,15 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transfor
 <script>
 (() => {
   'use strict';
-  const { Signal, LoteIce, limparSala, transformCss, ordenarCodecs } = window.NHVCam;
+  const { Signal, LoteIce, limparSala, transformCss, ordenarCodecs, parSelecionado, caminho } = window.NHVCam;
   const CFG = window.NHVCAM_CONFIG;
   const q = new URL(location.href).searchParams;
-  const sala = limparSala(q.get('r') || q.get('sala')) || 'cam1';
+  const salaBase = limparSala(q.get('r') || q.get('sala')) || 'cam1';
+  const chave = limparSala(q.get('k'));
+  const sala = chave ? salaBase + '-' + chave : salaBase;   // sala real no sinal
+  const rotulo = salaBase + (chave ? ' · ' + chave : '');
   const preview = q.get('preview') === '1';          // prévia do painel: pede meia resolução
-  const hudModo = q.get('hud') || 'auto';             // 1 sempre, 0 nunca, auto só desconectado
+  const hudModo = q.get('hud') || 'auto';             // 1 sempre, 0 nunca, auto só antes da primeira conexão
   const codecPref = (q.get('codec') || 'auto').toLowerCase();
   const fitParam = q.get('fit');                      // cover | contain (vence o que o celular manda)
   const noObs = /\bOBS\//.test(navigator.userAgent);
@@ -37,18 +40,24 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transfor
   const v = document.getElementById('v'), hud = document.getElementById('hud');
   if (q.get('bg')) document.getElementById('stage').style.background = /^[0-9a-f]{3,8}$/i.test(q.get('bg')) ? '#' + q.get('bg') : q.get('bg');
 
+  const NEGOCIACAO_MS = 10000;  // enquanto negocia, não repete o "oi"
+  const DESCONECTADO_MS = 12000; // tempo para o celular recuperar por reinício de ICE antes de recomeçar do zero
+  const SEM_IMAGEM_S = 15;       // conectado mas sem quadro novo por tanto tempo: recomeça
+
   const view = { scale: 1, x: 0, y: 0, mirror: false, fit: fitParam || 'cover' };
   let sig = null, pc = null, dc = null, lote = null, origem = null, pendentes = [];
-  let timerHello = null, timerDesc = null, conectado = false;
+  let timerHello = null, timerDesc = null, conectado = false, jaConectou = false, negociandoDesde = 0;
   let ultimoFrames = -1, semFrames = 0, bytesAnt = 0, tAnt = 0;
 
   function aplicarView() { v.style.transform = transformCss(view); v.style.objectFit = view.fit === 'contain' ? 'contain' : 'cover'; }
   function estado(nome, detalhe) {
     if (!noPai) return;
-    try { window.parent.postMessage({ nhvcam: 'estado', sala, estado: nome, detalhe: detalhe || '' }, '*'); } catch (e) {}
+    try { window.parent.postMessage({ nhvcam: 'estado', sala: salaBase, estado: nome, detalhe: detalhe || '' }, '*'); } catch (e) {}
   }
+  // Depois da primeira conexão nunca mais aparece texto por cima do vídeo (fica o último quadro),
+  // a não ser com hud=1.
   function setHud(texto) {
-    const mostrar = hudModo === '1' ? true : hudModo === '0' ? false : !conectado;
+    const mostrar = hudModo === '1' ? true : hudModo === '0' ? false : (!conectado && !jaConectou);
     hud.textContent = texto || '';
     hud.classList.toggle('oculto', !mostrar || !texto);
   }
@@ -56,27 +65,47 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transfor
     v.play().catch(() => {});
     if (querAudio) { v.muted = false; v.play().catch(() => { v.muted = true; v.play().catch(() => {}); }); }
   }
+  function negociando() { return !!pc && !conectado && performance.now() - negociandoDesde < NEGOCIACAO_MS; }
   function pedir() { if (sig && sig.status === 'SUBSCRIBED') sig.enviar('hello', { preview }); }
   function iniciarHello() {
-    clearInterval(timerHello); pedir();
-    timerHello = setInterval(() => { if (conectado) clearInterval(timerHello); else pedir(); }, 2500);
+    clearInterval(timerHello);
+    if (!negociando()) pedir();
+    timerHello = setInterval(() => {
+      if (conectado) { clearInterval(timerHello); return; }
+      if (negociando()) return;
+      pedir();
+    }, 2500);
   }
   function limparPc() {
     clearTimeout(timerDesc);
     if (pc) { try { pc.onconnectionstatechange = null; pc.ontrack = null; pc.close(); } catch (e) {} }
-    pc = null; dc = null; pendentes = []; conectado = false; ultimoFrames = -1; semFrames = 0; bytesAnt = 0; tAnt = 0;
+    pc = null; dc = null; pendentes = []; conectado = false; ultimoFrames = -1; semFrames = 0; bytesAnt = 0; tAnt = 0; negociandoDesde = 0;
   }
-  function caiu(msg) { limparPc(); setHud('NHV Cam · ' + sala + ' · ' + msg); estado('aguardando', msg); iniciarHello(); }
+  function caiu(msg) { limparPc(); setHud('NHV Cam · ' + rotulo + ' · ' + msg); estado('aguardando', msg); iniciarHello(); }
+  function armarQueda(meu) {
+    clearTimeout(timerDesc);
+    timerDesc = setTimeout(() => { if (pc === meu && meu.connectionState !== 'connected') caiu('conexão caiu, reconectando'); }, DESCONECTADO_MS);
+  }
   function drenar() {
     if (!pc || !pc.remoteDescription) return;
     const fila = pendentes; pendentes = [];
     for (const c of fila) pc.addIceCandidate(c).catch((e) => console.warn('ice', e));
+  }
+  function preferirCodec(meu) {
+    try {
+      if (!(window.RTCRtpReceiver && RTCRtpReceiver.getCapabilities)) return;
+      const caps = RTCRtpReceiver.getCapabilities('video');
+      for (const t of meu.getTransceivers()) {
+        if (t.receiver && t.receiver.track && t.receiver.track.kind === 'video' && t.setCodecPreferences) t.setCodecPreferences(ordenarCodecs(caps.codecs, codecPref));
+      }
+    } catch (e) { console.warn('codec', e); }
   }
 
   async function aoOferta(m) {
     limparPc();
     clearInterval(timerHello);
     origem = m.from;
+    negociandoDesde = performance.now();
     const meu = new RTCPeerConnection({ iceServers: CFG.iceServers, bundlePolicy: 'max-bundle' });
     pc = meu;
     lote = new LoteIce((cands) => sig.enviar('ice', { candidates: cands }, origem));
@@ -98,34 +127,45 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transfor
     meu.onconnectionstatechange = () => {
       if (pc !== meu) return;
       const st = meu.connectionState;
-      if (st === 'connected') { conectado = true; clearInterval(timerHello); clearTimeout(timerDesc); setHud(''); estado('conectado'); }
-      else if (st === 'failed' || st === 'closed') caiu('conexão caiu, reconectando');
-      else if (st === 'disconnected') { clearTimeout(timerDesc); timerDesc = setTimeout(() => { if (pc === meu && meu.connectionState !== 'connected') caiu('conexão caiu, reconectando'); }, 5000); }
+      if (st === 'connected') { conectado = true; jaConectou = true; clearInterval(timerHello); clearTimeout(timerDesc); setHud(''); estado('conectado'); }
+      else if (st === 'closed') caiu('conexão fechada, reconectando');
+      else if (st === 'failed' || st === 'disconnected') { conectado = false; armarQueda(meu); estado('aguardando', 'recuperando a conexão'); }
     };
     await meu.setRemoteDescription(m.data.sdp);
     if (pc !== meu) return;
-    try {
-      if (window.RTCRtpReceiver && RTCRtpReceiver.getCapabilities) {
-        const caps = RTCRtpReceiver.getCapabilities('video');
-        for (const t of meu.getTransceivers()) {
-          if (t.receiver && t.receiver.track && t.receiver.track.kind === 'video' && t.setCodecPreferences) t.setCodecPreferences(ordenarCodecs(caps.codecs, codecPref));
-        }
-      }
-    } catch (e) { console.warn('codec', e); }
+    preferirCodec(meu);
     const resposta = await meu.createAnswer();
     if (pc !== meu) return;
     await meu.setLocalDescription(resposta);
     if (pc !== meu) return;
     sig.enviar('answer', { sdp: { type: meu.localDescription.type, sdp: meu.localDescription.sdp } }, origem);
     drenar();
-    setHud('NHV Cam · ' + sala + ' · conectando ao celular');
+    setHud('NHV Cam · ' + rotulo + ' · conectando ao celular');
+  }
+
+  // Oferta de reinício de ICE do mesmo celular: responde na MESMA conexão (sem trocar o vídeo).
+  async function renegociar(m) {
+    const meu = pc;
+    negociandoDesde = performance.now();
+    await meu.setRemoteDescription(m.data.sdp);
+    if (pc !== meu) return;
+    const resposta = await meu.createAnswer();
+    if (pc !== meu) return;
+    await meu.setLocalDescription(resposta);
+    if (pc !== meu) return;
+    sig.enviar('answer', { sdp: { type: meu.localDescription.type, sdp: meu.localDescription.sdp } }, origem);
+    drenar();
   }
 
   function aoReceber(m) {
     if (m.role !== 'cam') return;
-    if (m.kind === 'offer') aoOferta(m).catch((e) => { console.warn(e); setHud('NHV Cam · ' + sala + ' · erro: ' + e.message); estado('erro', e.message); });
+    if (m.kind === 'offer') {
+      const falhou = (e) => { console.warn(e); setHud('NHV Cam · ' + rotulo + ' · erro: ' + e.message); estado('erro', e.message); };
+      if (pc && m.from === origem && m.data.renegociar) renegociar(m).catch((e) => { console.warn('renegociação falhou, recomeçando', e); aoOferta(m).catch(falhou); });
+      else aoOferta(m).catch(falhou);
+    }
     else if (m.kind === 'ice') { if (m.from !== origem) return; pendentes.push.apply(pendentes, m.data.candidates || []); drenar(); }
-    else if (m.kind === 'hello') { if (!conectado || m.from !== origem) pedir(); }  // celular (re)entrou: pede oferta nova
+    else if (m.kind === 'hello') { if ((!conectado || m.from !== origem) && !negociando()) pedir(); }  // celular (re)entrou: pede oferta nova
     else if (m.kind === 'bye') { if (m.from === origem) caiu('celular saiu, aguardando'); }
   }
 
@@ -141,37 +181,54 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transfor
       const bps = tAnt ? (inb.bytesReceived - bytesAnt) * 8 / ((agora - tAnt) / 1000) : 0;
       bytesAnt = inb.bytesReceived; tAnt = agora;
       const frames = inb.framesDecoded || 0;
-      if (frames === ultimoFrames) { semFrames++; if (semFrames >= 10) { caiu('sem imagem, reconectando'); return; } }
+      if (frames === ultimoFrames) { semFrames++; if (semFrames >= SEM_IMAGEM_S) { caiu('sem imagem, reconectando'); return; } }
       else semFrames = 0;
       ultimoFrames = frames;
       const w = inb.frameWidth || v.videoWidth, h = inb.frameHeight || v.videoHeight;
       const fps = Math.round(inb.framesPerSecond || 0);
-      const info = w + 'x' + h + ' · ' + fps + ' fps · ' + (bps / 1e6).toFixed(1) + ' Mbps';
-      if (hudModo === '1') setHud(sala + ' · ' + info);
+      const sel = parSelecionado(st);
+      const cam = sel ? caminho(sel.loc, sel.rem) : { nome: '', grau: '' };
+      const rtt = sel ? sel.rtt : null;
+      const info = w + 'x' + h + ' · ' + fps + ' fps · ' + (bps / 1e6).toFixed(1) + ' Mbps' + (cam.nome ? ' · ' + cam.nome : '') + (rtt != null ? ' · ' + rtt + ' ms' : '');
+      if (hudModo === '1') setHud(rotulo + ' · ' + info);
       estado('conectado', info);
-      if (dc && dc.readyState === 'open') dc.send(JSON.stringify({ type: 'rx', w, h, fps }));
+      if (dc && dc.readyState === 'open') dc.send(JSON.stringify({ type: 'rx', w, h, fps, caminho: cam.nome, grau: cam.grau, rtt }));
     } catch (e) {}
   }, 1000);
 
   (async () => {
     aplicarView();
-    setHud('NHV Cam · ' + sala + ' · conectando ao sinal');
+    setHud('NHV Cam · ' + rotulo + ' · conectando ao sinal');
     estado('conectando');
     try {
       sig = new Signal(sala, 'view');
-    } catch (e) { setHud('NHV Cam · ' + sala + ' · ' + e.message); estado('erro', e.message); return; }
+    } catch (e) { setHud('NHV Cam · ' + rotulo + ' · ' + e.message); estado('erro', e.message); return; }
     sig.onmessage = aoReceber;
     sig.onstatus = (st) => {
-      if (st === 'SUBSCRIBED') { if (!conectado) { setHud('NHV Cam · ' + sala + ' · aguardando o celular'); estado('aguardando'); iniciarHello(); } }
-      else if (st === 'CHANNEL_ERROR' || st === 'TIMED_OUT') { setHud('NHV Cam · ' + sala + ' · sinal indisponível (' + st + ')'); estado('erro', st); }
+      if (st === 'SUBSCRIBED') { if (!conectado) { setHud('NHV Cam · ' + rotulo + ' · aguardando o celular'); estado('aguardando'); iniciarHello(); } }
+      else if (st === 'CHANNEL_ERROR' || st === 'TIMED_OUT') { setHud('NHV Cam · ' + rotulo + ' · sinal indisponível (' + st + ')'); estado('erro', st); }
     };
     try { await sig.conectar(); }
-    catch (e) { setHud('NHV Cam · ' + sala + ' · falha no sinal: ' + ((e && e.message) || e)); estado('erro', String(e)); }
+    catch (e) { setHud('NHV Cam · ' + rotulo + ' · falha no sinal: ' + ((e && e.message) || e)); estado('erro', String(e)); }
   })();
 
-  window.addEventListener('pagehide', () => { if (sig && origem) sig.enviar('bye', {}, origem); });
+  function despedir() {
+    clearInterval(timerHello);
+    if (sig && origem) sig.enviar('bye', {}, origem);
+    limparPc();
+  }
+  window.addEventListener('pagehide', despedir);
+  // o painel avisa antes de descarregar a prévia, para o "bye" chegar no celular com folga
+  window.addEventListener('message', (e) => {
+    if (!e.data || e.data.nhvcam !== 'fechar') return;
+    despedir();
+    setTimeout(() => { try { sig.fechar(); } catch (err) {} }, 300);
+  });
   // clique na página: destrava o som quando o navegador bloqueou autoplay com áudio
   document.addEventListener('click', () => { if (querAudio) { v.muted = false; v.play().catch(() => {}); } });
+
+  // ganchos para o teste automatizado
+  window.__nhvcamView = { pc: () => pc, conectado: () => conectado, jaConectou: () => jaConectou, sala };
 })();
 </script>
 </body>

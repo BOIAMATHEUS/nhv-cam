@@ -51,6 +51,7 @@ select{font:inherit;color:inherit;background:var(--panel2);border:1px solid var(
 <body>
 <header><h1>NHV Cam · painel</h1><p>Até 5 celulares como câmera no OBS. Prévia, link do OBS e QR para abrir no celular.</p></header>
 <main id="main">
+  <div class="nova">Chave da equipe: <input id="inChave" autocapitalize="off" spellcheck="false" style="width:110px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace"> <button id="btNovaChave">Gerar nova</button> <span>Vai no QR e no link do OBS. Só quem tem a chave entra nas câmeras; troque a chave e todo mundo precisa reabrir.</span></div>
   <div class="nova">Salas: <span id="salasAtivas"></span> <input id="novaSala" placeholder="outra sala (ex.: cam6)" autocapitalize="off" spellcheck="false"> <button id="btNova">Adicionar</button> <button id="btTodas">Pausar todas as prévias</button></div>
   <section class="ajuda" id="ajuda">
     <div>
@@ -72,6 +73,18 @@ select{font:inherit;color:inherit;background:var(--panel2);border:1px solid var(
         <li>Feche Camo e Iriun antes: eles seguram a câmera.</li>
         <li>Mantenha o Safari aberto em primeiro plano e o celular na vertical.</li>
       </ol>
+    </div>
+    <div>
+      <h3>Live de horas: checklist</h3>
+      <ul>
+        <li><b>Modo Avião com Wi-Fi ligado</b> em cada iPhone: ligação recebida derruba a câmera no Safari. Não Perturbe também ajuda.</li>
+        <li><b>Bloqueio de orientação</b> em retrato (Central de Controle) antes de pôr no tripé.</li>
+        <li><b>Carregador na tomada</b> o tempo todo. Modo de Baixo Consumo desligado. Feche os outros apps.</li>
+        <li>No celular, Config: <b>Manter a tela ligada</b> ativo (se o iOS negar, Ajustes, Tela e Brilho, Bloqueio Automático, Nunca). Use <b>Escurecer</b> no tripé.</li>
+        <li>Mesma <b>chave da equipe</b> em tudo; pause as prévias deste painel depois de conferir.</li>
+        <li>Se o Wi-Fi oscilar, a conexão se recupera sozinha (reinício de ICE em 5 s, recomeço completo em 12 s) e o OBS segura o último quadro, sem texto na tela.</li>
+        <li>Não recarregue as fontes do OBS no ar; "Desligar a fonte quando não estiver visível" desmarcado.</li>
+      </ul>
     </div>
     <div>
       <h3>Dicas</h3>
@@ -112,10 +125,23 @@ select{font:inherit;color:inherit;background:var(--panel2);border:1px solid var(
 (() => {
   'use strict';
   const CHAVE = 'nhvcam.painel.salas';
+  const CHAVE_EQUIPE = 'nhvcam.chave';
   const base = location.href.split('#')[0].split('?')[0].replace(/[^/]*$/, '');
   const limpar = (s) => String(s || '').trim().toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 32);
   const main = document.getElementById('main'), ajuda = document.getElementById('ajuda'), tpl = document.getElementById('tplCard');
   const cards = new Map();
+
+  // Chave da equipe: separa as nossas salas de qualquer outra tela que use os mesmos nomes (cam1...).
+  // Vem da URL (?k=), senão do navegador, senão é gerada aqui e guardada.
+  function gerarChave() { const a = 'abcdefghjkmnpqrstuvwxyz23456789'; let s = ''; for (let i = 0; i < 5; i++) s += a[Math.floor(Math.random() * a.length)]; return s; }
+  let chave = limpar(new URL(location.href).searchParams.get('k') || '');
+  if (!chave) { try { chave = limpar(localStorage.getItem(CHAVE_EQUIPE) || ''); } catch (e) {} }
+  if (!chave) chave = gerarChave();
+  try { localStorage.setItem(CHAVE_EQUIPE, chave); } catch (e) {}
+  const comChave = (url) => url + '&k=' + encodeURIComponent(chave);
+  document.getElementById('inChave').value = chave;
+  document.getElementById('inChave').addEventListener('change', (e) => { const n = limpar(e.target.value); if (n && n !== chave) { try { localStorage.setItem(CHAVE_EQUIPE, n); } catch (err) {} location.search = '?k=' + n; } });
+  document.getElementById('btNovaChave').addEventListener('click', () => { if (confirm('Gerar uma chave nova? Celulares e fontes do OBS vão precisar reabrir com os links novos.')) { const n = gerarChave(); try { localStorage.setItem(CHAVE_EQUIPE, n); } catch (err) {} location.search = '?k=' + n; } });
 
   const FIXAS = ['cam1', 'cam2', 'cam3', 'cam4', 'cam5'];
   let salas = FIXAS.slice();
@@ -140,8 +166,8 @@ select{font:inherit;color:inherit;background:var(--panel2);border:1px solid var(
       n.querySelector('h2').append(' ', x);
       x.addEventListener('click', () => { salas = salas.filter((s) => s !== sala); salvarExtras(); n.remove(); cards.delete(sala); pintarAtivas(); });
     }
-    const linkObs = () => base + 'view.html?r=' + encodeURIComponent(sala) + (selCodec.value !== 'auto' ? '&codec=' + selCodec.value : '') + (selFit.value !== 'cover' ? '&fit=' + selFit.value : '');
-    const linkCel = base + '?r=' + encodeURIComponent(sala);
+    const linkObs = () => comChave(base + 'view.html?r=' + encodeURIComponent(sala)) + (selCodec.value !== 'auto' ? '&codec=' + selCodec.value : '') + (selFit.value !== 'cover' ? '&fit=' + selFit.value : '');
+    const linkCel = comChave(base + '?r=' + encodeURIComponent(sala));
     const atualizar = () => { inObs.value = linkObs(); };
     selCodec.addEventListener('change', atualizar); selFit.addEventListener('change', atualizar);
     atualizar(); inCel.value = linkCel;
@@ -149,13 +175,16 @@ select{font:inherit;color:inherit;background:var(--panel2);border:1px solid var(
     n.querySelector('.btCel').addEventListener('click', (e) => copiar(linkCel, e.currentTarget));
     try { new QRCode(n.querySelector('.cod'), { text: linkCel, width: 128, height: 128, correctLevel: QRCode.CorrectLevel.M }); } catch (e) {}
 
-    const srcPrevia = base + 'view.html?r=' + encodeURIComponent(sala) + '&preview=1&hud=1';
+    const srcPrevia = comChave(base + 'view.html?r=' + encodeURIComponent(sala)) + '&preview=1&hud=1';
     let ligada = true;
     const setPrevia = (on) => {
       ligada = on;
-      iframe.src = on ? srcPrevia : 'about:blank';
       pausada.hidden = on; btPrevia.textContent = on ? 'Pausar prévia' : 'Ligar prévia';
-      if (!on) setEstado('warn', 'prévia pausada');
+      if (on) { iframe.src = srcPrevia; return; }
+      setEstado('warn', 'prévia pausada');
+      // avisa a prévia para se despedir do celular e só depois descarrega
+      try { iframe.contentWindow.postMessage({ nhvcam: 'fechar' }, '*'); } catch (e) {}
+      setTimeout(() => { if (!ligada) iframe.src = 'about:blank'; }, 500);
     };
     btPrevia.addEventListener('click', () => setPrevia(!ligada));
     const setEstado = (tipo, texto) => { estado.className = 'estado ' + tipo; estado.querySelector('span').textContent = texto; };

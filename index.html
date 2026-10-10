@@ -42,6 +42,8 @@ button{border:0;background:none;cursor:pointer}
 #inicio h1{font-size:30px;line-height:1.05;margin:0 0 6px;font-weight:700;letter-spacing:-.4px}
 #inicio p{margin:0 0 14px;color:var(--muted)}
 #inicio .rot{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+#chaveInfo{margin-top:8px;font-size:12px;color:var(--muted)}
+#chaveInfo b{color:var(--text);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
 .seg{display:flex;background:var(--panel2);border-radius:14px;padding:4px;gap:4px}
 .seg button{flex:1;padding:9px 4px 7px;border-radius:10px;font-weight:600;color:var(--muted);display:flex;flex-direction:column;align-items:center;line-height:1}
 .seg button b{font-size:22px;font-weight:700;margin-bottom:3px}
@@ -122,6 +124,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
         <button type="button" data-sala="cam4"><b>4</b><span>CAM</span></button>
         <button type="button" data-sala="cam5"><b>5</b><span>CAM</span></button>
       </div>
+      <div id="chaveInfo"></div>
       <button type="button" class="btn" id="btIniciar">Iniciar câmera</button>
       <div class="link">No OBS, fonte Navegador 1080 x 1920 com este link (toque para copiar):<code id="linkObs"></code></div>
     </div>
@@ -182,7 +185,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
   <div class="fundo" id="folhaFundo"></div>
   <div class="painel">
     <h2>Configurações</h2>
-    <div class="linha"><label>Sala<small>O mesmo código vai no link do OBS (cam1 a cam5 ou outro)</small></label><input type="text" id="cfgSala" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
+    <div class="linha"><label>Sala<small>cam1 a cam5, ou outro nome</small></label><input type="text" id="cfgSala" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
+    <div class="linha"><label>Chave da equipe<small>Vem no QR do painel; impede que outra tela puxe a câmera</small></label><input type="text" id="cfgChave" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="sem chave"></div>
     <div class="linha"><label>Bitrate<small>8 Mbps já é ótimo em 1080p; acima disso pesa no Wi-Fi com vários celulares</small></label>
       <select id="cfgBitrate"><option value="4">4 Mbps</option><option value="6">6 Mbps</option><option value="8">8 Mbps</option><option value="12">12 Mbps</option><option value="20">20 Mbps</option><option value="30">30 Mbps</option></select></div>
     <div class="linha"><label>Quadros por segundo</label>
@@ -191,15 +195,16 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
       <select id="cfgCodec"><option value="auto">Auto (H264)</option><option value="h264">H264</option><option value="vp9">VP9</option><option value="vp8">VP8</option><option value="av1">AV1</option></select></div>
     <div class="linha"><label>Ajuste no OBS<small>Preencher corta sobras; Caber deixa barras</small></label>
       <select id="cfgFit"><option value="cover">Preencher</option><option value="contain">Caber</option></select></div>
+    <div class="linha"><label>Manter a tela ligada<small id="cfgWakeSt">Pede ao iPhone para não apagar a tela (iOS 16.4 ou mais novo)</small></label><input type="checkbox" id="cfgWake" checked></div>
     <div class="linha"><label>Inverter largura e altura<small>Use se a imagem chegar deitada no OBS</small></label><input type="checkbox" id="cfgSwap"></div>
     <div class="linha"><label>Link do OBS<small id="cfgLink"></small></label><button type="button" class="btn sec" style="width:auto;margin:0;padding:9px 12px" id="btCopiar">Copiar</button></div>
     <button type="button" class="btn sec" id="btReconectar">Reconectar</button>
     <button type="button" class="btn" id="btFechar">Fechar</button>
-    <div class="ajuda"><b>Como usar.</b> No OBS, adicione uma fonte Navegador com o link acima, largura 1080 e altura 1920. Celular e PC no mesmo Wi-Fi conectam direto. Pinça na imagem dá zoom, arrastar move o enquadramento, toque duplo volta ao 1x. O Guia 9:16 mostra onde o Instagram cobre a imagem na live. Escurecer apaga a prévia para o celular ficar no tripé sem brilhar (a câmera continua). Deixe o Safari em primeiro plano durante a live.</div>
+    <div class="ajuda"><b>Como usar.</b> No OBS, adicione uma fonte Navegador com o link acima, largura 1080 e altura 1920. Celular e PC no mesmo Wi-Fi conectam direto. Pinça na imagem dá zoom, arrastar move o enquadramento, toque duplo volta ao 1x. O Guia 9:16 mostra onde o Instagram cobre a imagem na live. Escurecer apaga a prévia para o celular ficar no tripé sem brilhar (a câmera continua). A linha acima do zoom mostra por onde o vídeo passa (direto, internet ou relay) e a latência. <b>Para a live:</b> Modo Avião com Wi-Fi ligado (ligação derruba a câmera), bloqueio de orientação em retrato, carregador na tomada, Safari em primeiro plano.</div>
   </div>
 </div>
 
-<div id="escuro"><div><span class="pill big" id="escuroSt"><i></i>OBS</span><p>Câmera ligada. Toque para ver a prévia.</p></div></div>
+<div id="escuro"><div><span class="pill big" id="escuroSt"><i></i>OBS</span><p id="escuroP">Câmera ligada. Toque para ver a prévia.</p></div></div>
 <div id="toast"></div>
 <div id="gire">Vire o celular na vertical</div>
 
@@ -209,22 +214,25 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
 <script>
 (() => {
   'use strict';
-  const { Signal, LoteIce, limparSala, transformCss, ordenarCodecs } = window.NHVCam;
+  const { Signal, LoteIce, limparSala, transformCss, ordenarCodecs, parSelecionado, caminho } = window.NHVCam;
   const CFG = window.NHVCAM_CONFIG;
   const $ = (s) => document.querySelector(s);
 
   const QUAL = { '4k': { w: 3840, h: 2160, nome: '4K' }, '1080': { w: 1920, h: 1080, nome: '1080p' }, '720': { w: 1280, h: 720, nome: '720p' } };
-  const PADRAO = { sala: 'cam1', facing: 'environment', deviceId: '', qualidade: '1080', fps: 30, bitrateMbps: 8, codec: 'auto', swap: false, mirror: false, audio: false, zoomModo: 'digital', fit: 'cover', guia: false };
-  const CHAVE = 'nhvcam.celular';
-  const FIXAS = ['cam1', 'cam2', 'cam3', 'cam4', 'cam5'];
+  const PADRAO = { sala: 'cam1', chave: '', facing: 'environment', deviceId: '', qualidade: '1080', fps: 30, bitrateMbps: 8, codec: 'auto', swap: false, mirror: false, audio: false, zoomModo: 'digital', fit: 'cover', guia: false, telaLigada: true };
+  const CHAVE_LS = 'nhvcam.celular';
   const NOMES = { 'back camera': 'Traseira', 'front camera': 'Frontal', 'back dual wide camera': 'Traseira dupla', 'back dual camera': 'Traseira dupla', 'back triple camera': 'Traseira tripla', 'back ultra wide camera': 'Ultra wide', 'back telephoto camera': 'Teleobjetiva' };
+  const NEGOCIACAO_MS = 10000;   // janela em que um "oi" repetido do mesmo OBS é ignorado
+  const DESCONECTADO_MS = 5000;  // depois disso tenta reinício de ICE
+  const MORTE_MS = 12000;        // depois disso derruba o par e espera o OBS pedir de novo
 
   let S = Object.assign({}, PADRAO, carregar());
   const urlParams = new URL(location.href).searchParams;
   if (urlParams.get('r')) S.sala = limparSala(urlParams.get('r')) || S.sala;
+  if (urlParams.get('k') !== null) S.chave = limparSala(urlParams.get('k'));
 
   const view = { scale: 1, x: 0, y: 0, mirror: !!S.mirror, fit: S.fit || 'cover' };
-  const peers = new Map();      // id do visualizador -> { pc, dc, lote, preview, videoSender, audioSender, pendentes, timerDesc, rx }
+  const peers = new Map();      // id do visualizador -> { pc, dc, lote, preview, videoSender, audioSender, pendentes, criado, timers, rx }
   const prevStats = new Map();
   let stream = null, videoTrack = null, audioTrack = null, sig = null, caps = null, wake = null, rodando = false;
 
@@ -237,8 +245,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
   };
 
   /* ---------- utilidades ---------- */
-  function carregar() { try { return JSON.parse(localStorage.getItem(CHAVE)) || {}; } catch (e) { return {}; } }
-  function salvar() { try { localStorage.setItem(CHAVE, JSON.stringify(S)); } catch (e) {} }
+  function carregar() { try { return JSON.parse(localStorage.getItem(CHAVE_LS)) || {}; } catch (e) { return {}; } }
+  function salvar() { try { localStorage.setItem(CHAVE_LS, JSON.stringify(S)); } catch (e) {} }
   let toastTimer;
   function toast(msg, ms) { el.toast.textContent = msg; el.toast.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => el.toast.classList.remove('on'), ms || 2600); }
   function pill(e, texto, tipo) {
@@ -246,7 +254,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
     e.innerHTML = '<i></i>'; e.append(texto);
   }
   function baseUrl() { return location.href.split('#')[0].split('?')[0].replace(/[^/]*$/, ''); }
-  function linkObs() { return baseUrl() + 'view.html?r=' + encodeURIComponent(S.sala); }
+  function salaCompleta() { return S.chave ? S.sala + '-' + S.chave : S.sala; }
+  function linkObs() { return baseUrl() + 'view.html?r=' + encodeURIComponent(S.sala) + (S.chave ? '&k=' + encodeURIComponent(S.chave) : ''); }
   function fmtMbps(bps) { return (bps / 1e6).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + ' Mbps'; }
   function nomeCamera(label, i) { if (!label) return 'Câmera ' + (i + 1); return NOMES[label.trim().toLowerCase()] || label; }
   async function copiar(t) { try { await navigator.clipboard.writeText(t); toast('Link copiado'); } catch (e) { prompt('Copie o link:', t); } }
@@ -279,6 +288,10 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
     document.querySelectorAll('#segSala button').forEach((b) => b.classList.toggle('on', b.dataset.sala === S.sala));
     $('#linkObs').textContent = linkObs();
     $('#cfgLink').textContent = linkObs();
+    const ci = $('#chaveInfo');
+    ci.innerHTML = '';
+    if (S.chave) { ci.append('Chave da equipe: '); const b = document.createElement('b'); b.textContent = S.chave; ci.append(b); }
+    else ci.textContent = 'Sem chave da equipe: abra pelo QR do painel para ganhar uma (evita que outra tela puxe a câmera).';
   }
   document.querySelectorAll('#segSala button').forEach((b) => b.addEventListener('click', () => { S.sala = b.dataset.sala; salvar(); pintarSala(); }));
   $('#linkObs').addEventListener('click', () => copiar(linkObs()));
@@ -287,32 +300,42 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
     const b = $('#btIniciar');
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { toast('Abra pelo link https (a câmera exige conexão segura)', 5000); return; }
     b.disabled = true; b.textContent = 'Abrindo câmera';
+    acordar(); // primeiro de tudo, ainda dentro do gesto de toque (o Safari pode exigir)
     try {
       await abrirCamera();
     } catch (e) { mostrarErro(e); b.disabled = false; b.textContent = 'Iniciar câmera'; return; }
     el.inicio.style.display = 'none'; el.controles.classList.add('on'); rodando = true;
-    acordar();
     try { await conectarSinal(); } catch (e) { mostrarErro(e); }
   });
 
   /* ---------- câmera ---------- */
-  function pararTudo() { if (stream) stream.getTracks().forEach((t) => t.stop()); stream = null; videoTrack = null; audioTrack = null; }
-
-  async function abrirCamera() {
+  function montarConstraints() {
     const q = QUAL[S.qualidade] || QUAL['1080'];
     const dims = S.swap ? { width: { ideal: q.h }, height: { ideal: q.w } } : { width: { ideal: q.w }, height: { ideal: q.h } };
     const video = Object.assign({ frameRate: { ideal: Number(S.fps) || 30 } }, dims, S.deviceId ? { deviceId: { exact: S.deviceId } } : { facingMode: S.facing });
     const audio = S.audio ? { echoCancellation: true, noiseSuppression: true, autoGainControl: true } : false;
-    pararTudo(); // no iOS só uma captura por vez: solta a anterior antes de pedir a nova
+    return { video, audio };
+  }
+
+  // Pede a câmera nova ANTES de soltar a antiga (no iOS a antiga termina sozinha; em outros
+  // aparelhos, se a câmera recusar por estar ocupada, solta a antiga e tenta de novo).
+  async function abrirCamera() {
+    let c = montarConstraints();
     let novo;
     try {
-      novo = await navigator.mediaDevices.getUserMedia({ video, audio });
+      novo = await navigator.mediaDevices.getUserMedia(c);
     } catch (e) {
-      if (S.deviceId && (e.name === 'OverconstrainedError' || e.name === 'NotFoundError' || e.name === 'NotReadableError')) {
-        S.deviceId = ''; salvar(); delete video.deviceId; video.facingMode = S.facing;
-        novo = await navigator.mediaDevices.getUserMedia({ video, audio });
-      } else throw e;
+      if (e.name === 'NotReadableError' || e.name === 'AbortError') {
+        pararTudo();
+        try { novo = await navigator.mediaDevices.getUserMedia(c); } catch (e2) { e = e2; }
+      }
+      if (!novo && S.deviceId && (e.name === 'OverconstrainedError' || e.name === 'NotFoundError' || e.name === 'NotReadableError')) {
+        S.deviceId = ''; salvar(); c = montarConstraints();
+        novo = await navigator.mediaDevices.getUserMedia(c);
+      }
+      if (!novo) throw e;
     }
+    const antigos = stream ? stream.getTracks() : [];
     stream = novo; videoTrack = novo.getVideoTracks()[0]; audioTrack = novo.getAudioTracks()[0] || null;
     el.preview.srcObject = new MediaStream([videoTrack]);
     el.preview.play().catch(() => {});
@@ -320,7 +343,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
       if (p.videoSender) p.videoSender.replaceTrack(videoTrack).catch(() => {});
       if (p.audioSender) p.audioSender.replaceTrack(audioTrack).catch(() => {});
     }
-    videoTrack.addEventListener('ended', () => { if (rodando) pill(el.stCap, 'Câmera parou', 'err'); });
+    antigos.forEach((t) => { if (!novo.getTracks().includes(t)) t.stop(); });
+    mudoHa = 0;
     caps = capsZoom();
     prepararZoom();
     aplicarPreview();
@@ -328,6 +352,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
     pintarBotoes();
     await listarCameras();
   }
+  function pararTudo() { if (stream) stream.getTracks().forEach((t) => t.stop()); stream = null; videoTrack = null; audioTrack = null; }
 
   async function listarCameras() {
     try {
@@ -359,6 +384,25 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
     el.btAudio.classList.toggle('on', !!(S.audio && audioTrack));
     el.btGuia.classList.toggle('on', !!S.guia);
     el.guia.hidden = !S.guia;
+  }
+
+  // Vigia da câmera: se o iOS deixar a captura muda por 8 s ou encerrar a trilha com a página
+  // na frente, religa sozinho (até 5 tentativas, uma a cada 6 s).
+  let mudoHa = 0, religando = false, tentativasReligar = 0, ultimaReligada = 0;
+  async function religar(motivo) {
+    const agora = performance.now();
+    if (religando || agora - ultimaReligada < 6000 || tentativasReligar >= 5) return;
+    religando = true; ultimaReligada = agora; tentativasReligar++;
+    toast(motivo + ', religando a câmera (' + tentativasReligar + '/5)');
+    try { await abrirCamera(); tentativasReligar = 0; toast('Câmera religada'); }
+    catch (e) { mostrarErro(e); }
+    finally { religando = false; mudoHa = 0; }
+  }
+  function vigiarCamera() {
+    if (!rodando || document.visibilityState !== 'visible' || religando) return;
+    if (!videoTrack || videoTrack.readyState === 'ended') { religar('A câmera parou'); return; }
+    if (videoTrack.muted) { mudoHa++; if (mudoHa >= 8) religar('A câmera travou'); }
+    else { mudoHa = 0; if (tentativasReligar && videoTrack.readyState === 'live') tentativasReligar = 0; }
   }
 
   /* ---------- zoom (digital no OBS; nativo quando o iPhone expõe) ---------- */
@@ -453,12 +497,12 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
     if (sig) { for (const id of peers.keys()) sig.enviar('bye', {}, id); sig.fechar(); }
     for (const id of Array.from(peers.keys())) fecharPeer(id);
     pill(el.stSinal, 'Sinal: conectando', 'warn');
-    const meu = new Signal(S.sala, 'cam');
+    const meu = new Signal(salaCompleta(), 'cam');
     sig = meu;
     meu.onmessage = aoReceber;
     meu.onstatus = (st) => {
       if (sig !== meu) return;
-      if (st === 'SUBSCRIBED') { pill(el.stSinal, 'Sala ' + S.sala, 'ok'); meu.enviar('hello', {}); }
+      if (st === 'SUBSCRIBED') { pill(el.stSinal, 'Sala ' + S.sala + (S.chave ? ' · ' + S.chave : ''), 'ok'); meu.enviar('hello', {}); }
       else if (st === 'CHANNEL_ERROR' || st === 'TIMED_OUT') pill(el.stSinal, 'Sinal: ' + st.toLowerCase().replace('_', ' '), 'err');
       else if (st === 'CLOSED') pill(el.stSinal, 'Sinal fechado', 'err');
       atualizarStatus();
@@ -470,7 +514,12 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
   function aoReceber(m) {
     if (m.role !== 'view') return;
     const p = peers.get(m.from);
-    if (m.kind === 'hello') criarPeer(m.from, !!(m.data && m.data.preview)).catch((e) => { console.warn(e); toast('Falha ao negociar: ' + e.message); });
+    if (m.kind === 'hello') {
+      const preview = !!(m.data && m.data.preview);
+      // "oi" repetido de um OBS que já está negociando: ignora, senão os dois recomeçam para sempre
+      if (p && p.preview === preview && p.pc.connectionState !== 'connected' && p.pc.connectionState !== 'failed' && p.pc.connectionState !== 'closed' && performance.now() - p.criado < NEGOCIACAO_MS) return;
+      criarPeer(m.from, preview).catch((e) => { console.warn(e); toast('Falha ao negociar: ' + e.message); });
+    }
     else if (m.kind === 'answer') { if (p) p.pc.setRemoteDescription(m.data.sdp).then(() => drenarIce(p)).catch((e) => console.warn('answer', e)); }
     else if (m.kind === 'ice') { if (p) { p.pendentes.push.apply(p.pendentes, m.data.candidates || []); drenarIce(p); } }
     else if (m.kind === 'bye') fecharPeer(m.from);
@@ -485,15 +534,19 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
     if (!videoTrack || !sig) return;
     fecharPeer(id);
     const pc = new RTCPeerConnection({ iceServers: CFG.iceServers, bundlePolicy: 'max-bundle' });
-    const p = { id, pc, preview, dc: null, lote: null, videoSender: null, audioSender: null, pendentes: [], timerDesc: null, rx: null };
+    const p = { id, pc, preview, dc: null, lote: null, videoSender: null, audioSender: null, pendentes: [], criado: performance.now(), timerDesc: null, timerMorte: null, reiniciando: false, rx: null };
     peers.set(id, p);
     p.lote = new LoteIce((cands) => sig && sig.enviar('ice', { candidates: cands }, id));
     pc.onicecandidate = (e) => { if (e.candidate) p.lote.add(e.candidate.toJSON()); else p.lote.flush(); };
     pc.onconnectionstatechange = () => {
       const st = pc.connectionState;
-      if (st === 'connected') { clearTimeout(p.timerDesc); aplicarBitrateEm(p); }
-      else if (st === 'failed' || st === 'closed') fecharPeer(id);
-      else if (st === 'disconnected') { clearTimeout(p.timerDesc); p.timerDesc = setTimeout(() => { if (pc.connectionState !== 'connected') fecharPeer(id); }, 5000); }
+      if (st === 'connected') { clearTimeout(p.timerDesc); clearTimeout(p.timerMorte); aplicarBitrateEm(p); }
+      else if (st === 'closed') fecharPeer(id);
+      else if (st === 'failed') { reiniciarIce(p); armarMorte(p, MORTE_MS); }
+      else if (st === 'disconnected') {
+        clearTimeout(p.timerDesc);
+        p.timerDesc = setTimeout(() => { if (pc.connectionState !== 'connected') { reiniciarIce(p); armarMorte(p, MORTE_MS); } }, DESCONECTADO_MS);
+      }
       atualizarStatus();
     };
     p.dc = pc.createDataChannel('ctrl', { ordered: true });
@@ -519,10 +572,30 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
     atualizarStatus();
   }
 
+  // Reinício de ICE: tenta recuperar o mesmo par (novos candidatos) antes de derrubar tudo.
+  async function reiniciarIce(p) {
+    if (p.reiniciando || !sig || peers.get(p.id) !== p) return;
+    p.reiniciando = true;
+    try {
+      let oferta;
+      if (p.pc.restartIce) { p.pc.restartIce(); oferta = await p.pc.createOffer(); }
+      else oferta = await p.pc.createOffer({ iceRestart: true });
+      if (peers.get(p.id) !== p) return;
+      await p.pc.setLocalDescription(oferta);
+      if (peers.get(p.id) !== p) return;
+      sig.enviar('offer', { sdp: { type: p.pc.localDescription.type, sdp: p.pc.localDescription.sdp }, renegociar: true }, p.id);
+    } catch (e) { console.warn('reinício de ICE', e); }
+    finally { p.reiniciando = false; }
+  }
+  function armarMorte(p, ms) {
+    clearTimeout(p.timerMorte);
+    p.timerMorte = setTimeout(() => { if (peers.get(p.id) === p && p.pc.connectionState !== 'connected') fecharPeer(p.id); }, ms);
+  }
+
   function fecharPeer(id) {
     const p = peers.get(id); if (!p) return;
     peers.delete(id); prevStats.delete(id);
-    clearTimeout(p.timerDesc);
+    clearTimeout(p.timerDesc); clearTimeout(p.timerMorte);
     try { p.pc.onconnectionstatechange = null; p.pc.close(); } catch (e) {}
     atualizarStatus();
   }
@@ -577,9 +650,10 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
     pill(el.escuroSt, texto, tipo);
   }
 
-  /* ---------- estatísticas ---------- */
+  /* ---------- estatísticas e vigias (1 s) ---------- */
   setInterval(async () => {
     if (!rodando) return;
+    vigiarCamera();
     let alvo = null;
     for (const p of peers.values()) if (p.pc.connectionState === 'connected' && !p.preview) { alvo = p; break; }
     if (!alvo) for (const p of peers.values()) if (p.pc.connectionState === 'connected') { alvo = p; break; }
@@ -600,6 +674,14 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
       if (out.qualityLimitationReason === 'bandwidth') { partes.push('rede limitando'); tipo = 'warn'; }
       else if (out.qualityLimitationReason === 'cpu') { partes.push('CPU limitando'); tipo = 'warn'; }
       if (alvo.rx && alvo.rx.w) partes.push('OBS ' + alvo.rx.w + 'x' + alvo.rx.h);
+      // por onde o vídeo passa e a latência: o que o celular enxerga, senão o que o OBS reportou
+      const sel = parSelecionado(st);
+      let cam = sel ? caminho(sel.loc, sel.rem) : { nome: '', grau: '' };
+      if (!cam.nome && alvo.rx && alvo.rx.caminho) cam = { nome: alvo.rx.caminho, grau: alvo.rx.grau || '' };
+      const rtt = sel && sel.rtt != null ? sel.rtt : (alvo.rx && alvo.rx.rtt != null ? alvo.rx.rtt : null);
+      if (cam.nome) partes.push(cam.nome);
+      if (rtt != null) partes.push(rtt + ' ms');
+      if (cam.grau === 'relay' || cam.grau === 'internet') tipo = 'warn';
       pill(el.stBit, partes.join(' · '), tipo);
       el.stCap.hidden = true; // o pill de estatísticas já traz a resolução que está saindo
     } catch (e) {}
@@ -608,8 +690,9 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
   /* ---------- configurações ---------- */
   function fecharFolha() { el.folha.classList.remove('on'); }
   function pintarConfig() {
-    $('#cfgSala').value = S.sala; $('#cfgBitrate').value = String(S.bitrateMbps); $('#cfgFps').value = String(S.fps);
+    $('#cfgSala').value = S.sala; $('#cfgChave').value = S.chave || ''; $('#cfgBitrate').value = String(S.bitrateMbps); $('#cfgFps').value = String(S.fps);
     $('#cfgCodec').value = S.codec; $('#cfgFit').value = view.fit; $('#cfgSwap').checked = !!S.swap; $('#cfgLink').textContent = linkObs();
+    $('#cfgWake').checked = S.telaLigada !== false; pintarWake();
   }
   $('#btConfig').addEventListener('click', () => { pintarConfig(); el.folha.classList.add('on'); });
   $('#folhaFundo').addEventListener('click', fecharFolha);
@@ -620,22 +703,58 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
     S.sala = nova; salvar(); pintarSala(); pintarConfig();
     if (rodando) conectarSinal().catch(mostrarErro);
   });
+  $('#cfgChave').addEventListener('change', () => {
+    const nova = limparSala($('#cfgChave').value);
+    if (nova === S.chave) return;
+    S.chave = nova; salvar(); pintarSala(); pintarConfig();
+    if (rodando) conectarSinal().catch(mostrarErro);
+  });
   $('#cfgBitrate').addEventListener('change', () => { S.bitrateMbps = Number($('#cfgBitrate').value); salvar(); peers.forEach(aplicarBitrateEm); });
   $('#cfgFps').addEventListener('change', () => { S.fps = Number($('#cfgFps').value); salvar(); if (rodando) abrirCamera().catch(mostrarErro); });
   $('#cfgCodec').addEventListener('change', () => { S.codec = $('#cfgCodec').value; salvar(); renegociarTodos(); });
   $('#cfgFit').addEventListener('change', () => { view.fit = $('#cfgFit').value; S.fit = view.fit; salvar(); aplicarPreview(); enviarView(); });
   $('#cfgSwap').addEventListener('change', () => { S.swap = $('#cfgSwap').checked; salvar(); if (rodando) abrirCamera().catch(mostrarErro); });
+  $('#cfgWake').addEventListener('change', () => { S.telaLigada = $('#cfgWake').checked; salvar(); if (S.telaLigada) acordar(); else soltar(); });
   $('#btCopiar').addEventListener('click', () => copiar(linkObs()));
   $('#btReconectar').addEventListener('click', () => { fecharFolha(); conectarSinal().then(() => toast('Sinal reconectado')).catch(mostrarErro); });
 
   /* ---------- tela ligada e volta do segundo plano ---------- */
-  async function acordar() { try { if ('wakeLock' in navigator) wake = await navigator.wakeLock.request('screen'); } catch (e) {} }
+  const RESERVA = 'Para garantir: Ajustes > Tela e Brilho > Bloqueio Automático > Nunca durante a live.';
+  let wakeStatus = 'Ainda não pedido.';
+  function pintarWake() {
+    const s = $('#cfgWakeSt'); if (s) s.textContent = wakeStatus;
+    const ativo = !!(wake && !wake.released);
+    $('#escuroP').textContent = ativo ? 'Câmera ligada, tela mantida acesa. Toque para ver a prévia.' : 'Câmera ligada. Toque para ver a prévia. ' + RESERVA;
+  }
+  async function acordar() {
+    if (S.telaLigada === false) { wakeStatus = 'Desligado: o iPhone pode apagar a tela e pausar a câmera.'; pintarWake(); return; }
+    if (!('wakeLock' in navigator)) { wakeStatus = 'Sem suporte neste iOS (precisa do 16.4 ou mais novo). ' + RESERVA; pintarWake(); return; }
+    if (wake && !wake.released) { pintarWake(); return; }
+    try {
+      const meu = await navigator.wakeLock.request('screen');
+      wake = meu;
+      wakeStatus = 'Ativo: a tela não apaga enquanto esta página estiver na frente.';
+      meu.addEventListener('release', () => { if (wake === meu && rodando) wakeStatus = 'Liberado pelo iOS (página saiu da frente); religa ao voltar.'; pintarWake(); });
+    } catch (e) {
+      wakeStatus = 'O iOS negou (' + e.name + '). ' + RESERVA;
+    }
+    pintarWake();
+  }
+  async function soltar() {
+    const w = wake; wake = null;
+    wakeStatus = 'Desligado: o iPhone pode apagar a tela e pausar a câmera.';
+    try { if (w) await w.release(); } catch (e) {}
+    pintarWake();
+  }
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState !== 'visible' || !rodando) return;
     acordar();
-    setTimeout(() => { if (!videoTrack || videoTrack.readyState === 'ended' || videoTrack.muted) abrirCamera().catch(mostrarErro); }, 1200);
+    setTimeout(() => { if (!videoTrack || videoTrack.readyState === 'ended' || videoTrack.muted) { tentativasReligar = 0; religar('Voltou para a página'); } }, 1200);
   });
   window.addEventListener('pagehide', () => { if (sig) for (const id of peers.keys()) sig.enviar('bye', {}, id); });
+
+  // ganchos para o teste automatizado
+  window.__nhvcam = { peers, reiniciarIce, salaCompleta, estado: () => S };
 
   pintarSala();
   pintarBotoes();
