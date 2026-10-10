@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>NHV Cam · OBS</title>
 <meta name="description" content="Página que o OBS abre como fonte Navegador: recebe a câmera do celular por WebRTC.">
+<script>
+// Esta é a página do OBS. Aberta num celular (fora do OBS e fora do painel), vai para a página do
+// celular com a mesma sala e chave. Para usar um celular como monitor de verdade, acrescente &ver=1.
+(function () {
+  var p = new URL(location.href).searchParams;
+  if (!/\bOBS\//.test(navigator.userAgent) && window.parent === window && /iPhone|iPod|Android/i.test(navigator.userAgent) && !p.has('ver')) location.replace('index.html' + location.search);
+})();
+</script>
 <style>
 html,body{margin:0;height:100%;background:#000;overflow:hidden}
 #stage{position:fixed;inset:0;background:#000;overflow:hidden}
@@ -42,6 +50,9 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transfor
   const v = document.getElementById('v'), hud = document.getElementById('hud');
   if (q.get('bg')) document.getElementById('stage').style.background = /^[0-9a-f]{3,8}$/i.test(q.get('bg')) ? '#' + q.get('bg') : q.get('bg');
 
+  // Colchão de reprodução (ms): a imagem absorve oscilação do Wi-Fi em vez de travar. Padrão 150 ms
+  // no OBS, 0 na prévia do painel; ajustável com &buffer=300 no link.
+  const bufferMs = q.get('buffer') !== null && Number.isFinite(Number(q.get('buffer'))) ? Math.max(0, Math.min(4000, Number(q.get('buffer')))) : (preview ? 0 : 150);
   const NEGOCIACAO_MS = 10000;  // enquanto negocia, não repete o "oi"
   const DESCONECTADO_MS = 12000; // tempo para o celular recuperar por reinício de ICE antes de recomeçar do zero
   const SEM_IMAGEM_S = 15;       // conectado mas sem quadro novo por tanto tempo: recomeça
@@ -130,6 +141,12 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transfor
       const ms = (e.streams && e.streams[0]) || new MediaStream([e.track]);
       if (v.srcObject !== ms) v.srcObject = ms;
       tocar();
+      try {
+        if (e.receiver && e.track && e.track.kind === 'video') {
+          if ('jitterBufferTarget' in e.receiver) e.receiver.jitterBufferTarget = bufferMs;
+          else if ('playoutDelayHint' in e.receiver) e.receiver.playoutDelayHint = bufferMs / 1000;
+        }
+      } catch (err) { console.warn('buffer', err); }
     };
     meu.ondatachannel = (e) => {
       dc = e.channel;

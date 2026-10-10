@@ -13,6 +13,11 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" href="icon-192.png">
+<script>
+// Esta é a página do CELULAR. Se for aberta dentro do OBS (fonte Navegador), vai para a página do OBS
+// com a mesma sala e chave, para o link errado não deixar a fonte sem imagem.
+if (/\bOBS\//.test(navigator.userAgent)) location.replace('view.html' + location.search);
+</script>
 <style>
 :root{--bg:#0b0b0c;--panel:#141416;--panel2:#1c1c1f;--line:#2a2a2f;--text:#f3f0ea;--muted:#9b978f;--accent:#c98a3c;--accent2:#e8b56e;--ok:#4cc38a;--warn:#e9b949;--err:#e5484d}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -199,6 +204,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
     <div class="linha"><label>Manter a tela ligada<small id="cfgWakeSt">Pede ao iPhone para não apagar a tela (iOS 16.4 ou mais novo)</small></label><input type="checkbox" id="cfgWake" checked></div>
     <div class="linha"><label>Inverter largura e altura<small>Use se a imagem chegar deitada no OBS</small></label><input type="checkbox" id="cfgSwap"></div>
     <div class="linha"><label>Link do OBS<small id="cfgLink"></small></label><button type="button" class="btn sec" style="width:auto;margin:0;padding:9px 12px" id="btCopiar">Copiar</button></div>
+    <button type="button" class="btn sec" id="btRedeFraca">Rede fraca: 720p e 4 Mbps (um toque)</button>
     <button type="button" class="btn sec" id="btReligar">Religar a câmera (se travou depois de ligação ou Siri)</button>
     <button type="button" class="btn sec" id="btReconectar">Reconectar o sinal</button>
     <button type="button" class="btn" id="btFechar">Fechar</button>
@@ -221,7 +227,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
   const $ = (s) => document.querySelector(s);
 
   const QUAL = { '4k': { w: 3840, h: 2160, nome: '4K' }, '1080': { w: 1920, h: 1080, nome: '1080p' }, '720': { w: 1280, h: 720, nome: '720p' } };
-  const PADRAO = { sala: 'cam1', chave: '', facing: 'environment', deviceId: '', qualidade: '1080', fps: 30, bitrateMbps: 8, codec: 'auto', swap: false, mirror: false, audio: false, zoomModo: 'digital', fit: 'cover', guia: false, telaLigada: true };
+  const PADRAO = { sala: 'cam1', chave: '', facing: 'environment', deviceId: '', qualidade: '1080', fps: 30, bitrateMbps: 6, codec: 'auto', swap: false, mirror: false, audio: false, zoomModo: 'digital', fit: 'cover', guia: false, telaLigada: true };
   const CHAVE_LS = 'nhvcam.celular';
   const NOMES = { 'back camera': 'Traseira', 'front camera': 'Frontal', 'back dual wide camera': 'Traseira dupla', 'back dual camera': 'Traseira dupla', 'back triple camera': 'Traseira tripla', 'back ultra wide camera': 'Ultra wide', 'back telephoto camera': 'Teleobjetiva' };
   const NEGOCIACAO_MS = 10000;   // janela em que um "oi" repetido do mesmo OBS é ignorado
@@ -556,7 +562,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
     p.dc.onopen = () => enviarView(p);
     p.dc.onmessage = (e) => { try { const d = JSON.parse(e.data); if (d.type === 'rx') p.rx = d; } catch (err) {} };
 
-    const enc = preview ? [{ maxBitrate: 1.5e6, scaleResolutionDownBy: 2 }] : [{ maxBitrate: (Number(S.bitrateMbps) || 8) * 1e6 }];
+    const enc = preview ? [{ maxBitrate: 1.5e6, scaleResolutionDownBy: 2 }] : [{ maxBitrate: (Number(S.bitrateMbps) || 6) * 1e6 }];
     let tv;
     try { tv = pc.addTransceiver(videoTrack, { direction: 'sendonly', streams: [stream], sendEncodings: enc }); }
     catch (e) { tv = pc.addTransceiver(videoTrack, { direction: 'sendonly', streams: [stream] }); }
@@ -607,13 +613,14 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
     if (!p.videoSender) return;
     const editar = (prm) => {
       if (!prm.encodings || !prm.encodings.length) prm.encodings = [{}];
-      prm.encodings[0].maxBitrate = p.preview ? 1.5e6 : (Number(S.bitrateMbps) || 8) * 1e6;
+      prm.encodings[0].maxBitrate = p.preview ? 1.5e6 : (Number(S.bitrateMbps) || 6) * 1e6;
       if (p.preview) prm.encodings[0].scaleResolutionDownBy = 2;
       return prm;
     };
     try {
       const prm = editar(p.videoSender.getParameters());
-      prm.degradationPreference = 'maintain-resolution';
+      // sob perda de pacote no Wi-Fi, cede um pouco de resolução e de fps em vez de travar
+      prm.degradationPreference = 'balanced';
       try { await p.videoSender.setParameters(prm); }
       catch (e) { await p.videoSender.setParameters(editar(p.videoSender.getParameters())); }
     } catch (e) { console.warn('bitrate', e); }
@@ -681,6 +688,10 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
       let tipo = 'ok';
       if (out.qualityLimitationReason === 'bandwidth') { partes.push('rede limitando'); tipo = 'warn'; }
       else if (out.qualityLimitationReason === 'cpu') { partes.push('CPU limitando'); tipo = 'warn'; }
+      // perda de pacotes vista pelo OBS (o sinal do Wi-Fi em número): acima de 2% já pinta de amarelo
+      let rin = null;
+      st.forEach((r) => { if (r.type === 'remote-inbound-rtp' && (r.kind === 'video' || r.mediaType === 'video')) rin = r; });
+      if (rin && typeof rin.fractionLost === 'number' && rin.fractionLost > 0.005) { partes.push('perda ' + (rin.fractionLost * 100).toFixed(1) + '%'); if (rin.fractionLost > 0.02) tipo = 'warn'; }
       if (alvo.rx && alvo.rx.w) partes.push('OBS ' + alvo.rx.w + 'x' + alvo.rx.h);
       // por onde o vídeo passa e a latência: o que o celular enxerga, senão o que o OBS reportou
       const sel = parSelecionado(st);
@@ -726,6 +737,13 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
   $('#btCopiar').addEventListener('click', () => copiar(linkObs()));
   $('#btReconectar').addEventListener('click', () => { fecharFolha(); conectarSinal().then(() => toast('Sinal reconectado')).catch(mostrarErro); });
   $('#btReligar').addEventListener('click', () => { fecharFolha(); tentativasReligar = 0; ultimaReligada = 0; abrirCamera().then(() => toast('Câmera religada')).catch(mostrarErro); });
+  $('#btRedeFraca').addEventListener('click', async () => {
+    fecharFolha();
+    S.qualidade = '720'; S.bitrateMbps = 4; salvar();
+    el.selQual.value = '720'; el.subQual.textContent = QUAL['720'].nome;
+    peers.forEach(aplicarBitrateEm);
+    try { if (rodando) await abrirCamera(); toast('Modo rede fraca: 720p e 4 Mbps'); } catch (e) { mostrarErro(e); }
+  });
 
   /* ---------- tela ligada e volta do segundo plano ---------- */
   const RESERVA = 'No iOS 17 ou mais novo o Safari já segura a tela enquanto a câmera está ligada. Para garantir: Ajustes > Tela e Brilho > Bloqueio Automático > Nunca durante a live.';
