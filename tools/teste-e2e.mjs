@@ -86,6 +86,19 @@ tr = await v1.evaluate(() => document.getElementById('v').style.transform);
 ok(/scale\(-2, 2\)/.test(tr), 'cam1: espelho aplicado no OBS (' + tr + ')');
 await s1.click('#btEspelho');
 
+// 4b) Virar: a frontal entra espelhada; a traseira volta sem espelho (o zoom 2x fica)
+await s1.click('#btCamera');
+await s1.locator('#subCamera', { hasText: 'frontal' }).waitFor({ timeout: 10000 }).then(() => ok(true, 'cam1: Virar trocou para a frontal'), async () => ok(false, 'cam1: Virar não trocou (' + (await s1.locator('#subCamera').textContent()) + ')'));
+await espera(900);
+tr = await v1.evaluate(() => document.getElementById('v').style.transform);
+ok(/scale\(-2, 2\)/.test(tr), 'cam1: frontal chega espelhada no OBS (' + tr + ')');
+await s1.click('#btCamera');
+await s1.locator('#subCamera', { hasText: 'traseira' }).waitFor({ timeout: 10000 }).then(() => ok(true, 'cam1: Virar voltou para a traseira'), async () => ok(false, 'cam1: não voltou (' + (await s1.locator('#subCamera').textContent()) + ')'));
+await espera(900);
+tr = await v1.evaluate(() => document.getElementById('v').style.transform);
+ok(/scale\(2, 2\)/.test(tr), 'cam1: traseira sem espelho no OBS (' + tr + ')');
+ok((await s1.evaluate(() => document.querySelectorAll('#cfgLente option').length)) >= 1, 'cam1: lista de lentes na Config');
+
 // 5) gestos: pinça (zoom) e arrasto (enquadramento) no quadro do celular
 await s1.evaluate(() => {
   const q = document.getElementById('quadro'), r = q.getBoundingClientRect();

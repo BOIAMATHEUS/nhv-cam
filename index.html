@@ -179,11 +179,10 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
     <button type="button" class="reset" id="btZoomReset">1x</button>
   </div>
   <div class="acoes">
-    <div class="acao" id="acCamera">
-      <svg viewBox="0 0 24 24"><path d="M4 8h3l2-2h6l2 2h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
-      Câmera<span class="sub" id="subCamera">traseira</span>
-      <select id="selCamera" aria-label="Escolher câmera"></select>
-    </div>
+    <button type="button" class="acao" id="btCamera">
+      <svg viewBox="0 0 24 24"><path d="M4 8h3l2-2h6l2 2h3v11H4z"/><circle cx="12" cy="13" r="3.5"/><path d="M17.5 3.5L20 6l-2.5 2.5M6.5 20.5L4 18l2.5-2.5"/></svg>
+      Virar<span class="sub" id="subCamera">traseira</span>
+    </button>
     <div class="acao" id="acQual">
       <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10v4M7 12h3M10 10v4M14 10h2.2a2 2 0 010 4H14z"/></svg>
       Qualidade<span class="sub" id="subQual">1080p</span>
@@ -236,6 +235,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
       <select id="cfgFit"><option value="cover">Preencher</option><option value="contain">Caber</option></select></div>
     <div class="linha"><label>Microfone do celular<small>Desligado, a fonte do OBS fica sem som. Ligado, o botão Áudio alterna o mudo na hora</small></label><input type="checkbox" id="cfgMic"></div>
     <div class="linha"><label>Qual microfone<small>Com fone Bluetooth ligado, dá para manter o microfone do iPhone na live</small></label><select id="cfgMicSel"><option value="">Padrão do iPhone</option></select></div>
+    <div class="linha"><label>Lente<small>Traseira, frontal, ultra wide ou teleobjetiva, conforme o iPhone. O botão Virar alterna frontal e traseira</small></label><select id="cfgLente"></select></div>
     <div class="linha"><label>Seu nome na sala<small>Aparece nos outros celulares quando a Sala está ligada</small></label><input type="text" id="cfgNome" placeholder="ex.: Sanny" maxlength="18" autocapitalize="words"></div>
     <div class="linha"><label>Ouvir a sala neste celular<small>Desligue se o som dos outros estiver voltando pelo microfone (eco). Você continua sendo vista e ouvida</small></label><input type="checkbox" id="cfgOuvir" checked></div>
     <div class="linha"><label>Manter a tela ligada<small id="cfgWakeSt">Pede ao iPhone para não apagar a tela (iOS 16.4 ou mais novo)</small></label><input type="checkbox" id="cfgWake" checked></div>
@@ -285,7 +285,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
     palco: $('#palco'), quadro: $('#quadro'), preview: $('#preview'), inicio: $('#inicio'), controles: $('#controles'), guia: $('#guia'),
     stSinal: $('#stSinal'), stObs: $('#stObs'), stCap: $('#stCap'), stBit: $('#stBit'), stFonte: $('#stFonte'), escuro: $('#escuro'), escuroSt: $('#escuroSt'),
     zoom: $('#zoom'), zoomVal: $('#zoomVal'), zoomModo: $('#zoomModo'),
-    selCamera: $('#selCamera'), subCamera: $('#subCamera'), selQual: $('#selQual'), subQual: $('#subQual'),
+    btCamera: $('#btCamera'), cfgLente: $('#cfgLente'), subCamera: $('#subCamera'), selQual: $('#selQual'), subQual: $('#subQual'),
     btEspelho: $('#btEspelho'), btAudio: $('#btAudio'), btGuia: $('#btGuia'), folha: $('#folha'), toast: $('#toast'),
     btSala: $('#btSala'), subSala: $('#subSala'), stSala: $('#stSala'), salaTiles: $('#salaTiles'), salaGrande: $('#salaGrande'),
   };
@@ -414,22 +414,36 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
   }
   function pararTudo() { if (stream) stream.getTracks().forEach((t) => t.stop()); stream = null; videoTrack = null; audioTrack = null; }
 
+  // frontal ou traseira, pelo que a captura informa (ou pelo que foi pedido, se o navegador não disser)
+  function frenteAgora() {
+    const fm = videoTrack && videoTrack.getSettings && videoTrack.getSettings().facingMode;
+    return fm ? fm === 'user' : S.facing === 'user';
+  }
   async function listarCameras() {
     try {
       const devs = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === 'videoinput');
       const atual = videoTrack && videoTrack.getSettings().deviceId;
-      el.selCamera.innerHTML = '';
+      el.cfgLente.innerHTML = '';
       devs.forEach((d, i) => {
         const o = document.createElement('option');
         o.value = d.deviceId; o.textContent = nomeCamera(d.label, i);
         if (d.deviceId === atual) o.selected = true;
-        el.selCamera.append(o);
+        el.cfgLente.append(o);
       });
-      const sel = devs.find((d) => d.deviceId === atual);
-      el.subCamera.textContent = sel ? nomeCamera(sel.label, devs.indexOf(sel)) : (videoTrack && nomeCamera(videoTrack.label, 0)) || (S.facing === 'user' ? 'Frontal' : 'Traseira');
     } catch (e) {}
+    el.subCamera.textContent = frenteAgora() ? 'frontal' : 'traseira';
   }
-  el.selCamera.addEventListener('change', () => { S.deviceId = el.selCamera.value; salvar(); abrirCamera().catch(mostrarErro); });
+  el.cfgLente.addEventListener('change', () => { S.deviceId = el.cfgLente.value; salvar(); abrirCamera().catch(mostrarErro); });
+  // Virar: alterna frontal e traseira num toque. A frontal entra espelhada (como a live do Instagram);
+  // a traseira volta sem espelho. O botão Espelhar continua valendo por cima.
+  el.btCamera.addEventListener('click', async () => {
+    if (!rodando || religando) return;
+    const paraFrente = !frenteAgora();
+    S.facing = paraFrente ? 'user' : 'environment'; S.deviceId = ''; S.mirror = paraFrente; view.mirror = paraFrente; salvar();
+    try { await abrirCamera(); } catch (e) { mostrarErro(e); return; }
+    aplicarPreview(); enviarView(); pintarBotoes();
+    toast(paraFrente ? 'Câmera frontal (espelhada)' : 'Câmera traseira');
+  });
 
   el.selQual.value = S.qualidade; el.subQual.textContent = (QUAL[S.qualidade] || QUAL['1080']).nome;
   el.selQual.addEventListener('change', () => { S.qualidade = el.selQual.value; salvar(); el.subQual.textContent = QUAL[S.qualidade].nome; abrirCamera().catch(mostrarErro); });
