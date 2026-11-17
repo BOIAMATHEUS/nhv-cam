@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NHV Cam · Painel</title>
+<meta name="description" content="Painel do PC: prévia das câmeras, link do OBS e QR para abrir no celular.">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0a0b;--panel:#141416;--panel2:#1d1d20;--line:rgba(255,255,255,.08);--text:#f2f2f2;--muted:#8a8f98;--dim:#5c6068;--gold:#f2c14e;--ok:#34d27b;--warn:#f5a623;--err:#ff3b30;--mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;border:0;cursor:pointer;border-radius:12px;padding:10px 14px;background:var(--panel2);font-weight:600;font-size:14px;transition:background .15s}
+button:hover{background:#26262a}
+button.p{background:var(--text);color:#000}
+button.p:hover{background:#fff}
+button.x{background:none;color:var(--muted);padding:2px 6px;font-size:11px}
+select,input{font:inherit;color:inherit;background:var(--panel2);border:1px solid transparent;border-radius:12px;padding:9px 12px;font-size:14px}
+.topo{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:12px;padding:14px 28px;background:rgba(10,10,11,.85);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.marca{display:flex;align-items:center;gap:10px;font:600 13px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;margin-right:auto}
+.marca i{width:8px;height:8px;border-radius:50%;background:var(--err);box-shadow:0 0 0 4px rgba(255,59,48,.18)}
+.marca span{color:var(--dim)}
+.equipe{display:flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:5px 5px 5px 14px}
+.equipe small{font:500 10px/1 var(--mono);letter-spacing:.12em;color:var(--dim);text-transform:uppercase}
+.equipe input{width:84px;background:none;padding:6px 0;font:600 15px/1 var(--mono);letter-spacing:.06em;color:var(--gold);border-radius:0}
+.equipe button{padding:8px 12px;font-size:13px}
+main{padding:24px 28px 10px}
+.grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:16px;align-items:start}
+.card{background:var(--panel);border-radius:24px;padding:10px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.previa{position:relative;width:100%;aspect-ratio:9/16;background:#000;border-radius:16px;overflow:hidden}
+.previa iframe{width:100%;height:100%;border:0;display:block;background:#000}
+.previa .pausada{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--dim);font:500 11px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;text-align:center;padding:12px;background:#0d0d0e}
+.previa .pausada[hidden]{display:none}
+.previa .sobre{position:absolute;left:10px;right:10px;top:10px;display:flex;pointer-events:none}
+.card h2{margin:0;font:600 12px/1 var(--mono);letter-spacing:.08em;color:#fff;background:rgba(14,14,16,.62);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:8px 11px;border-radius:999px;pointer-events:auto;white-space:nowrap}
+.estado{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);padding:0 4px;min-height:18px;line-height:1.3}
+.estado i{width:7px;height:7px;border-radius:50%;background:var(--muted);display:inline-block;flex:none}
+.estado.ok i{background:var(--ok)}.estado.warn i{background:var(--warn)}.estado.err i{background:var(--err)}
+.estado.ok span{color:var(--text)}
+.acoesCard{display:grid;grid-template-columns:1fr auto;gap:6px}
+.btPrevia{font-size:13px;padding:10px 12px}
+details.mais{border-top:1px solid var(--line);padding-top:4px}
+details.mais summary{list-style:none;cursor:pointer;font-size:13px;color:var(--muted);padding:6px 4px;display:flex;justify-content:space-between}
+details.mais summary::after{content:"+";font-family:var(--mono)}
+details.mais[open] summary::after{content:"−"}
+details.mais summary::-webkit-details-marker{display:none}
+.qr{display:flex;gap:12px;align-items:center;margin:6px 0 10px}
+.qr .cod{background:#fff;padding:7px;border-radius:12px;line-height:0;flex:none}
+.qr .cod img,.qr .cod canvas{width:96px!important;height:96px!important}
+.qr small{color:var(--muted);font-size:12px;line-height:1.4}
+.linha{margin-top:8px}
+.linha label{display:block;font:500 9px/1 var(--mono);color:var(--dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:.12em}
+.copiar{display:flex;gap:6px}
+.copiar input{flex:1;min-width:0;font:12px var(--mono);padding:9px 10px}
+.copiar button{padding:9px 12px;font-size:13px}
+.opcoes{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.opcoes select{font-size:13px;padding:8px 10px;flex:1;min-width:0}
+.extra{display:flex;align-items:center;gap:8px;margin-top:16px;color:var(--dim);font-size:13px;flex-wrap:wrap}
+.extra input{width:200px;font-size:13px}
+.extra #salasAtivas{font-family:var(--mono);font-size:12px}
+.baixo{display:grid;grid-template-columns:1.1fr 1fr;gap:16px;padding:16px 28px 0}
+.bloco{background:var(--panel);border-radius:24px;padding:22px;min-width:0}
+.bloco h3{margin:0 0 4px;font-size:18px;letter-spacing:-.01em}
+.bloco>p{margin:6px 0 16px;color:var(--muted);font-size:14px;max-width:62ch}
+.bloco>p b{color:var(--text)}
+.bloco small{color:var(--muted);display:block;margin-top:10px;font-size:12px;line-height:1.5}
+.bloco small code,.ajuda code{font:12px var(--mono);background:var(--panel2);padding:2px 6px;border-radius:6px;color:var(--text)}
+#salaCard .estado{padding:0;margin-bottom:12px}
+label.chk{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:14px}
+label.chk input{accent-color:var(--ok);width:16px;height:16px}
+.tiles{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.tiles:empty{display:none}
+.tile{position:relative;width:110px;aspect-ratio:9/16;border-radius:12px;overflow:hidden;background:#000}
+.tile video{width:100%;height:100%;object-fit:cover;display:block}
+.tile span{position:absolute;left:0;right:0;bottom:0;font-size:12px;font-weight:600;padding:3px 6px;background:linear-gradient(transparent,rgba(0,0,0,.75));color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ajudaBox{padding:16px 28px 40px}
+.ajuda{background:var(--panel);border-radius:24px;color:var(--muted);font-size:14px}
+.ajuda>summary{list-style:none;cursor:pointer;padding:20px 22px;font-size:16px;font-weight:600;color:var(--text);display:flex;justify-content:space-between}
+.ajuda>summary::-webkit-details-marker{display:none}
+.ajuda>summary::after{content:"+";font-family:var(--mono);color:var(--muted)}
+.ajuda[open]>summary::after{content:"−"}
+.ajuda .colunas{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:22px;padding:0 22px 22px}
+.ajuda h3{margin:0 0 8px;color:var(--text);font:600 10px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase}
+.ajuda ol,.ajuda ul{margin:0;padding-left:18px}
+.ajuda li{margin:5px 0;line-height:1.45}
+.ajuda b{color:var(--text)}
+@media (max-width:900px){.baixo{grid-template-columns:1fr}}
+@media (max-width:560px){.topo,main,.baixo,.ajudaBox{padding-left:16px;padding-right:16px}.grade{grid-template-columns:1fr 1fr;gap:10px}}
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="marca"><i></i>NHV Cam <span>· painel</span></div>
+  <div class="equipe"><small>Equipe</small><input id="inChave" autocapitalize="off" spellcheck="false" aria-label="Chave da equipe"><button id="btNovaChave">Gerar nova</button></div>
+  <button id="btTodas">Pausar todas as prévias</button>
+</header>
+<main>
+  <div class="grade" id="main"><i id="ajuda" hidden></i></div>
+  <div class="extra">Câmeras: <span id="salasAtivas"></span> <input id="novaSala" placeholder="outra câmera (ex.: cam6)" autocapitalize="off" spellcheck="false"> <button id="btNova">Adicionar</button></div>
+</main>
+<div class="baixo">
+  <section class="bloco" id="salaCard">
+    <h3>Sala da equipe</h3>
+    <p>Quem toca em <b>Sala</b> no celular vê e ouve os outros na hora, como numa chamada. É assim que uma convidada entra de longe, e o OBS continua pegando cada câmera separada.</p>
+    <div class="estado"><i></i><span>PC fora da sala</span></div>
+    <div class="opcoes" style="align-items:center;gap:14px"><button class="p" id="btSalaPc">Entrar na sala com este PC</button><label class="chk"><input type="checkbox" id="chkFalar" checked> usar o microfone do PC (com fone)</label></div>
+    <div id="salaPcTiles" class="tiles"></div>
+  </section>
+  <section class="bloco">
+    <h3>Duas câmeras numa fonte só</h3>
+    <p>Uma fonte Navegador do OBS (1080 x 1920) com duas câmeras juntas, para a collab.</p>
+    <div class="opcoes" style="margin-top:0">
+      <select id="colA" title="Câmera A"></select>
+      <select id="colB" title="Câmera B"></select>
+      <select id="colLayout" title="Layout"><option value="dividido">A em cima, B embaixo</option><option value="pip">A inteira, B no canto</option><option value="lado">Lado a lado</option></select>
+    </div>
+    <div class="copiar" style="margin-top:8px"><input readonly id="inCollab"><button class="p" id="btCollab">Copiar</button></div>
+    <small>Use no lugar das duas fontes separadas. Para escrever os nomes na tela, acrescente <code>&amp;na=Sanny&amp;nb=Convidada</code> ao link.</small>
+  </section>
+</div>
+<div class="ajudaBox"><details class="ajuda"><summary>Como montar e manter no ar</summary><div class="colunas">
+    <div>
+      <h3>No OBS</h3>
+      <ol>
+        <li>Fontes, botão +, <b>Navegador</b>.</li>
+        <li>URL: o <b>link para o OBS</b> da câmera (copie acima).</li>
+        <li>Largura <b>1080</b>, altura <b>1920</b>. FPS: deixe o padrão ou marque 60 se a câmera estiver em 60.</li>
+        <li>Deixe <b>desmarcado</b> "Desligar a fonte quando não estiver visível" (senão ela reconecta a cada troca de cena).</li>
+        <li><b>Som:</b> por padrão o celular não manda áudio e a fonte é muda. Se for usar o microfone do celular, toque em Áudio no celular e marque "Controlar áudio via OBS" na fonte. Para silenciar na hora, toque em Áudio de novo (fica "mudo", sem interromper a imagem) ou use o mute no mixer do OBS.</li>
+      </ol>
+    </div>
+    <div>
+      <h3>No iPhone</h3>
+      <ol>
+        <li>Leia o QR (ou abra o link) no <b>Safari</b>.</li>
+        <li>Escolha qual CAM (1 a 5) é aquele celular e toque em <b>Ligar câmera</b>. Permita a câmera.</li>
+        <li>Pinça dá zoom, arrastar move o enquadramento, toque duplo volta ao 1x.</li>
+        <li>Feche Camo e Iriun antes: eles seguram a câmera.</li>
+        <li>Mantenha o Safari aberto em primeiro plano e o celular na vertical.</li>
+      </ol>
+    </div>
+    <div>
+      <h3>Live de horas: checklist</h3>
+      <ul>
+        <li><b>Modo Avião com Wi-Fi ligado</b> em cada iPhone: ligação ou Siri mudam a câmera no Safari sem aviso (bug conhecido do WebKit; o celular religa sozinho, e Config tem "Religar a câmera"). Não Perturbe e Siri desligada por cima. Se for usar Acesso Pessoal por USB, Modo Avião não dá: fique com Não Perturbe.</li>
+        <li><b>Acesso Guiado</b> (triplo clique no botão lateral) prende o iPhone no Safari: nem toque errado, nem Central de Notificações, nem troca de app. Trocar de app ou bloquear a tela pausa a câmera.</li>
+        <li><b>Bloqueio de orientação</b> em retrato (Central de Controle) antes de pôr no tripé.</li>
+        <li><b>Carregador de 20 W na tomada</b>, não na porta do PC (com Acesso Pessoal ligado, o cabo no PC pode desviar a transmissão para o 4G). Acesso Pessoal desligado. Modo de Baixo Consumo desligado (ele força a tela a apagar em 30 s). Feche os outros apps. Tire a capa: se esquentar, o iOS baixa os fps e pode desligar a câmera; nesse caso caia para 720p em Qualidade.</li>
+        <li>No celular, Config: <b>Manter a tela ligada</b> ativo. No iOS 17 ou mais novo o Safari já segura a tela enquanto a câmera está ligada; por garantia, Ajustes, Tela e Brilho, Bloqueio Automático, Nunca. Use <b>Escurecer</b> no tripé.</li>
+        <li>Mesma <b>chave da equipe</b> em tudo; pause as prévias deste painel depois de conferir.</li>
+        <li>Se o Wi-Fi oscilar, a conexão se recupera sozinha (reinício de ICE em 5 s, recomeço completo em 12 s) e o OBS segura o último quadro, sem texto na tela.</li>
+        <li>Não recarregue as fontes do OBS no ar; "Desligar a fonte quando não estiver visível" desmarcado.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Por cabo (USB)</h3>
+      <ul>
+        <li>O Safari não manda vídeo pelo USB (a Apple não implementa WebUSB; só apps como Camo fazem isso, com driver). Para um site, o cabo só serve como <b>rede</b>. Duas formas:</li>
+        <li><b>O cabo que funciona: adaptador USB-C (ou Lightning) para Ethernet</b> no iPhone, ligado no roteador. O iPhone entra na rede de casa por cabo, sem plano de dados e sem mexer no Windows; o iOS passa a usar o cabo como rota principal e a linha de estatísticas mostra "direto na rede local". É o que o VDO.Ninja recomenda. Adaptador com entrada de energia carrega junto.</li>
+        <li><b>Acesso Pessoal por USB: não use na live.</b> Ele compartilha só os dados móveis (exige plano com hotspot, app Apple Devices ou iTunes no PC) e o Safari só anuncia ao WebRTC a interface da rota padrão, que nesse caso é o 4G, não o cabo: o vídeo tende a sair pela internet (4G do iPhone até o provedor de casa e volta), com latência alta, mesmo com o cabo plugado. Ninguém documentou esse arranjo funcionando. Se testar, a linha de estatísticas precisa dizer "direto pelo Acesso Pessoal"; qualquer outra coisa é pior que o Wi-Fi.</li>
+        <li><b>Cuidado que vale mesmo sem querer USB:</b> com "Permitir Acesso a Outros" ligado, basta plugar o iPhone no PC para carregar e o Windows pode trocar a internet do PC (e a transmissão do OBS) para o 4G do celular, derrubando o Wi-Fi de casa. Durante a live: Acesso Pessoal desligado e carregador na tomada, nunca na porta do PC. Se precisar do cabo no PC, no adaptador "Apple Mobile Device Ethernet" ponha IP fixo <code>172.20.10.14</code>, máscara <code>255.255.255.240</code>, sem gateway e sem DNS, IPv6 desmarcado, e confira com <code>tracert -d 8.8.8.8</code> que o primeiro salto é o roteador de casa, não 172.20.10.1. Subir a métrica do adaptador não basta.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Roleta "Pedidos ao vivo" no OBS</h3>
+      <ol>
+        <li>Fonte Navegador com a URL do app (<code>...up.railway.app/?aba=pedidos</code>), largura <b>1080</b>, altura <b>1920</b>, "Usar FPS personalizado" 60.</li>
+        <li>No campo <b>CSS personalizado</b>, apague o que estiver lá e cole só esta linha:<br><code>@import url("https://boiamatheus.github.io/nhv-cam/obs-pedidos.css");</code></li>
+        <li>Botão direito na fonte, <b>Interagir</b>: faça o login (fica guardado 30 dias). Na mesma janela você clica no pedido, em GIRAR e fecha a foto do prêmio; a roda do mouse rola a lista.</li>
+        <li>Para o som da roleta sair na live, ligue "som" no topo da página e marque "Controlar áudio via OBS" na fonte.</li>
+        <li>Configure prêmios e cupons antes, no Chrome (abas Roleta e Cupons); no OBS só fica a lista de pedidos, o placar e a roleta.</li>
+      </ol>
+    </div>
+    <div>
+      <h3>Collab de longe (Sala)</h3>
+      <ol>
+        <li>Mande para a convidada, pelo WhatsApp, o link "Abrir no celular" de uma CAM livre (ex.: CAM 3). Ela abre no Safari, toca em <b>Iniciar câmera</b> e depois em <b>Sala</b>; em Config, <b>Rede fraca</b> poupa a internet de casa dela.</li>
+        <li>No iPhone de quem apresenta, toque em <b>Sala</b> também. Os dois se veem e se ouvem na hora; toque na vinheta para ver a pessoa grande.</li>
+        <li><b>Fone nos dois</b> (AirPods serve). Sem fone, o som do outro sai no alto-falante, entra no microfone e vira eco. Em Config, "Qual microfone" deixa o microfone do iPhone na live mesmo com o fone ligado.</li>
+        <li>No OBS: use a fonte <b>Duas câmeras numa fonte só</b> (link no alto da página) com "Controlar áudio via OBS", no lugar das fontes separadas dessas duas câmeras. O público ouve as duas pelo OBS.</li>
+        <li>A convidada não assiste à live pelo Instagram enquanto fala: chega com 10 a 20 s de atraso.</li>
+        <li>Este painel pode entrar na sala para ouvir e falar com quem está nela, fora do ar (com fone no PC).</li>
+      </ol>
+    </div>
+    <div>
+      <h3>Dicas</h3>
+      <ul>
+        <li>Celular e PC no <b>mesmo Wi-Fi</b> (de preferência 5 GHz): conexão direta, qualidade máxima. Com 5 celulares a 8 Mbps são 40 Mbps chegando no PC.</li>
+        <li><b>Por cabo:</b> veja o bloco "Por cabo (USB)". Resumo: adaptador Ethernet no iPhone; Acesso Pessoal por USB não serve para a live.</li>
+        <li>O <b>Firewall do Windows</b> precisa permitir o OBS em redes privadas: o navegador do OBS descobre o iPhone por mDNS (UDP 5353). Bloqueado, a conexão cai para "via internet" ou não fecha.</li>
+        <li>A prévia deste painel pede um segundo vídeo ao celular (meia resolução). <b>Pause as prévias durante a live</b> para poupar os iPhones e o Wi-Fi.</li>
+        <li>Uma fonte Navegador por câmera, cada uma com a sua sala (<code>?r=cam1</code> a <code>?r=cam5</code>). Troque de câmera trocando de cena ou de fonte no OBS.</li>
+        <li>Parâmetros do link: <code>&codec=h264</code>, <code>&fit=contain</code>, <code>&hud=1</code> (mostra resolução e bitrate), <code>&hud=0</code> (nunca mostra texto).</li>
+        <li>Imagem pesada no OBS: Configurações, Avançado, ligue "Aceleração de hardware da fonte Navegador".</li>
+      </ul>
+    </div>
+  </div></details></div>
+
+<template id="tplCard">
+  <section class="card">
+    <div class="previa"><iframe allow="autoplay" title="prévia"></iframe><div class="pausada" hidden>Prévia pausada</div><div class="sobre"><h2></h2></div></div>
+    <div class="estado"><i></i><span>conectando</span></div>
+    <div class="acoesCard"><button class="p btObs">Copiar link do OBS</button><button class="btPrevia">Pausar</button></div>
+    <details class="mais"><summary>Abrir no celular e opções</summary>
+      <div class="qr"><div class="cod"></div><small>Aponte a câmera do iPhone e abra no Safari.</small></div>
+      <div class="linha"><label>Link do celular</label><div class="copiar"><input readonly class="inCel"><button class="btCel">Copiar</button></div></div>
+      <div class="linha"><label>Link do OBS (1080 x 1920)</label><div class="copiar"><input readonly class="inObs"></div></div>
+      <div class="opcoes">
+        <select class="selCodec"><option value="auto">Codec auto (H264)</option><option value="h264">H264</option><option value="vp9">VP9</option><option value="vp8">VP8</option></select>
+        <select class="selFit"><option value="cover">Preencher 9:16</option><option value="contain">Caber (barras)</option></select>
+      </div>
+    </details>
+  </section>
+</template>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="core.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+(() => {
+  'use strict';
+  const CHAVE = 'nhvcam.painel.salas';
+  const CHAVE_EQUIPE = 'nhvcam.chave';
+  const base = location.href.split('#')[0].split('?')[0].replace(/[^/]*$/, '');
+  const limpar = (s) => String(s || '').trim().toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 32);
+  const main = document.getElementById('main'), ajuda = document.getElementById('ajuda'), tpl = document.getElementById('tplCard');
+  const cards = new Map();
+
+  // Chave da equipe: separa as nossas salas de qualquer outra tela que use os mesmos nomes (cam1...).
+  // Vem da URL (?k=), senão do navegador, senão é gerada aqui e guardada.
+  function gerarChave() { const a = 'abcdefghjkmnpqrstuvwxyz23456789'; let s = ''; for (let i = 0; i < 5; i++) s += a[Math.floor(Math.random() * a.length)]; return s; }
+  let chave = limpar(new URL(location.href).searchParams.get('k') || '');
+  if (!chave) { try { chave = limpar(localStorage.getItem(CHAVE_EQUIPE) || ''); } catch (e) {} }
+  if (!chave) chave = gerarChave();
+  try { localStorage.setItem(CHAVE_EQUIPE, chave); } catch (e) {}
+  const comChave = (url) => url + '&k=' + encodeURIComponent(chave);
+  document.getElementById('inChave').value = chave;
+  document.getElementById('inChave').addEventListener('change', (e) => { const n = limpar(e.target.value); if (n && n !== chave) { try { localStorage.setItem(CHAVE_EQUIPE, n); } catch (err) {} location.search = '?k=' + n; } });
+  document.getElementById('btNovaChave').addEventListener('click', () => { if (confirm('Gerar uma chave nova? Celulares e fontes do OBS vão precisar reabrir com os links novos.')) { const n = gerarChave(); try { localStorage.setItem(CHAVE_EQUIPE, n); } catch (err) {} location.search = '?k=' + n; } });
+
+  const FIXAS = ['cam1', 'cam2', 'cam3', 'cam4', 'cam5'];
+  let salas = FIXAS.slice();
+  try { const extra = JSON.parse(localStorage.getItem(CHAVE)) || []; for (const s of extra) if (!salas.includes(s)) salas.push(s); } catch (e) {}
+  for (const s of new URL(location.href).searchParams.getAll('r')) { const l = limpar(s); if (l && !salas.includes(l)) salas.push(l); }
+  function salvarExtras() { try { localStorage.setItem(CHAVE, JSON.stringify(salas.filter((s) => !FIXAS.includes(s)))); } catch (e) {} }
+
+  function copiar(t, bt) {
+    navigator.clipboard.writeText(t).then(() => { const o = bt.textContent; bt.textContent = 'Copiado'; setTimeout(() => { bt.textContent = o; }, 1200); }).catch(() => prompt('Copie:', t));
+  }
+
+  function criarCard(sala) {
+    const n = tpl.content.firstElementChild.cloneNode(true);
+    n.dataset.sala = sala;
+    const iframe = n.querySelector('iframe'), pausada = n.querySelector('.pausada'), btPrevia = n.querySelector('.btPrevia');
+    const estado = n.querySelector('.estado'), inObs = n.querySelector('.inObs'), inCel = n.querySelector('.inCel');
+    const selCodec = n.querySelector('.selCodec'), selFit = n.querySelector('.selFit');
+    const rotulo = /^cam[1-5]$/.test(sala) ? 'CAM ' + sala.slice(3) : sala.toUpperCase();
+    n.querySelector('h2').textContent = rotulo;
+    if (!FIXAS.includes(sala)) {
+      const x = document.createElement('button'); x.className = 'x'; x.textContent = 'Remover'; x.title = 'Tirar do painel';
+      n.querySelector('h2').append(' ', x);
+      x.addEventListener('click', () => { salas = salas.filter((s) => s !== sala); salvarExtras(); n.remove(); cards.delete(sala); pintarAtivas(); });
+    }
+    const linkObs = () => comChave(base + 'view.html?r=' + encodeURIComponent(sala)) + (selCodec.value !== 'auto' ? '&codec=' + selCodec.value : '') + (selFit.value !== 'cover' ? '&fit=' + selFit.value : '');
+    const linkCel = comChave(base + '?r=' + encodeURIComponent(sala));
+    const atualizar = () => { inObs.value = linkObs(); };
+    selCodec.addEventListener('change', atualizar); selFit.addEventListener('change', atualizar);
+    atualizar(); inCel.value = linkCel;
+    n.querySelector('.btObs').addEventListener('click', (e) => copiar(linkObs(), e.currentTarget));
+    n.querySelector('.btCel').addEventListener('click', (e) => copiar(linkCel, e.currentTarget));
+    try { new QRCode(n.querySelector('.cod'), { text: linkCel, width: 128, height: 128, correctLevel: QRCode.CorrectLevel.M }); } catch (e) {}
+
+    const srcPrevia = comChave(base + 'view.html?r=' + encodeURIComponent(sala)) + '&preview=1&hud=1';
+    let ligada = true;
+    const setPrevia = (on) => {
+      ligada = on;
+      pausada.hidden = on; btPrevia.textContent = on ? 'Pausar' : 'Ligar';
+      if (on) { iframe.src = srcPrevia; return; }
+      setEstado('warn', 'prévia pausada');
+      // avisa a prévia para se despedir do celular e só depois descarrega
+      try { iframe.contentWindow.postMessage({ nhvcam: 'fechar' }, '*'); } catch (e) {}
+      setTimeout(() => { if (!ligada) iframe.src = 'about:blank'; }, 500);
+    };
+    btPrevia.addEventListener('click', () => setPrevia(!ligada));
+    const setEstado = (tipo, texto) => { estado.className = 'estado ' + tipo; estado.querySelector('span').textContent = texto; };
+    setPrevia(true);
+    cards.set(sala, { iframe, setEstado, setPrevia, ligada: () => ligada });
+    main.insertBefore(n, ajuda);
+  }
+
+  const btTodas = document.getElementById('btTodas');
+  btTodas.addEventListener('click', () => {
+    const algumaLigada = Array.from(cards.values()).some((c) => c.ligada());
+    for (const c of cards.values()) c.setPrevia(!algumaLigada);
+    btTodas.textContent = algumaLigada ? 'Ligar todas as prévias' : 'Pausar todas as prévias';
+  });
+
+  window.addEventListener('message', (e) => {
+    const d = e.data; if (!d || d.nhvcam !== 'estado') return;
+    for (const [, c] of cards) {
+      if (c.iframe.contentWindow !== e.source) continue;
+      const mapa = { conectado: 'ok', aguardando: 'warn', conectando: 'warn', erro: 'err' };
+      const texto = d.estado === 'conectado' ? 'celular conectado' + (d.detalhe ? ' · ' + d.detalhe : '') : d.estado === 'aguardando' ? 'aguardando o celular' + (d.detalhe ? ' (' + d.detalhe + ')' : '') : d.estado === 'erro' ? 'erro: ' + d.detalhe : 'conectando';
+      c.setEstado(mapa[d.estado] || 'warn', texto);
+    }
+  });
+
+  // Sala da equipe no PC: ouvir (e falar) com quem ligou "Sala" nos celulares. Fone no PC, senão o
+  // som do alto-falante volta pelo microfone do celular de quem apresenta.
+  const salaEstado = document.querySelector('#salaCard .estado'), tilesPc = document.getElementById('salaPcTiles'), btSalaPc = document.getElementById('btSalaPc');
+  let salaPc = null, micPc = null;
+  const setSalaEstado = (tipo, t) => { salaEstado.className = 'estado ' + tipo; salaEstado.querySelector('span').textContent = t; };
+  function rotuloMembro(meta) {
+    meta = meta || {};
+    if (meta.tipo === 'pc') return meta.nome || 'PC';
+    const cam = /^cam[1-9]$/.test(meta.cam || '') ? 'CAM ' + meta.cam.slice(3) : (meta.cam || '');
+    return meta.nome && meta.nome !== cam ? meta.nome + ' · ' + cam : (cam || meta.nome || 'celular');
+  }
+  function pintarSalaPc() {
+    if (!salaPc) { setSalaEstado('', 'PC fora da sala'); return; }
+    const m = salaPc.membros();
+    if (salaPc.status !== 'SUBSCRIBED') setSalaEstado('warn', 'conectando ao sinal');
+    else if (!m.length) setSalaEstado('warn', 'PC na sala; ninguém mais ainda (toque em Sala nos celulares)');
+    else setSalaEstado(m.every((x) => x.estado === 'connected') ? 'ok' : 'warn', 'na sala: ' + m.map((x) => rotuloMembro(x.meta) + (x.estado === 'connected' ? '' : ' (conectando)')).join(', '));
+  }
+  function sairSalaPc() {
+    if (salaPc) { salaPc.sair(); salaPc = null; }
+    if (micPc) { micPc.getTracks().forEach((t) => t.stop()); micPc = null; }
+    tilesPc.innerHTML = '';
+    btSalaPc.textContent = 'Entrar na sala com este PC';
+    pintarSalaPc();
+  }
+  btSalaPc.addEventListener('click', async () => {
+    if (salaPc) { sairSalaPc(); return; }
+    if (!window.NHVCam) { alert('A biblioteca de sinal não carregou (sem internet?)'); return; }
+    if (document.getElementById('chkFalar').checked) {
+      try { micPc = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } }); }
+      catch (e) { micPc = null; alert('Sem microfone no PC (' + e.name + '): entrando só para ouvir.'); }
+    }
+    salaPc = new window.NHVCam.Sala({
+      nome: 'sala-' + chave, meta: { tipo: 'pc', nome: 'PC do painel' }, enviar: { video: false, audio: !!micPc },
+      tracks: () => ({ video: null, audio: micPc ? micPc.getAudioTracks()[0] : null }),
+      onEntrou: (id, meta, stream) => {
+        const d = document.createElement('div'); d.className = 'tile'; d.dataset.id = id;
+        const v = document.createElement('video'); v.autoplay = true; v.playsInline = true; v.srcObject = stream;
+        const s = document.createElement('span'); s.textContent = rotuloMembro(meta);
+        d.append(v, s); tilesPc.append(d); v.play().catch(() => {});
+      },
+      onSaiu: (id) => { const d = tilesPc.querySelector('[data-id="' + id + '"]'); if (d) d.remove(); },
+      onMeta: (id, meta) => { const s = tilesPc.querySelector('[data-id="' + id + '"] span'); if (s) s.textContent = rotuloMembro(meta); pintarSalaPc(); },
+      onEstado: pintarSalaPc,
+    });
+    btSalaPc.textContent = 'Sair da sala';
+    try { await salaPc.entrar(); }
+    catch (e) { alert('Não conectou ao sinal: ' + ((e && e.message) || e)); sairSalaPc(); return; }
+    pintarSalaPc();
+  });
+  window.addEventListener('pagehide', () => { if (salaPc) salaPc.sair(); });
+
+  // Duas câmeras numa fonte só do OBS (collab.html)
+  const colA = document.getElementById('colA'), colB = document.getElementById('colB'), colLayout = document.getElementById('colLayout'), inCollab = document.getElementById('inCollab');
+  function pintarCollab() {
+    [[colA, 'cam1'], [colB, 'cam2']].forEach(([sel, padrao]) => {
+      const atual = sel.value || padrao; sel.innerHTML = '';
+      for (const s of salas) { const o = document.createElement('option'); o.value = s; o.textContent = /^cam[1-5]$/.test(s) ? 'CAM ' + s.slice(3) : s; sel.append(o); }
+      sel.value = salas.includes(atual) ? atual : salas[0];
+    });
+    inCollab.value = comChave(base + 'collab.html?a=' + encodeURIComponent(colA.value) + '&b=' + encodeURIComponent(colB.value)) + (colLayout.value !== 'dividido' ? '&layout=' + colLayout.value : '');
+  }
+  [colA, colB, colLayout].forEach((s) => s.addEventListener('change', pintarCollab));
+  document.getElementById('btCollab').addEventListener('click', (e) => copiar(inCollab.value, e.currentTarget));
+
+  function pintarAtivas() { document.getElementById('salasAtivas').textContent = salas.join(', '); pintarCollab(); }
+  document.getElementById('btNova').addEventListener('click', () => {
+    const s = limpar(document.getElementById('novaSala').value);
+    if (!s || salas.includes(s)) return;
+    salas.push(s); salvarExtras(); criarCard(s); pintarAtivas(); document.getElementById('novaSala').value = '';
+  });
+  document.getElementById('novaSala').addEventListener('keydown', (e) => { if (e.key === 'Enter') document.getElementById('btNova').click(); });
+
+  salas.forEach(criarCard);
+  pintarAtivas();
+})();
+</script>
+</body>
+</html>

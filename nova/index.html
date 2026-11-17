@@ -1,0 +1,1154 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>NHV Cam</title>
+<meta name="description" content="Câmera do celular direto no OBS por WebRTC, em 9:16, com zoom. Até 5 celulares ao mesmo tempo.">
+<meta name="theme-color" content="#0b0b0c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="NHV Cam">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<script>
+// Esta é a página do CELULAR. Se for aberta dentro do OBS (fonte Navegador), vai para a página do OBS
+// com a mesma sala e chave, para o link errado não deixar a fonte sem imagem.
+if (/\bOBS\//.test(navigator.userAgent)) location.replace('view.html' + location.search);
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0a0b;--panel:#151517;--panel2:#1f1f22;--line:rgba(255,255,255,.08);--text:#f2f2f2;--muted:#8a8f98;--dim:#5c6068;--gold:#f2c14e;--ok:#34d27b;--warn:#f5a623;--err:#ff3b30;--vidro:rgba(14,14,16,.6);--mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:16px/1.35 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;overscroll-behavior:none;-webkit-user-select:none;user-select:none;-webkit-font-smoothing:antialiased}
+body{height:100dvh;display:flex;flex-direction:column;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+button,select,input{font:inherit;color:inherit}
+button{border:0;background:none;cursor:pointer;padding:0}
+svg{stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.mono{font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em}
+
+/* barra de cima: botões redondos e o rótulo da câmera no meio */
+#barra{display:grid;grid-template-columns:44px 44px 1fr 44px 44px;align-items:center;gap:8px;padding:10px 14px 8px}
+.redondo{width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;color:var(--text);transition:background .15s,color .15s,border-color .15s}
+.redondo svg{width:19px;height:19px}
+.redondo.on{border-color:var(--gold);color:var(--gold);background:rgba(242,193,78,.08)}
+#rotCam{justify-self:center;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:112px;height:48px;padding:0 16px;border-radius:14px;border:1px solid rgba(255,255,255,.14);line-height:1.15}
+#rotCam b{font:600 15px/1 var(--mono);letter-spacing:.06em;color:var(--gold)}
+#rotCam small{font:500 10px/1 var(--mono);letter-spacing:.1em;color:var(--dim);margin-top:5px;text-transform:uppercase}
+
+/* visor */
+#palco{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:4px 14px;position:relative}
+#quadro{position:relative;background:#000;border-radius:26px;overflow:hidden;touch-action:none;box-shadow:0 0 0 1px rgba(255,255,255,.1)}
+#preview{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform-origin:50% 50%;will-change:transform;background:#000}
+.canto{position:absolute;width:18px;height:18px;border-color:rgba(255,255,255,.75);border-style:solid;border-width:0;z-index:3;pointer-events:none}
+.canto.a{top:16px;left:16px;border-top-width:2px;border-left-width:2px}.canto.b{top:16px;right:16px;border-top-width:2px;border-right-width:2px}
+.canto.c{bottom:16px;left:16px;border-bottom-width:2px;border-left-width:2px}.canto.d{bottom:16px;right:16px;border-bottom-width:2px;border-right-width:2px}
+#guia{position:absolute;inset:0;pointer-events:none}
+#guia[hidden]{display:none}
+#guia .faixa{position:absolute;left:0;right:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center}
+#guia .faixa.topo{top:0;height:13.02%;border-bottom:1px solid rgba(242,193,78,.6);align-items:flex-end;padding-bottom:6px}
+#guia .faixa.base{bottom:0;height:21.88%;border-top:1px solid rgba(242,193,78,.6);align-items:flex-start;padding-top:8px}
+#guia .faixa.topo span{display:none}
+#guia .faixa span{font:500 10px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--gold)}
+#guia i{position:absolute;background:rgba(255,255,255,.22)}
+#guia .v1{left:33.33%;top:0;bottom:0;width:1px}#guia .v2{left:66.66%;top:0;bottom:0;width:1px}
+#guia .h1{top:33.33%;left:0;right:0;height:1px}#guia .h2{top:66.66%;left:0;right:0;height:1px}
+#colegas{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:flex-end;gap:6px;padding:8px;pointer-events:none}
+#colegas:empty{display:none}
+.colega{position:relative;width:34%;aspect-ratio:9/16;border-radius:14px;overflow:hidden;background:#000;box-shadow:0 0 0 1px rgba(255,255,255,.25);pointer-events:auto;flex:none}
+.colega video{width:100%;height:100%;object-fit:cover;display:block;background:#000}
+.colega .rot{position:absolute;left:6px;bottom:6px;font-size:12px;font-weight:600;color:#fff;background:var(--vidro);padding:3px 8px;border-radius:999px;pointer-events:none}
+.colega .tocar{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55);color:#fff;font-weight:600;font-size:13px;text-align:center;padding:10px}
+.colega.semsom .tocar{display:flex}
+.colega.grande{position:absolute;inset:0;width:100%;height:100%;border-radius:0;box-shadow:none;z-index:3}
+
+/* estado dentro do visor: chip no topo, no centro */
+#topo{position:absolute;left:0;right:0;top:0;padding:14px 44px;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;z-index:4}
+.pill{font:600 11px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;padding:9px 13px 9px 11px;border-radius:999px;background:var(--vidro);backdrop-filter:blur(14px) saturate(1.4);-webkit-backdrop-filter:blur(14px) saturate(1.4);color:#fff;display:inline-flex;align-items:center;gap:8px;max-width:100%}
+.pill[hidden]{display:none}
+.pill i{width:7px;height:7px;border-radius:50%;background:var(--muted);display:inline-block;flex:none}
+.pill.ok i{background:var(--ok)}.pill.warn i{background:var(--warn)}.pill.err i{background:var(--err)}
+.pill.big{font-size:12px;padding:10px 15px 10px 13px}
+.pill.big.ok{background:var(--err)}
+.pill.big.ok i{background:#fff;animation:pulso 1.6s ease-in-out infinite}
+@keyframes pulso{50%{opacity:.3}}
+#stSinal:not(.err){display:none}
+
+/* sala */
+#salaTiles{position:absolute;left:14px;bottom:44px;display:flex;gap:6px;z-index:4;max-width:calc(100% - 28px);overflow-x:auto;scrollbar-width:none}
+#salaTiles:empty{display:none}
+#salaTiles.oculto{opacity:0;pointer-events:none;width:1px;height:1px;overflow:hidden}
+.tile{position:relative;flex:none;width:72px;aspect-ratio:9/16;border-radius:12px;overflow:hidden;background:#000;box-shadow:0 0 0 1px rgba(255,255,255,.3)}
+.tile video{width:100%;height:100%;object-fit:cover;display:block}
+.tile span{position:absolute;left:0;right:0;bottom:0;font-size:11px;font-weight:600;padding:3px 6px;background:linear-gradient(transparent,rgba(0,0,0,.75));color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile.grande{display:none}
+.tile.audio{display:flex;align-items:center;justify-content:center;background:rgba(20,20,22,.92)}
+.tile.audio video{display:none}
+.tile.audio span{position:static;background:none;white-space:normal;text-align:center;padding:6px}
+#salaGrande{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:2;background:#000}
+#salaGrande[hidden]{display:none}
+#quadro.grande #preview{inset:auto;top:14px;right:14px;width:28%;height:auto;aspect-ratio:9/16;border-radius:12px;z-index:3;box-shadow:0 0 0 1px rgba(255,255,255,.35);transform:none!important}
+#quadro.grande #guia,#quadro.grande .canto{display:none}
+#quadro.grande #topo{z-index:5;right:30%;align-items:flex-start;padding-left:14px}
+
+/* controles de baixo */
+#controles{padding:10px 14px 6px;display:none;flex-direction:column;gap:10px}
+#controles.on{display:flex}
+.leituras{display:grid;grid-template-columns:repeat(4,1fr);align-items:center;background:var(--panel);border-radius:18px;padding:11px 4px;cursor:pointer}
+.leituras div{display:flex;flex-direction:column;align-items:center;gap:5px;border-left:1px solid var(--line);min-width:0}
+.leituras div:first-child{border-left:0}
+.leituras b{font:600 15px/1 var(--mono);letter-spacing:.02em;white-space:nowrap;font-variant-numeric:tabular-nums}
+.leituras small{font:500 9px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.leituras .warn b{color:var(--warn)}
+.info{display:none;flex-wrap:wrap;gap:6px}
+#controles.detalhes .info:has(.pill:not([hidden])),#controles .info:has(#stFonte:not([hidden])){display:flex}
+#controles:not(.detalhes) .info .pill:not(#stFonte){display:none}
+.info .pill{background:var(--panel);text-transform:none;letter-spacing:0;font-weight:500;line-height:1.3;backdrop-filter:none;-webkit-backdrop-filter:none}
+.zoom{display:flex;align-items:center;gap:8px;background:var(--panel);border-radius:18px;padding:6px 8px 6px 16px}
+.zoom .lbl{font:500 9px/1 var(--mono);letter-spacing:.12em;color:var(--dim);flex:1}
+.zoom .z{min-width:46px;height:36px;border-radius:11px;font:600 13px/1 var(--mono);color:var(--muted);border:1px solid transparent}
+.zoom .z.on{border-color:var(--gold);color:var(--gold)}
+.zoom input[type=range]{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.zoom .val{display:none}
+.base{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:6px 6px 2px}
+.base .esq{justify-self:start}.base .dir{justify-self:end}
+.acao{display:flex;flex-direction:column;align-items:center;gap:6px;font:500 9px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.acao .bola{width:54px;height:54px;border-radius:50%;background:var(--panel2);display:flex;align-items:center;justify-content:center;color:var(--text);transition:background .15s,color .15s}
+.acao svg{width:22px;height:22px}
+.acao.on .bola{background:var(--text);color:#000}
+.acao .corte{display:none}
+.acao.mudo .bola{background:rgba(255,59,48,.18);color:var(--err)}
+.acao.mudo{color:var(--err)}
+.acao.mudo .corte{display:block}
+.acao .sub{display:none}
+#btEscuro .disparo{width:76px;height:76px;border-radius:50%;border:3px solid rgba(255,255,255,.9);padding:4px;display:block}
+#btEscuro .disparo span{display:flex;align-items:center;justify-content:center;width:100%;height:100%;border-radius:50%;background:#f2f2f2;color:#000}
+#btEscuro .disparo svg{width:24px;height:24px}
+#btSala .bola{width:auto;height:44px;padding:0 18px;border-radius:999px;background:none;border:1px solid var(--gold);color:var(--gold);font:600 12px/1 var(--mono);letter-spacing:.08em;gap:8px}
+#btSala .bola svg{width:18px;height:18px}
+#btSala.on .bola{background:var(--gold);color:#000}
+
+/* tela inicial: um cartão e um botão, como um app */
+#inicio{position:fixed;inset:0;z-index:10;display:flex;flex-direction:column;padding:calc(18px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));background:var(--bg)}
+#inicio .topo-ini{display:flex;align-items:center;justify-content:space-between;padding:4px 4px 0}
+#inicio .marca{display:flex;align-items:center;gap:9px;font:600 13px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase}
+#inicio .marca i{width:8px;height:8px;border-radius:50%;background:var(--err);box-shadow:0 0 0 4px rgba(255,59,48,.18)}
+#inicio .versao{font:500 10px/1 var(--mono);letter-spacing:.12em;color:var(--dim);text-transform:uppercase}
+#inicio .cartao-ini{flex:1;margin-top:18px;border-radius:28px;background:radial-gradient(120% 70% at 50% 0%,#22201b 0%,#121213 60%);border:1px solid rgba(255,255,255,.08);padding:28px 20px 22px;display:flex;flex-direction:column;justify-content:flex-end;position:relative;overflow:hidden}
+#inicio .cartao-ini .canto{border-color:rgba(242,193,78,.55)}
+#inicio .eti{align-self:flex-start;font:500 10px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--gold);border:1px solid rgba(242,193,78,.4);border-radius:999px;padding:7px 11px;margin-bottom:16px}
+#inicio h1{font-size:32px;line-height:1.05;margin:0 0 10px;font-weight:700;letter-spacing:-.025em}
+#inicio p{margin:0 0 24px;color:var(--muted);font-size:15px;max-width:32ch}
+.seg{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.seg button{aspect-ratio:1;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);font:600 22px/1 var(--mono);color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;transition:background .15s,color .15s,border-color .15s}
+.seg button span{font:500 9px/1 var(--mono);letter-spacing:.12em;color:var(--dim)}
+.seg button.on{border-color:var(--gold);color:var(--gold);background:rgba(242,193,78,.08)}
+.seg button.on span{color:var(--gold)}
+#chaveInfo{margin-top:16px;font-size:13px;color:var(--muted);display:flex;align-items:center;gap:9px;line-height:1.35}
+#chaveInfo b{color:var(--text);font:600 13px/1 var(--mono);letter-spacing:.06em}
+#chaveInfo::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--warn);flex:none}
+#chaveInfo.ok::before{background:var(--ok)}
+.rodape-ini{display:flex;align-items:center;gap:14px;padding:16px 4px 0}
+.rodape-ini .obs{display:flex;flex-direction:column;gap:5px;text-align:left;flex:none}
+.rodape-ini .obs b{font-size:15px;font-weight:600}
+.rodape-ini .obs small{font:500 9px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:56px;padding:14px 18px;border-radius:18px;font-weight:700;font-size:17px;background:#f2f2f2;color:#000}
+.rodape-ini .btn{flex:1}
+.btn:active{transform:scale(.985)}
+.btn:disabled{opacity:.55}
+.btn.sec{background:var(--panel2);color:var(--text);font-weight:600;font-size:15px;min-height:50px}
+#linkObs{display:none}
+
+/* folha de ajustes */
+#folha{position:fixed;inset:0;display:none;z-index:20}
+#folha.on{display:block}
+#folha .fundo{position:absolute;inset:0;background:rgba(0,0,0,.6)}
+#folha .painel{position:absolute;left:0;right:0;bottom:0;max-height:90dvh;overflow:auto;background:#101012;border-radius:28px 28px 0 0;border-top:1px solid rgba(255,255,255,.08);padding:8px 16px calc(20px + env(safe-area-inset-bottom));animation:sobe .22s cubic-bezier(.2,.8,.2,1)}
+@keyframes sobe{from{transform:translateY(40px);opacity:.4}}
+#folha .alca{width:38px;height:5px;border-radius:3px;background:#34343a;margin:2px auto 12px}
+#folha .cab{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+#folha h2{margin:0;font-size:22px;font-weight:700;letter-spacing:-.01em}
+#folha .x{width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;color:var(--muted)}
+#folha .x svg{width:15px;height:15px;stroke-width:2.4}
+.grupo{margin-bottom:22px}
+.grupo>h3{margin:0 0 9px 4px;font:500 10px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.cartao{background:var(--panel);border-radius:18px;padding:0 14px}
+.linha{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);min-height:54px}
+.linha:last-child{border-bottom:0}
+.linha label{color:var(--text);font-weight:500;font-size:15px;min-width:0}
+.linha small{display:block;color:var(--muted);font-weight:400;font-size:13px;margin-top:3px;line-height:1.3}
+.linha select,.linha input[type=text]{background:var(--panel2);border:0;border-radius:11px;padding:9px 10px;max-width:44%;flex:none;font-size:15px;-webkit-user-select:text;user-select:text}
+.linha input[type=checkbox]{-webkit-appearance:none;appearance:none;width:51px;height:31px;border-radius:999px;background:#39393d;position:relative;flex:none;cursor:pointer;transition:background .2s;margin:0}
+.linha input[type=checkbox]::after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.3);transition:transform .2s}
+.linha input[type=checkbox]:checked{background:var(--ok)}
+.linha input[type=checkbox]:checked::after{transform:translateX(20px)}
+.linha .modo{display:none;gap:2px;background:var(--panel2);border-radius:11px;padding:3px}
+.linha .modo.on{display:flex}
+.linha .modo button{padding:7px 10px;border-radius:8px;font-size:13px;font-weight:600;color:var(--muted)}
+.linha .modo button.on{background:var(--text);color:#000}
+.linha.so-modo{display:none}
+.linha.so-modo:has(.modo.on){display:flex}
+.linha .mini{background:var(--panel2);border-radius:11px;padding:9px 14px;font-size:15px;font-weight:600;flex:none}
+.botoes{display:flex;flex-direction:column;gap:8px}
+.ajuda{color:var(--muted);font-size:14px;line-height:1.5}
+.ajuda summary{list-style:none;cursor:pointer;color:var(--text);font-weight:500;padding:16px 14px;background:var(--panel);border-radius:18px}
+.ajuda summary::-webkit-details-marker{display:none}
+.ajuda[open] summary{margin-bottom:12px}
+.ajuda p{margin:0 4px 10px}
+.ajuda b{color:var(--text)}
+#btFechar{margin-top:4px}
+#toast{position:fixed;left:50%;top:calc(76px + env(safe-area-inset-top));transform:translateX(-50%) translateY(-10px);background:rgba(242,242,242,.97);color:#000;padding:11px 16px;border-radius:16px;font-weight:600;font-size:14px;opacity:0;transition:.2s;z-index:30;max-width:88vw;text-align:center;pointer-events:none;box-shadow:0 8px 30px rgba(0,0,0,.45)}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+#escuro{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:#000;z-index:15;text-align:center;padding:30px}
+#escuro.on{display:flex}
+#escuro p{margin:16px auto 0;color:#55585e;font-size:14px;max-width:30ch}
+#gire{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:var(--bg);z-index:40;font-weight:700;font-size:18px;text-align:center;padding:30px}
+@media (orientation:landscape) and (max-height:500px){#gire{display:flex}}
+
+/* ===== ajuste às referências: visor largo, chip de formato, leituras com botões nas pontas ===== */
+#barra{grid-template-columns:44px auto 1fr 44px 44px}
+.chipTop{position:relative;height:44px;min-width:64px;padding:0 14px;border-radius:999px;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font:600 12px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+.chipTop select{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
+#rotCam{justify-self:center}
+#palco{padding:2px 14px 0}
+#quadro{border-radius:28px}
+.leituras{grid-template-columns:44px 1fr 1fr 1fr 44px;padding:8px;border-radius:20px;cursor:default;gap:0}
+.leituras .redondo{width:40px;height:40px;border-color:rgba(255,255,255,.12)}
+.leituras .redondo svg{width:18px;height:18px}
+.leituras>div:nth-child(2){border-left:0}
+#controles.detalhes #leituras{border-color:var(--gold);color:var(--gold)}
+.zoom{padding:6px 14px;gap:6px;border-radius:20px}
+.zoom .lado{display:flex;flex-direction:column;gap:5px;flex:1;min-width:0}
+.zoom .lado.dir{align-items:flex-end}
+.zoom .lado small{font:500 9px/1 var(--mono);letter-spacing:.12em;color:var(--dim);text-transform:uppercase}
+.zoom .lado b{font:600 13px/1 var(--mono);color:var(--gold);text-transform:uppercase;white-space:nowrap}
+.zoom .z{min-width:42px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<header id="barra">
+  <button type="button" class="redondo" id="btCamera" aria-label="Virar a câmera">
+    <svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 00-14.3-4.9L4 8M4 4v4h4"/><path d="M4 13a8 8 0 0014.3 4.9L20 16M20 20v-4h-4"/></svg>
+    <span class="vh" id="subCamera">traseira</span>
+  </button>
+  <label class="chipTop" id="acQual"><span id="subQual">1080p</span>
+    <select id="selQual" aria-label="Qualidade"><option value="4k">4K (se o iPhone deixar)</option><option value="1080">1080p</option><option value="720">720p</option></select>
+  </label>
+  <div id="rotCam"><b id="rotCamN">CAM 1</b><small id="rotEquipe">sem equipe</small></div>
+  <button type="button" class="redondo" id="btGuia" aria-label="Guia 9:16">
+    <svg viewBox="0 0 24 24"><rect x="5" y="2.5" width="14" height="19" rx="2.5"/><path d="M5 8.5h14M5 15.5h14M9.7 2.5v19M14.3 2.5v19"/></svg>
+  </button>
+  <button type="button" class="redondo" id="btConfig" aria-label="Ajustes">
+    <svg viewBox="0 0 24 24"><circle cx="5.5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="18.5" cy="12" r="1.3"/></svg>
+  </button>
+</header>
+
+<div id="palco">
+  <div id="quadro">
+    <video id="preview" autoplay playsinline muted></video>
+    <div id="guia" hidden>
+      <div class="faixa topo"><span>cabeçalho do Instagram</span></div>
+      <div class="faixa base"><span>comentários e botões</span></div>
+      <i class="v1"></i><i class="v2"></i><i class="h1"></i><i class="h2"></i>
+    </div>
+    <i class="canto a"></i><i class="canto b"></i><i class="canto c"></i><i class="canto d"></i>
+    <div id="colegas"></div>
+    <video id="salaGrande" autoplay playsinline muted hidden></video>
+    <div id="salaTiles"></div>
+    <div id="topo">
+      <span class="pill big" id="stObs"><i></i>OBS</span>
+      <span class="pill" id="stSinal"><i></i>Sinal</span>
+      <span class="pill" id="stSala" hidden><i></i>Sala</span>
+    </div>
+  </div>
+</div>
+
+<section id="controles">
+  <div class="leituras">
+    <button type="button" class="redondo" id="btEspelho" aria-label="Espelhar"><svg viewBox="0 0 24 24"><path d="M12 3v18"/><path d="M8 7l-4 5 4 5z"/><path d="M16 7l4 5-4 5"/></svg></button>
+    <div><b id="lRes">—</b><small>Imagem</small></div>
+    <div id="lRedeC"><b id="lRede">—</b><small>Envio</small></div>
+    <div id="lLatC"><b id="lLat">—</b><small id="lCam">Atraso</small></div>
+    <span class="vh" id="lFps"></span>
+    <button type="button" class="redondo" id="leituras" aria-label="Detalhes da transmissão"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button>
+  </div>
+  <div class="info">
+    <span class="pill" id="stCap" hidden><i></i></span>
+    <span class="pill" id="stBit" hidden><i></i></span>
+    <span class="pill" id="stFonte" hidden><i></i></span>
+  </div>
+  <div class="zoom">
+    <span class="lado"><small>Zoom</small><b id="zoomTxt">1.0x</b></span>
+    <button type="button" class="z" id="btZoomReset" data-z="1">1x</button>
+    <button type="button" class="z" data-z="1.5">1.5</button>
+    <button type="button" class="z" data-z="2">2x</button>
+    <button type="button" class="z" data-z="3">3x</button>
+    <span class="val" id="zoomVal">1.0x</span>
+    <span class="lado dir"><small>Lente</small><b id="lLente">traseira</b></span>
+    <input type="range" id="zoom" min="1" max="5" step="0.01" value="1" aria-label="Zoom">
+  </div>
+  <div class="base">
+    <button type="button" class="acao esq" id="btAudio">
+      <span class="bola"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/><path class="corte" d="M4 3l16 18"/></svg></span>
+      Microfone<span class="sub" id="subAudio">off</span>
+    </button>
+    <button type="button" class="acao" id="btEscuro" aria-label="Apagar a tela para o tripé">
+      <span class="disparo"><span><svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 019.5 4a8 8 0 1010.5 10.5z"/></svg></span></span>
+      Apagar tela
+    </button>
+    <button type="button" class="acao dir" id="btSala">
+      <span class="bola"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19a5.5 5.5 0 0111 0"/><circle cx="17" cy="9" r="2.6"/><path d="M15.5 14.2a4.6 4.6 0 016 4.3"/></svg>Sala</span>
+      <span id="subSala">desligada</span>
+    </button>
+  </div>
+</section>
+
+<div id="inicio">
+  <div class="topo-ini"><span class="marca"><i></i>NHV Cam</span><span class="versao">câmera para o OBS</span></div>
+  <div class="cartao-ini">
+    <i class="canto a"></i><i class="canto b"></i>
+    <span class="eti">Até 5 celulares · 9:16</span>
+    <h1>Qual câmera é este celular?</h1>
+    <p>Escolha o número e ligue. A imagem vai direto para o OBS pelo Wi-Fi, sem instalar nada.</p>
+    <div class="seg" id="segSala">
+      <button type="button" data-sala="cam1"><b>1</b><span>CAM</span></button>
+      <button type="button" data-sala="cam2"><b>2</b><span>CAM</span></button>
+      <button type="button" data-sala="cam3"><b>3</b><span>CAM</span></button>
+      <button type="button" data-sala="cam4"><b>4</b><span>CAM</span></button>
+      <button type="button" data-sala="cam5"><b>5</b><span>CAM</span></button>
+    </div>
+    <div id="chaveInfo"></div>
+  </div>
+  <div class="rodape-ini">
+    <button type="button" class="obs" id="btLinkObs"><b>Link do OBS</b><small>toque para copiar</small></button>
+    <button type="button" class="btn" id="btIniciar">Ligar câmera</button>
+  </div>
+  <code id="linkObs"></code>
+</div>
+
+<div id="folha">
+  <div class="fundo" id="folhaFundo"></div>
+  <div class="painel">
+    <div class="alca"></div>
+    <div class="cab"><h2>Ajustes</h2><button type="button" class="x" id="btX" aria-label="Fechar"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+
+    <div class="grupo"><h3>Imagem</h3><div class="cartao">
+      <div class="linha"><label>Lente<small>O botão de virar alterna frontal e traseira</small></label><select id="cfgLente"></select></div>
+      <div class="linha"><label>Quadros por segundo</label><select id="cfgFps"><option value="30">30 fps</option><option value="60">60 fps</option></select></div>
+      <div class="linha so-modo"><label>Tipo de zoom</label><div class="modo" id="zoomModo"><button type="button" data-m="digital">Digital</button><button type="button" data-m="nativo">Nativo</button></div></div>
+      <div class="linha"><label>No OBS<small>Preencher corta sobras; Caber deixa barras</small></label><select id="cfgFit"><option value="cover">Preencher</option><option value="contain">Caber</option></select></div>
+      <div class="linha"><label>Inverter largura e altura<small>Se a imagem chegar deitada no OBS</small></label><input type="checkbox" id="cfgSwap"></div>
+    </div></div>
+
+    <div class="grupo"><h3>Som</h3><div class="cartao">
+      <div class="linha"><label>Microfone deste celular<small>Ligado, o botão Microfone alterna o mudo na hora</small></label><input type="checkbox" id="cfgMic"></div>
+      <div class="linha"><label>Qual microfone</label><select id="cfgMicSel"><option value="">Padrão do iPhone</option></select></div>
+    </div></div>
+
+    <div class="grupo"><h3>Sala da equipe</h3><div class="cartao">
+      <div class="linha"><label>Seu nome na sala</label><input type="text" id="cfgNome" placeholder="ex.: Sanny" maxlength="18" autocapitalize="words"></div>
+      <div class="linha"><label>Ouvir a sala aqui<small>Desligue se der eco. Você continua sendo ouvida</small></label><input type="checkbox" id="cfgOuvir" checked></div>
+      <div class="linha"><label>Ver os outros aqui<small>Desligue para a prévia ficar só com a sua câmera</small></label><input type="checkbox" id="cfgVer" checked></div>
+    </div></div>
+
+    <div class="grupo"><h3>Conexão</h3><div class="cartao">
+      <div class="linha"><label>Câmera<small>cam1 a cam5, ou outro nome</small></label><input type="text" id="cfgSala" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
+      <div class="linha"><label>Chave da equipe<small>Vem no QR do painel</small></label><input type="text" id="cfgChave" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="sem chave"></div>
+      <div class="linha"><label>Envio<small>6 a 8 Mbps é ótimo em 1080p</small></label><select id="cfgBitrate"><option value="4">4 Mbps</option><option value="6">6 Mbps</option><option value="8">8 Mbps</option><option value="12">12 Mbps</option><option value="20">20 Mbps</option><option value="30">30 Mbps</option></select></div>
+      <div class="linha"><label>Codec<small>H264 usa o chip do iPhone</small></label><select id="cfgCodec"><option value="auto">Auto (H264)</option><option value="h264">H264</option><option value="vp9">VP9</option><option value="vp8">VP8</option><option value="av1">AV1</option></select></div>
+      <div class="linha"><label>Manter a tela ligada<small id="cfgWakeSt">Pede ao iPhone para não apagar a tela</small></label><input type="checkbox" id="cfgWake" checked></div>
+      <div class="linha"><label>Link do OBS<small id="cfgLink"></small></label><button type="button" class="mini" id="btCopiar">Copiar</button></div>
+    </div></div>
+
+    <div class="grupo"><h3>Se algo travar</h3><div class="botoes">
+      <button type="button" class="btn sec" id="btRedeFraca">Rede fraca: 720p e 4 Mbps</button>
+      <button type="button" class="btn sec" id="btReligar">Religar a câmera</button>
+      <button type="button" class="btn sec" id="btReconectar">Reconectar o sinal</button>
+    </div></div>
+
+    <div class="grupo"><details class="ajuda"><summary>Como usar</summary>
+      <p><b>No OBS:</b> fonte Navegador com o link acima, largura 1080 e altura 1920. Celular e PC no mesmo Wi-Fi conectam direto.</p>
+      <p><b>No celular:</b> pinça na imagem dá zoom, arrastar move o enquadramento, toque duplo volta ao 1x. A faixa de números mostra a imagem que está saindo; toque nela para ver os detalhes.</p>
+      <p><b>Sala:</b> liga uma chamada entre os celulares da mesma chave, inclusive quem está longe. Toque numa pessoa para vê-la grande. Use fone para não dar eco.</p>
+      <p><b>Para a live:</b> Modo Avião com Wi-Fi ligado, bloqueio de orientação em retrato, carregador na tomada, Safari na frente.</p>
+    </details></div>
+
+    <button type="button" class="btn" id="btFechar">Pronto</button>
+  </div>
+</div>
+
+<div id="escuro"><div><span class="pill big" id="escuroSt"><i></i>OBS</span><p id="escuroP">Câmera ligada. Toque para ver a prévia.</p></div></div>
+<div id="toast"></div>
+<div id="gire">Vire o celular na vertical</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="core.js"></script>
+<script>
+(() => {
+  'use strict';
+  const { Signal, LoteIce, Sala, limparSala, transformCss, ordenarCodecs, parSelecionado, caminho } = window.NHVCam;
+  const CFG = window.NHVCAM_CONFIG;
+  const $ = (s) => document.querySelector(s);
+
+  const QUAL = { '4k': { w: 3840, h: 2160, nome: '4K' }, '1080': { w: 1920, h: 1080, nome: '1080p' }, '720': { w: 1280, h: 720, nome: '720p' } };
+  const PADRAO = { sala: 'cam1', chave: '', facing: 'environment', deviceId: '', qualidade: '1080', fps: 30, bitrateMbps: 6, codec: 'auto', swap: false, mirror: false, audio: false, mudo: false, zoomModo: 'digital', fit: 'cover', guia: false, telaLigada: true, colab: false, nome: '', micId: '', ouvir: true, ver: true };
+  const CHAVE_LS = 'nhvcam.celular';
+  const NOMES = { 'back camera': 'Traseira', 'front camera': 'Frontal', 'back dual wide camera': 'Traseira dupla', 'back dual camera': 'Traseira dupla', 'back triple camera': 'Traseira tripla', 'back ultra wide camera': 'Ultra wide', 'back telephoto camera': 'Teleobjetiva' };
+  const NEGOCIACAO_MS = 10000;   // janela em que um "oi" repetido do mesmo OBS é ignorado
+  const DESCONECTADO_MS = 5000;  // depois disso tenta reinício de ICE
+  const MORTE_MS = 12000;        // depois disso derruba o par e espera o OBS pedir de novo
+
+  let S = Object.assign({}, PADRAO, carregar());
+  const urlParams = new URL(location.href).searchParams;
+  if (urlParams.get('r')) S.sala = limparSala(urlParams.get('r')) || S.sala;
+  if (urlParams.get('k') !== null) S.chave = limparSala(urlParams.get('k'));
+
+  const view = { scale: 1, x: 0, y: 0, mirror: !!S.mirror, fit: S.fit || 'cover' };
+  const peers = new Map();      // id do visualizador -> { pc, dc, lote, preview, videoSender, audioSender, pendentes, criado, timers, rx }
+  const prevStats = new Map();
+  let stream = null, videoTrack = null, audioTrack = null, sig = null, caps = null, wake = null, rodando = false;
+
+  const el = {
+    palco: $('#palco'), quadro: $('#quadro'), preview: $('#preview'), inicio: $('#inicio'), controles: $('#controles'), guia: $('#guia'),
+    stSinal: $('#stSinal'), stObs: $('#stObs'), stCap: $('#stCap'), stBit: $('#stBit'), stFonte: $('#stFonte'), escuro: $('#escuro'), escuroSt: $('#escuroSt'),
+    zoom: $('#zoom'), zoomVal: $('#zoomVal'), zoomModo: $('#zoomModo'),
+    btCamera: $('#btCamera'), cfgLente: $('#cfgLente'), subCamera: $('#subCamera'), selQual: $('#selQual'), subQual: $('#subQual'),
+    btEspelho: $('#btEspelho'), btAudio: $('#btAudio'), btGuia: $('#btGuia'), folha: $('#folha'), toast: $('#toast'),
+    btSala: $('#btSala'), subSala: $('#subSala'), stSala: $('#stSala'), salaTiles: $('#salaTiles'), salaGrande: $('#salaGrande'),
+  };
+
+  /* ---------- utilidades ---------- */
+  function carregar() { try { return JSON.parse(localStorage.getItem(CHAVE_LS)) || {}; } catch (e) { return {}; } }
+  function salvar() { try { localStorage.setItem(CHAVE_LS, JSON.stringify(S)); } catch (e) {} }
+  let toastTimer;
+  function toast(msg, ms) { el.toast.textContent = msg; el.toast.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => el.toast.classList.remove('on'), ms || 2600); }
+  function pill(e, texto, tipo) {
+    e.hidden = false; e.className = 'pill' + (e.id === 'stObs' || e.id === 'escuroSt' ? ' big' : '') + (tipo ? ' ' + tipo : '');
+    e.innerHTML = '<i></i>'; e.append(texto);
+  }
+  function baseUrl() { return location.href.split('#')[0].split('?')[0].replace(/[^/]*$/, ''); }
+  function salaCompleta() { return S.chave ? S.sala + '-' + S.chave : S.sala; }
+  function linkObs() { return baseUrl() + 'view.html?r=' + encodeURIComponent(S.sala) + (S.chave ? '&k=' + encodeURIComponent(S.chave) : ''); }
+  function fmtMbps(bps) { return (bps / 1e6).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + ' Mbps'; }
+  function nomeCamera(label, i) { if (!label) return 'Câmera ' + (i + 1); return NOMES[label.trim().toLowerCase()] || label; }
+  async function copiar(t) { try { await navigator.clipboard.writeText(t); toast('Link copiado'); } catch (e) { prompt('Copie o link:', t); } }
+  function mostrarErro(e) {
+    const n = (e && e.name) || '';
+    const msgs = {
+      NotAllowedError: 'Permissão de câmera negada. Em Ajustes > Safari > Câmera escolha Permitir e recarregue.',
+      NotFoundError: 'Nenhuma câmera encontrada.',
+      NotReadableError: 'A câmera está em uso por outro app. Feche Camo, Iriun ou a Câmera e tente de novo.',
+      OverconstrainedError: 'Esta câmera não aceita essa qualidade. Tente 1080p ou 720p.',
+      SecurityError: 'Abra pelo link https.',
+    };
+    toast(msgs[n] || ('Erro: ' + ((e && e.message) || e)), 6000);
+    console.error(e);
+  }
+
+  /* ---------- quadro 9:16 ---------- */
+  function ajustarQuadro() {
+    const r = el.palco.getBoundingClientRect();
+    const w = r.width - 28, h = r.height - 6;
+    let qw, qh;
+    if (!el.guia.hidden) { if (w / h > 9 / 16) { qh = h; qw = h * 9 / 16; } else { qw = w; qh = w * 16 / 9; } }
+    else { qw = w; qh = Math.min(h, w * 16 / 9); } // visor largo como no app Câmera; o Guia mostra o 9:16 inteiro
+    el.quadro.style.width = Math.max(0, qw) + 'px'; el.quadro.style.height = Math.max(0, qh) + 'px';
+  }
+  new ResizeObserver(ajustarQuadro).observe(el.palco);
+  new MutationObserver(ajustarQuadro).observe(el.guia, { attributes: true, attributeFilter: ['hidden'] });
+  ajustarQuadro();
+
+  /* ---------- tela inicial ---------- */
+  function pintarSala() {
+    document.querySelectorAll('#segSala button').forEach((b) => b.classList.toggle('on', b.dataset.sala === S.sala));
+    $('#linkObs').textContent = linkObs();
+    $('#cfgLink').textContent = linkObs();
+    const ci = $('#chaveInfo');
+    ci.innerHTML = '';
+    ci.classList.toggle('ok', !!S.chave);
+    if (S.chave) { ci.append('Equipe '); const b = document.createElement('b'); b.textContent = S.chave; ci.append(b); ci.append(' conectada pelo QR do painel'); }
+    else ci.textContent = 'Sem chave da equipe. Abra pelo QR do painel para outra tela não puxar a câmera.';
+    $('#rotCamN').textContent = rotuloCam(S.sala);
+    $('#rotEquipe').textContent = S.chave ? 'equipe ' + S.chave : 'sem equipe';
+  }
+  document.querySelectorAll('#segSala button').forEach((b) => b.addEventListener('click', () => { S.sala = b.dataset.sala; salvar(); pintarSala(); }));
+  $('#linkObs').addEventListener('click', () => copiar(linkObs()));
+
+  $('#btIniciar').addEventListener('click', async () => {
+    const b = $('#btIniciar');
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { toast('Abra pelo link https (a câmera exige conexão segura)', 5000); return; }
+    b.disabled = true; b.textContent = 'Abrindo câmera';
+    acordar(); // primeiro de tudo, ainda dentro do gesto de toque (o Safari pode exigir)
+    try {
+      await abrirCamera();
+    } catch (e) { mostrarErro(e); b.disabled = false; b.textContent = 'Ligar câmera'; return; }
+    el.inicio.style.display = 'none'; el.controles.classList.add('on'); document.body.classList.add('ao-vivo'); rodando = true;
+    try { await conectarSinal(); } catch (e) { mostrarErro(e); }
+    if (S.colab) entrarSalaEq().catch((e) => { console.warn('sala', e); toast('A sala não abriu: ' + ((e && e.message) || e), 4000); });
+  });
+
+  /* ---------- câmera ---------- */
+  function montarConstraints() {
+    const q = QUAL[S.qualidade] || QUAL['1080'];
+    const dims = S.swap ? { width: { ideal: q.h }, height: { ideal: q.w } } : { width: { ideal: q.w }, height: { ideal: q.h } };
+    const video = Object.assign({ frameRate: { ideal: Number(S.fps) || 30 } }, dims, S.deviceId ? { deviceId: { exact: S.deviceId } } : { facingMode: S.facing });
+    const audio = S.audio ? Object.assign({ echoCancellation: true, noiseSuppression: true, autoGainControl: true }, S.micId ? { deviceId: { exact: S.micId } } : {}) : false;
+    return { video, audio };
+  }
+
+  // Solta a captura atual ANTES de pedir a nova: no iOS um segundo getUserMedia com o primeiro
+  // ainda vivo deixa o primeiro mudo sem volta (WebKit), então nunca pedir dois ao mesmo tempo.
+  async function abrirCamera() {
+    let c = montarConstraints();
+    pararTudo();
+    let novo;
+    try {
+      novo = await navigator.mediaDevices.getUserMedia(c);
+    } catch (e) {
+      if (e.name === 'NotReadableError' || e.name === 'AbortError') {
+        await new Promise((r) => setTimeout(r, 700)); // a câmera pode levar um instante para ser liberada
+        try { novo = await navigator.mediaDevices.getUserMedia(c); } catch (e2) { e = e2; }
+      }
+      if (!novo && (S.deviceId || S.micId) && (e.name === 'OverconstrainedError' || e.name === 'NotFoundError' || e.name === 'NotReadableError')) {
+        S.deviceId = ''; S.micId = ''; salvar(); c = montarConstraints();
+        novo = await navigator.mediaDevices.getUserMedia(c);
+      }
+      if (!novo) throw e;
+    }
+    const antigos = stream ? stream.getTracks() : [];
+    stream = novo; videoTrack = novo.getVideoTracks()[0]; audioTrack = novo.getAudioTracks()[0] || null;
+    if (audioTrack) audioTrack.enabled = !S.mudo; // mudo = manda silêncio sem soltar o microfone
+    el.preview.srcObject = new MediaStream([videoTrack]);
+    el.preview.play().catch(() => {});
+    for (const p of peers.values()) {
+      if (p.videoSender) p.videoSender.replaceTrack(videoTrack).catch(() => {});
+      if (p.audioSender) p.audioSender.replaceTrack(audioTrack).catch(() => {});
+    }
+    antigos.forEach((t) => { if (!novo.getTracks().includes(t)) t.stop(); });
+    mudoHa = 0;
+    caps = capsZoom();
+    prepararZoom();
+    aplicarPreview();
+    pintarCaptura();
+    pintarBotoes();
+    if (salaEq) salaEq.atualizarTracks(); // a sala segue com a câmera e o microfone novos
+    await listarCameras();
+    listarMics();
+  }
+  async function listarMics() {
+    try {
+      const devs = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === 'audioinput');
+      const sel = $('#cfgMicSel'); sel.innerHTML = '';
+      const o0 = document.createElement('option'); o0.value = ''; o0.textContent = 'Padrão do iPhone'; sel.append(o0);
+      devs.forEach((d, i) => { const o = document.createElement('option'); o.value = d.deviceId; o.textContent = d.label || ('Microfone ' + (i + 1)); sel.append(o); });
+      sel.value = S.micId && devs.some((d) => d.deviceId === S.micId) ? S.micId : '';
+    } catch (e) {}
+  }
+  function pararTudo() { if (stream) stream.getTracks().forEach((t) => t.stop()); stream = null; videoTrack = null; audioTrack = null; }
+
+  // frontal ou traseira, pelo que a captura informa (ou pelo que foi pedido, se o navegador não disser)
+  function frenteAgora() {
+    const fm = videoTrack && videoTrack.getSettings && videoTrack.getSettings().facingMode;
+    return fm ? fm === 'user' : S.facing === 'user';
+  }
+  async function listarCameras() {
+    try {
+      const devs = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === 'videoinput');
+      const atual = videoTrack && videoTrack.getSettings().deviceId;
+      el.cfgLente.innerHTML = '';
+      devs.forEach((d, i) => {
+        const o = document.createElement('option');
+        o.value = d.deviceId; o.textContent = nomeCamera(d.label, i);
+        if (d.deviceId === atual) o.selected = true;
+        el.cfgLente.append(o);
+      });
+    } catch (e) {}
+    el.subCamera.textContent = frenteAgora() ? 'frontal' : 'traseira';
+  }
+  el.cfgLente.addEventListener('change', () => { S.deviceId = el.cfgLente.value; salvar(); abrirCamera().catch(mostrarErro); });
+  // Virar: alterna frontal e traseira num toque. A frontal entra espelhada (como a live do Instagram);
+  // a traseira volta sem espelho. O botão Espelhar continua valendo por cima.
+  el.btCamera.addEventListener('click', async () => {
+    if (!rodando || religando) return;
+    const paraFrente = !frenteAgora();
+    S.facing = paraFrente ? 'user' : 'environment'; S.deviceId = ''; S.mirror = paraFrente; view.mirror = paraFrente; salvar();
+    try { await abrirCamera(); } catch (e) { mostrarErro(e); return; }
+    aplicarPreview(); enviarView(); pintarBotoes();
+    toast(paraFrente ? 'Câmera frontal (espelhada)' : 'Câmera traseira');
+  });
+
+  el.selQual.value = S.qualidade; el.subQual.textContent = (QUAL[S.qualidade] || QUAL['1080']).nome;
+  el.selQual.addEventListener('change', () => { S.qualidade = el.selQual.value; salvar(); el.subQual.textContent = QUAL[S.qualidade].nome; abrirCamera().catch(mostrarErro); });
+
+  function pintarCaptura() {
+    if (!videoTrack) return;
+    const s = videoTrack.getSettings();
+    pill(el.stCap, (s.width || '?') + 'x' + (s.height || '?') + ' · ' + Math.round(s.frameRate || 0) + ' fps', '');
+  }
+  function pintarBotoes() {
+    el.btEspelho.classList.toggle('on', !!view.mirror);
+    const mic = !!(S.audio && audioTrack);
+    el.btAudio.classList.toggle('on', mic && !S.mudo);
+    el.btAudio.classList.toggle('mudo', mic && !!S.mudo);
+    $('#subAudio').textContent = !mic ? 'off' : (S.mudo ? 'mudo' : 'ligado');
+    el.btGuia.classList.toggle('on', !!S.guia);
+    el.guia.hidden = !S.guia;
+    el.btSala.classList.toggle('on', !!salaEq);
+  }
+
+  // Vigia da câmera: se o iOS deixar a captura muda por 8 s ou encerrar a trilha com a página
+  // na frente, religa sozinho (até 5 tentativas, uma a cada 6 s).
+  let mudoHa = 0, religando = false, tentativasReligar = 0, ultimaReligada = 0;
+  async function religar(motivo) {
+    const agora = performance.now();
+    if (religando || agora - ultimaReligada < 6000 || tentativasReligar >= 5) return;
+    religando = true; ultimaReligada = agora; tentativasReligar++;
+    toast(motivo + ', religando a câmera (' + tentativasReligar + '/5)');
+    try { await abrirCamera(); tentativasReligar = 0; toast('Câmera religada'); }
+    catch (e) { mostrarErro(e); }
+    finally { religando = false; mudoHa = 0; }
+  }
+  function vigiarCamera() {
+    if (!rodando || document.visibilityState !== 'visible' || religando) return;
+    if (!videoTrack || videoTrack.readyState === 'ended') { religar('A câmera parou'); return; }
+    if (videoTrack.muted) { mudoHa++; if (mudoHa >= 8) religar('A câmera travou'); }
+    else { mudoHa = 0; if (tentativasReligar && videoTrack.readyState === 'live') tentativasReligar = 0; }
+  }
+
+  /* ---------- zoom (digital no OBS; nativo quando o iPhone expõe) ---------- */
+  function capsZoom() {
+    try {
+      if (!videoTrack || !videoTrack.getCapabilities) return null;
+      const c = videoTrack.getCapabilities();
+      return c && c.zoom && isFinite(c.zoom.max) && c.zoom.max > c.zoom.min ? c.zoom : null;
+    } catch (e) { return null; }
+  }
+  function limitesZoom() {
+    if (S.zoomModo === 'nativo' && caps) return { min: caps.min, max: caps.max, step: caps.step || 0.05 };
+    return { min: 1, max: 5, step: 0.01 };
+  }
+  function prepararZoom() {
+    el.zoomModo.classList.toggle('on', !!caps);
+    if (!caps && S.zoomModo === 'nativo') S.zoomModo = 'digital';
+    el.zoomModo.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.m === S.zoomModo));
+    const L = limitesZoom();
+    el.zoom.min = L.min; el.zoom.max = L.max; el.zoom.step = L.step;
+    const atual = S.zoomModo === 'nativo' ? (videoTrack.getSettings().zoom || L.min) : view.scale;
+    el.zoom.value = atual; el.zoomVal.textContent = Number(atual).toFixed(1) + 'x';
+  }
+  let nativoOcupado = false, nativoAlvo = null;
+  function setZoom(valor, doSlider) {
+    const L = limitesZoom();
+    valor = Math.min(L.max, Math.max(L.min, Number(valor) || L.min));
+    if (S.zoomModo === 'nativo' && caps) { nativoAlvo = valor; aplicarNativo(); }
+    else { view.scale = valor; limitarPan(); aplicarPreview(); enviarView(); }
+    if (!doSlider) el.zoom.value = valor;
+    el.zoomVal.textContent = valor.toFixed(1) + 'x';
+  }
+  async function aplicarNativo() {
+    if (nativoOcupado) return; nativoOcupado = true;
+    try {
+      while (nativoAlvo !== null && videoTrack) { const z = nativoAlvo; nativoAlvo = null; await videoTrack.applyConstraints({ advanced: [{ zoom: z }] }); }
+    } catch (e) {
+      toast('O zoom nativo falhou neste iPhone, usando o digital'); S.zoomModo = 'digital'; salvar(); prepararZoom();
+    } finally { nativoOcupado = false; }
+  }
+  function limitarPan() { const lim = (view.scale - 1) / 2 * 100; view.x = Math.max(-lim, Math.min(lim, view.x)); view.y = Math.max(-lim, Math.min(lim, view.y)); }
+  function aplicarPreview() { el.preview.style.transform = transformCss(view); el.preview.style.objectFit = view.fit === 'contain' ? 'contain' : 'cover'; }
+  function resetZoom() {
+    view.scale = 1; view.x = 0; view.y = 0;
+    if (S.zoomModo === 'nativo' && caps) setZoom(Math.min(caps.max, Math.max(caps.min, 1))); else setZoom(1);
+    aplicarPreview(); enviarView();
+  }
+  el.zoom.addEventListener('input', () => setZoom(el.zoom.value, true));
+  $('#btZoomReset').addEventListener('click', resetZoom);
+  el.zoomModo.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { S.zoomModo = b.dataset.m; salvar(); prepararZoom(); }));
+
+  // pinça = zoom, um dedo = mover o enquadramento, toque duplo = 1x
+  let gesto = null, ultimoToque = 0;
+  const dist = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+  el.quadro.addEventListener('touchstart', (e) => {
+    if (!videoTrack || el.quadro.classList.contains('grande') || (e.target.closest && e.target.closest('#salaTiles'))) return;
+    if (e.touches.length === 2) gesto = { tipo: 'pinch', d0: dist(e.touches), z0: parseFloat(el.zoom.value) || 1 };
+    else if (e.touches.length === 1) gesto = { tipo: 'pan', x0: e.touches[0].clientX, y0: e.touches[0].clientY, vx: view.x, vy: view.y };
+  }, { passive: true });
+  el.quadro.addEventListener('touchmove', (e) => {
+    if (!gesto) return;
+    e.preventDefault();
+    if (gesto.tipo === 'pinch' && e.touches.length === 2) setZoom(gesto.z0 * dist(e.touches) / gesto.d0);
+    else if (gesto.tipo === 'pan' && e.touches.length === 1 && view.scale > 1) {
+      const r = el.quadro.getBoundingClientRect();
+      view.x = gesto.vx + (e.touches[0].clientX - gesto.x0) / r.width * 100;
+      view.y = gesto.vy + (e.touches[0].clientY - gesto.y0) / r.height * 100;
+      limitarPan(); aplicarPreview(); enviarView();
+    }
+  }, { passive: false });
+  el.quadro.addEventListener('touchend', (e) => {
+    if (e.touches.length === 0) {
+      const agora = Date.now();
+      if (gesto && gesto.tipo === 'pan' && agora - ultimoToque < 300) resetZoom();
+      ultimoToque = agora; gesto = null;
+    }
+  });
+
+  /* ---------- espelho, áudio, guia, tela escura ---------- */
+  el.btEspelho.addEventListener('click', () => { view.mirror = !view.mirror; S.mirror = view.mirror; salvar(); aplicarPreview(); enviarView(); pintarBotoes(); });
+  // Áudio: o primeiro toque liga o microfone (pede permissão e refaz a captura uma vez);
+  // depois disso o mesmo botão alterna o mudo na hora, sem mexer na câmera. Desligar de vez: Config.
+  el.btAudio.addEventListener('click', async () => {
+    if (!S.audio || !audioTrack) {
+      S.audio = true; S.mudo = false; salvar();
+      try { await abrirCamera(); toast('Microfone ligado. No OBS, marque "Controlar áudio via OBS" na fonte.', 4000); }
+      catch (e) { S.audio = false; salvar(); mostrarErro(e); }
+    } else {
+      S.mudo = !S.mudo; salvar();
+      audioTrack.enabled = !S.mudo;
+      toast(S.mudo ? 'Microfone no mudo' : 'Microfone aberto');
+    }
+    pintarBotoes();
+  });
+  el.btGuia.addEventListener('click', () => { S.guia = !S.guia; salvar(); pintarBotoes(); });
+  $('#btEscuro').addEventListener('click', () => { el.escuro.classList.add('on'); });
+  el.escuro.addEventListener('click', () => { el.escuro.classList.remove('on'); });
+
+  /* ---------- sala da equipe: os celulares se veem e se ouvem, como numa chamada ---------- */
+  let salaEq = null, grandeId = null;
+  const tiles = new Map(); // id do outro celular -> { el, video, rot, meta, stream }
+  function nomeSalaEq() { return S.chave ? 'sala-' + S.chave : 'sala'; }
+  function rotuloCam(cam) { return /^cam[1-9]$/.test(cam || '') ? 'CAM ' + cam.slice(3) : (cam || '?'); }
+  function metaSalaEq() { return { cam: S.sala, nome: (S.nome || '').trim() || rotuloCam(S.sala), tipo: 'cam' }; }
+  function rotuloMembro(meta) {
+    meta = meta || {};
+    if (meta.tipo === 'pc') return meta.nome || 'PC';
+    const cam = rotuloCam(meta.cam);
+    return meta.nome && meta.nome !== cam ? meta.nome + ' · ' + cam : cam;
+  }
+  function rotuloCurto(meta) { meta = meta || {}; return meta.tipo === 'pc' ? (meta.nome || 'PC') : (meta.nome || rotuloCam(meta.cam)); }
+  async function entrarSalaEq() {
+    if (salaEq) return;
+    if (!S.audio || !audioTrack) { S.audio = true; S.mudo = false; salvar(); await abrirCamera(); } // na sala a pessoa precisa falar
+    const s = new Sala({
+      nome: nomeSalaEq(), meta: metaSalaEq(), enviar: { video: true, audio: true },
+      tracks: () => ({ video: videoTrack, audio: audioTrack }),
+      onEntrou: criarTile, onSaiu: removerTile,
+      onMeta: (id, meta) => { const t = tiles.get(id); if (t) { t.meta = meta; t.rot.textContent = rotuloCurto(meta); } pintarSalaEq(); },
+      onEstado: pintarSalaEq,
+    });
+    salaEq = s; S.colab = true; salvar(); pintarBotoes(); aplicarVer();
+    try { await s.entrar(); }
+    catch (e) { salaEq = null; S.colab = false; salvar(); pintarBotoes(); pintarSalaEq(); throw e; }
+    pintarSalaEq();
+    if (!S.chave) toast('Sem chave da equipe: a sala fica pública. Abra pelo QR do painel.', 5000);
+  }
+  function sairSalaEq() {
+    if (salaEq) { salaEq.sair(); salaEq = null; }
+    for (const id of Array.from(tiles.keys())) removerTile(id);
+    S.colab = false; salvar(); pintarBotoes(); pintarSalaEq();
+  }
+  function criarTile(id, meta, stream) {
+    removerTile(id);
+    const d = document.createElement('div'); d.className = 'tile' + (stream.getVideoTracks().length ? '' : ' audio'); // o PC do painel só manda som
+    const v = document.createElement('video'); v.autoplay = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.srcObject = stream;
+    v.muted = S.ouvir === false; // "Ouvir a sala" desligado: vê, mas não toca o som (evita eco sem fone)
+    const r = document.createElement('span'); r.textContent = rotuloCurto(meta); // na vinheta cabe só o nome; o completo fica no estado
+    d.append(v, r);
+    try { stream.addEventListener('addtrack', () => { if (stream.getVideoTracks().length) d.classList.remove('audio'); }); } catch (e) {}
+    d.addEventListener('click', () => { if (!d.classList.contains('audio')) mostrarGrande(id); });
+    el.salaTiles.append(d);
+    v.play().catch(() => {});
+    tiles.set(id, { el: d, video: v, rot: r, meta, stream });
+    pintarSalaEq();
+  }
+  function removerTile(id) {
+    const t = tiles.get(id); if (!t) return;
+    tiles.delete(id);
+    if (grandeId === id) mostrarGrande(null);
+    try { t.video.srcObject = null; } catch (e) {}
+    t.el.remove();
+    pintarSalaEq();
+  }
+  // toque na vinheta: a pessoa fica grande e a própria câmera vira uma janelinha (o som continua na vinheta)
+  function mostrarGrande(id) {
+    const antes = grandeId && tiles.get(grandeId);
+    if (antes) antes.el.classList.remove('grande');
+    grandeId = id && tiles.get(id) ? id : null;
+    if (grandeId) {
+      const t = tiles.get(grandeId);
+      t.el.classList.add('grande');
+      el.salaGrande.srcObject = t.stream; el.salaGrande.hidden = false; el.salaGrande.play().catch(() => {});
+      el.quadro.classList.add('grande');
+    } else {
+      el.salaGrande.hidden = true; el.salaGrande.srcObject = null;
+      el.quadro.classList.remove('grande');
+    }
+  }
+  el.salaGrande.addEventListener('click', () => mostrarGrande(null));
+  function pintarSalaEq() {
+    if (!salaEq) { el.stSala.hidden = true; el.subSala.textContent = 'desligada'; return; }
+    const m = salaEq.membros();
+    const nomes = m.map((x) => rotuloMembro(x.meta) + (x.estado === 'connected' ? '' : ' (conectando)'));
+    if (salaEq.status !== 'SUBSCRIBED') pill(el.stSala, 'Sala: conectando', 'warn');
+    else if (!m.length) pill(el.stSala, 'Sala: só você por enquanto', 'warn');
+    else pill(el.stSala, 'Sala: ' + nomes.join(', '), m.every((x) => x.estado === 'connected') ? 'ok' : 'warn');
+    el.subSala.textContent = m.length ? m.length + (m.length === 1 ? ' pessoa' : ' pessoas') : 'ligada';
+  }
+  function aplicarOuvir() { for (const t of tiles.values()) t.video.muted = S.ouvir === false; }
+  function aplicarVer() { const esconder = S.ver === false; if (esconder && grandeId) mostrarGrande(null); el.salaTiles.classList.toggle('oculto', esconder); }
+  el.btSala.addEventListener('click', () => {
+    if (salaEq) { sairSalaEq(); toast('Saiu da sala'); return; }
+    entrarSalaEq().then(() => toast('Na sala. Quem ligar Sala com a mesma chave aparece aqui. Use fone para não dar eco.', 5000)).catch(mostrarErro);
+  });
+
+  /* ---------- sinalização ---------- */
+  async function conectarSinal() {
+    if (sig) { for (const id of peers.keys()) sig.enviar('bye', {}, id); sig.fechar(); }
+    for (const id of Array.from(peers.keys())) fecharPeer(id);
+    pill(el.stSinal, 'Sinal: conectando', 'warn');
+    const meu = new Signal(salaCompleta(), 'cam');
+    sig = meu;
+    meu.onmessage = aoReceber;
+    meu.onstatus = (st) => {
+      if (sig !== meu) return;
+      if (st === 'SUBSCRIBED') { pill(el.stSinal, 'Sala ' + S.sala + (S.chave ? ' · ' + S.chave : ''), 'ok'); meu.enviar('hello', {}); }
+      else if (st === 'CHANNEL_ERROR' || st === 'TIMED_OUT') pill(el.stSinal, 'Sinal: ' + st.toLowerCase().replace('_', ' '), 'err');
+      else if (st === 'CLOSED') pill(el.stSinal, 'Sinal fechado', 'err');
+      atualizarStatus();
+    };
+    await meu.conectar();
+    atualizarStatus();
+  }
+
+  function aoReceber(m) {
+    if (m.role !== 'view') return;
+    const p = peers.get(m.from);
+    if (m.kind === 'hello') {
+      const preview = !!(m.data && m.data.preview);
+      // "oi" repetido de um OBS que já está negociando: ignora, senão os dois recomeçam para sempre
+      if (p && p.preview === preview && p.pc.connectionState !== 'connected' && p.pc.connectionState !== 'failed' && p.pc.connectionState !== 'closed' && performance.now() - p.criado < NEGOCIACAO_MS) return;
+      criarPeer(m.from, preview).catch((e) => { console.warn(e); toast('Falha ao negociar: ' + e.message); });
+    }
+    else if (m.kind === 'answer') { if (p) p.pc.setRemoteDescription(m.data.sdp).then(() => drenarIce(p)).catch((e) => console.warn('answer', e)); }
+    else if (m.kind === 'ice') { if (p) { p.pendentes.push.apply(p.pendentes, m.data.candidates || []); drenarIce(p); } }
+    else if (m.kind === 'bye') fecharPeer(m.from);
+  }
+  function drenarIce(p) {
+    if (!p.pc.remoteDescription) return;
+    const fila = p.pendentes; p.pendentes = [];
+    for (const c of fila) p.pc.addIceCandidate(c).catch((e) => console.warn('ice', e));
+  }
+
+  async function criarPeer(id, preview) {
+    if (!videoTrack || !sig) return;
+    fecharPeer(id);
+    const pc = new RTCPeerConnection({ iceServers: CFG.iceServers, bundlePolicy: 'max-bundle' });
+    const p = { id, pc, preview, dc: null, lote: null, videoSender: null, audioSender: null, pendentes: [], criado: performance.now(), timerDesc: null, timerMorte: null, reiniciando: false, rx: null };
+    peers.set(id, p);
+    p.lote = new LoteIce((cands) => sig && sig.enviar('ice', { candidates: cands }, id));
+    pc.onicecandidate = (e) => { if (e.candidate) p.lote.add(e.candidate.toJSON()); else p.lote.flush(); };
+    pc.onconnectionstatechange = () => {
+      const st = pc.connectionState;
+      if (st === 'connected') { clearTimeout(p.timerDesc); clearTimeout(p.timerMorte); aplicarBitrateEm(p); }
+      else if (st === 'closed') fecharPeer(id);
+      else if (st === 'failed') { reiniciarIce(p); armarMorte(p, MORTE_MS); }
+      else if (st === 'disconnected') {
+        clearTimeout(p.timerDesc);
+        p.timerDesc = setTimeout(() => { if (pc.connectionState !== 'connected') { reiniciarIce(p); armarMorte(p, MORTE_MS); } }, DESCONECTADO_MS);
+      }
+      atualizarStatus();
+    };
+    p.dc = pc.createDataChannel('ctrl', { ordered: true });
+    p.dc.onopen = () => enviarView(p);
+    p.dc.onmessage = (e) => { try { const d = JSON.parse(e.data); if (d.type === 'rx') p.rx = d; } catch (err) {} };
+
+    const enc = preview ? [{ maxBitrate: 1.5e6, scaleResolutionDownBy: 2 }] : [{ maxBitrate: (Number(S.bitrateMbps) || 6) * 1e6 }];
+    let tv;
+    try { tv = pc.addTransceiver(videoTrack, { direction: 'sendonly', streams: [stream], sendEncodings: enc }); }
+    catch (e) { tv = pc.addTransceiver(videoTrack, { direction: 'sendonly', streams: [stream] }); }
+    p.videoSender = tv.sender;
+    const ta = pc.addTransceiver(audioTrack || 'audio', { direction: 'sendonly', streams: [stream] });
+    p.audioSender = ta.sender;
+    try {
+      if (tv.setCodecPreferences && window.RTCRtpSender && RTCRtpSender.getCapabilities) tv.setCodecPreferences(ordenarCodecs(RTCRtpSender.getCapabilities('video').codecs, S.codec));
+    } catch (e) { console.warn('codec', e); }
+
+    const oferta = await pc.createOffer();
+    if (peers.get(id) !== p) return;
+    await pc.setLocalDescription(oferta);
+    if (peers.get(id) !== p) return;
+    sig.enviar('offer', { sdp: { type: pc.localDescription.type, sdp: pc.localDescription.sdp } }, id);
+    atualizarStatus();
+  }
+
+  // Reinício de ICE: tenta recuperar o mesmo par (novos candidatos) antes de derrubar tudo.
+  async function reiniciarIce(p) {
+    if (p.reiniciando || !sig || peers.get(p.id) !== p) return;
+    p.reiniciando = true;
+    try {
+      let oferta;
+      if (p.pc.restartIce) { p.pc.restartIce(); oferta = await p.pc.createOffer(); }
+      else oferta = await p.pc.createOffer({ iceRestart: true });
+      if (peers.get(p.id) !== p) return;
+      await p.pc.setLocalDescription(oferta);
+      if (peers.get(p.id) !== p) return;
+      sig.enviar('offer', { sdp: { type: p.pc.localDescription.type, sdp: p.pc.localDescription.sdp }, renegociar: true }, p.id);
+    } catch (e) { console.warn('reinício de ICE', e); }
+    finally { p.reiniciando = false; }
+  }
+  function armarMorte(p, ms) {
+    clearTimeout(p.timerMorte);
+    p.timerMorte = setTimeout(() => { if (peers.get(p.id) === p && p.pc.connectionState !== 'connected') fecharPeer(p.id); }, ms);
+  }
+
+  function fecharPeer(id) {
+    const p = peers.get(id); if (!p) return;
+    peers.delete(id); prevStats.delete(id);
+    clearTimeout(p.timerDesc); clearTimeout(p.timerMorte);
+    try { p.pc.onconnectionstatechange = null; p.pc.close(); } catch (e) {}
+    atualizarStatus();
+  }
+
+  async function aplicarBitrateEm(p) {
+    if (!p.videoSender) return;
+    const editar = (prm) => {
+      if (!prm.encodings || !prm.encodings.length) prm.encodings = [{}];
+      prm.encodings[0].maxBitrate = p.preview ? 1.5e6 : (Number(S.bitrateMbps) || 6) * 1e6;
+      if (p.preview) prm.encodings[0].scaleResolutionDownBy = 2;
+      return prm;
+    };
+    try {
+      const prm = editar(p.videoSender.getParameters());
+      // sob perda de pacote no Wi-Fi, cede um pouco de resolução e de fps em vez de travar
+      prm.degradationPreference = 'balanced';
+      try { await p.videoSender.setParameters(prm); }
+      catch (e) { await p.videoSender.setParameters(editar(p.videoSender.getParameters())); }
+    } catch (e) { console.warn('bitrate', e); }
+  }
+
+  function renegociarTodos() {
+    if (!sig) return;
+    for (const id of Array.from(peers.keys())) { sig.enviar('bye', {}, id); fecharPeer(id); }
+  }
+
+  let viewPendente = false;
+  function enviarView(p) {
+    const msg = JSON.stringify(Object.assign({ type: 'view' }, view));
+    if (p) { if (p.dc && p.dc.readyState === 'open') p.dc.send(msg); return; }
+    if (viewPendente) return; viewPendente = true;
+    requestAnimationFrame(() => {
+      viewPendente = false;
+      const m2 = JSON.stringify(Object.assign({ type: 'view' }, view));
+      for (const q of peers.values()) if (q.dc && q.dc.readyState === 'open') q.dc.send(m2);
+    });
+  }
+
+  function atualizarStatus() {
+    let obs = 0, previas = 0, neg = 0;
+    for (const p of peers.values()) {
+      const c = p.pc.connectionState;
+      if (c === 'connected') { if (p.preview) previas++; else obs++; }
+      else if (c === 'connecting' || c === 'new') neg++;
+    }
+    let texto, tipo;
+    if (!sig || sig.status !== 'SUBSCRIBED') { texto = 'Sem sinal'; tipo = 'err'; }
+    else if (obs) { texto = (obs > 1 ? 'OBS conectado (' + obs + ' telas)' : 'OBS conectado') + (previas ? ' + prévia' : ''); tipo = 'ok'; }
+    else if (previas) { texto = 'Só a prévia, OBS não'; tipo = 'warn'; }
+    else if (neg) { texto = 'Conectando ao OBS'; tipo = 'warn'; }
+    else { texto = 'Aguardando o OBS'; tipo = 'warn'; }
+    pill(el.stObs, texto, tipo);
+    pill(el.escuroSt, texto, tipo);
+  }
+
+  /* ---------- estatísticas e vigias (1 s) ---------- */
+  setInterval(async () => {
+    if (!rodando) return;
+    vigiarCamera();
+    let alvo = null;
+    for (const p of peers.values()) if (p.pc.connectionState === 'connected' && !p.preview) { alvo = p; break; }
+    if (!alvo) for (const p of peers.values()) if (p.pc.connectionState === 'connected') { alvo = p; break; }
+    if (!alvo) { el.stBit.hidden = true; el.stFonte.hidden = true; el.stCap.hidden = !videoTrack; leituras(null); return; }
+    // a fonte do OBS está no tamanho certo? (o OBS manda o tamanho que deu à página)
+    let fonteErrada = null;
+    for (const p of peers.values()) if (!p.preview && p.rx && p.rx.vw && p.rx.fonteOk === false) { fonteErrada = p.rx; break; }
+    if (fonteErrada) pill(el.stFonte, 'Fonte do OBS em ' + fonteErrada.vw + 'x' + fonteErrada.vh + ': nas propriedades da fonte, largura 1080 e altura 1920', 'warn');
+    else el.stFonte.hidden = true;
+    try {
+      const st = await alvo.pc.getStats();
+      let out = null;
+      st.forEach((r) => { if (r.type === 'outbound-rtp' && (r.kind === 'video' || r.mediaType === 'video')) out = r; });
+      if (!out) return;
+      const ant = prevStats.get(alvo.id), agora = performance.now();
+      const bps = ant ? (out.bytesSent - ant.bytes) * 8 / ((agora - ant.t) / 1000) : 0;
+      prevStats.set(alvo.id, { bytes: out.bytesSent, t: agora });
+      const partes = [];
+      if (out.frameWidth) partes.push(out.frameWidth + 'x' + out.frameHeight);
+      if (out.framesPerSecond) partes.push(Math.round(out.framesPerSecond) + ' fps');
+      if (bps > 0) partes.push(fmtMbps(bps));
+      let tipo = 'ok';
+      if (out.qualityLimitationReason === 'bandwidth') { partes.push('rede limitando'); tipo = 'warn'; }
+      else if (out.qualityLimitationReason === 'cpu') { partes.push('CPU limitando'); tipo = 'warn'; }
+      // perda de pacotes vista pelo OBS (o sinal do Wi-Fi em número): acima de 2% já pinta de amarelo
+      let rin = null;
+      st.forEach((r) => { if (r.type === 'remote-inbound-rtp' && (r.kind === 'video' || r.mediaType === 'video')) rin = r; });
+      if (rin && typeof rin.fractionLost === 'number' && rin.fractionLost > 0.005) { partes.push('perda ' + (rin.fractionLost * 100).toFixed(1) + '%'); if (rin.fractionLost > 0.02) tipo = 'warn'; }
+      if (alvo.rx && alvo.rx.w) partes.push('OBS ' + alvo.rx.w + 'x' + alvo.rx.h);
+      // por onde o vídeo passa e a latência: o que o celular enxerga, senão o que o OBS reportou
+      const sel = parSelecionado(st);
+      let cam = sel ? caminho(sel.loc, sel.rem) : { nome: '', grau: '' };
+      if (!cam.nome && alvo.rx && alvo.rx.caminho) cam = { nome: alvo.rx.caminho, grau: alvo.rx.grau || '' };
+      const rtt = sel && sel.rtt != null ? sel.rtt : (alvo.rx && alvo.rx.rtt != null ? alvo.rx.rtt : null);
+      if (cam.nome) partes.push(cam.nome);
+      if (rtt != null) partes.push(rtt + ' ms');
+      if (cam.grau === 'relay' || cam.grau === 'internet') tipo = 'warn';
+      pill(el.stBit, partes.join(' · '), tipo);
+      leituras({ w: out.frameWidth, h: out.frameHeight, fps: out.framesPerSecond, bps, rtt, cam, tipo });
+      el.stCap.hidden = true; // o pill de estatísticas já traz a resolução que está saindo
+    } catch (e) {}
+  }, 1000);
+
+  /* ---------- configurações ---------- */
+  function fecharFolha() { el.folha.classList.remove('on'); }
+  function pintarConfig() {
+    $('#cfgSala').value = S.sala; $('#cfgChave').value = S.chave || ''; $('#cfgBitrate').value = String(S.bitrateMbps); $('#cfgFps').value = String(S.fps);
+    $('#cfgCodec').value = S.codec; $('#cfgFit').value = view.fit; $('#cfgSwap').checked = !!S.swap; $('#cfgLink').textContent = linkObs();
+    $('#cfgWake').checked = S.telaLigada !== false; pintarWake();
+    $('#cfgMic').checked = !!S.audio;
+    $('#cfgNome').value = S.nome || '';
+    $('#cfgOuvir').checked = S.ouvir !== false;
+    $('#cfgVer').checked = S.ver !== false;
+    listarMics();
+  }
+  $('#cfgOuvir').addEventListener('change', () => { S.ouvir = $('#cfgOuvir').checked; salvar(); aplicarOuvir(); toast(S.ouvir ? 'Som da sala ligado neste celular' : 'Som da sala desligado neste celular (você continua sendo ouvida)'); });
+  $('#cfgVer').addEventListener('change', () => { S.ver = $('#cfgVer').checked; salvar(); aplicarVer(); toast(S.ver ? 'Os outros aparecem na prévia' : 'Prévia só com a sua câmera (você continua na sala)'); });
+  $('#cfgNome').addEventListener('change', () => { S.nome = $('#cfgNome').value.trim().slice(0, 18); salvar(); if (salaEq) salaEq.atualizarMeta(metaSalaEq()); });
+  $('#cfgMicSel').addEventListener('change', () => { S.micId = $('#cfgMicSel').value; salvar(); if (rodando && S.audio) abrirCamera().catch(mostrarErro); });
+  $('#cfgMic').addEventListener('change', async () => {
+    S.audio = $('#cfgMic').checked; S.mudo = false; salvar();
+    if (!rodando) { pintarBotoes(); return; }
+    try { await abrirCamera(); toast(S.audio ? 'Microfone ligado' : 'Microfone desligado'); }
+    catch (e) { S.audio = false; salvar(); $('#cfgMic').checked = false; mostrarErro(e); }
+    pintarBotoes();
+  });
+  $('#btConfig').addEventListener('click', () => { pintarConfig(); el.folha.classList.add('on'); });
+  $('#folhaFundo').addEventListener('click', fecharFolha);
+  $('#btFechar').addEventListener('click', fecharFolha);
+  $('#cfgSala').addEventListener('change', () => {
+    const nova = limparSala($('#cfgSala').value) || 'cam1';
+    if (nova === S.sala) return;
+    S.sala = nova; salvar(); pintarSala(); pintarConfig();
+    if (rodando) conectarSinal().catch(mostrarErro);
+    if (salaEq) salaEq.atualizarMeta(metaSalaEq());
+  });
+  $('#cfgChave').addEventListener('change', () => {
+    const nova = limparSala($('#cfgChave').value);
+    if (nova === S.chave) return;
+    S.chave = nova; salvar(); pintarSala(); pintarConfig();
+    if (rodando) conectarSinal().catch(mostrarErro);
+    if (salaEq) { sairSalaEq(); entrarSalaEq().catch(mostrarErro); } // a sala é por chave
+  });
+  $('#cfgBitrate').addEventListener('change', () => { S.bitrateMbps = Number($('#cfgBitrate').value); salvar(); peers.forEach(aplicarBitrateEm); });
+  $('#cfgFps').addEventListener('change', () => { S.fps = Number($('#cfgFps').value); salvar(); if (rodando) abrirCamera().catch(mostrarErro); });
+  $('#cfgCodec').addEventListener('change', () => { S.codec = $('#cfgCodec').value; salvar(); renegociarTodos(); });
+  $('#cfgFit').addEventListener('change', () => { view.fit = $('#cfgFit').value; S.fit = view.fit; salvar(); aplicarPreview(); enviarView(); });
+  $('#cfgSwap').addEventListener('change', () => { S.swap = $('#cfgSwap').checked; salvar(); if (rodando) abrirCamera().catch(mostrarErro); });
+  $('#cfgWake').addEventListener('change', () => { S.telaLigada = $('#cfgWake').checked; salvar(); if (S.telaLigada) acordar(); else soltar(); });
+  $('#btCopiar').addEventListener('click', () => copiar(linkObs()));
+  $('#btReconectar').addEventListener('click', () => { fecharFolha(); conectarSinal().then(() => toast('Sinal reconectado')).catch(mostrarErro); });
+  $('#btReligar').addEventListener('click', () => { fecharFolha(); tentativasReligar = 0; ultimaReligada = 0; abrirCamera().then(() => toast('Câmera religada')).catch(mostrarErro); });
+  $('#btRedeFraca').addEventListener('click', async () => {
+    fecharFolha();
+    S.qualidade = '720'; S.bitrateMbps = 4; salvar();
+    el.selQual.value = '720'; el.subQual.textContent = QUAL['720'].nome;
+    peers.forEach(aplicarBitrateEm);
+    try { if (rodando) await abrirCamera(); toast('Modo rede fraca: 720p e 4 Mbps'); } catch (e) { mostrarErro(e); }
+  });
+
+  /* ---------- tela ligada e volta do segundo plano ---------- */
+  const RESERVA = 'No iOS 17 ou mais novo o Safari já segura a tela enquanto a câmera está ligada. Para garantir: Ajustes > Tela e Brilho > Bloqueio Automático > Nunca durante a live.';
+  let wakeStatus = 'Ainda não pedido.';
+  function pintarWake() {
+    const s = $('#cfgWakeSt'); if (s) s.textContent = wakeStatus;
+    const ativo = !!(wake && !wake.released);
+    $('#escuroP').textContent = ativo ? 'Câmera ligada, tela mantida acesa. Toque para ver a prévia.' : 'Câmera ligada. Toque para ver a prévia. ' + RESERVA;
+  }
+  async function acordar() {
+    if (S.telaLigada === false) { wakeStatus = 'Desligado: o iPhone pode apagar a tela e pausar a câmera.'; pintarWake(); return; }
+    if (!('wakeLock' in navigator)) { wakeStatus = 'Sem suporte neste iOS (precisa do 16.4 ou mais novo). ' + RESERVA; pintarWake(); return; }
+    if (wake && !wake.released) { pintarWake(); return; }
+    try {
+      const meu = await navigator.wakeLock.request('screen');
+      wake = meu;
+      wakeStatus = 'Ativo: a tela não apaga enquanto esta página estiver na frente.';
+      meu.addEventListener('release', () => { if (wake === meu && rodando) wakeStatus = 'Liberado pelo iOS (página saiu da frente); religa ao voltar.'; pintarWake(); });
+    } catch (e) {
+      wakeStatus = 'O iOS negou (' + e.name + '). ' + RESERVA;
+    }
+    pintarWake();
+  }
+  async function soltar() {
+    const w = wake; wake = null;
+    wakeStatus = 'Desligado: o iPhone pode apagar a tela e pausar a câmera.';
+    try { if (w) await w.release(); } catch (e) {}
+    pintarWake();
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible' || !rodando) return;
+    acordar();
+    setTimeout(() => { if (!videoTrack || videoTrack.readyState === 'ended' || videoTrack.muted) { tentativasReligar = 0; religar('Voltou para a página'); } }, 1200);
+  });
+  window.addEventListener('pagehide', () => { if (sig) for (const id of peers.keys()) sig.enviar('bye', {}, id); if (salaEq) salaEq.sair(); });
+
+  /* ---------- leituras, zoom em atalhos e detalhes (interface) ---------- */
+  function leituras(d) {
+    const res = $('#lRes'), fps = $('#lFps'), rede = $('#lRede'), lat = $('#lLat');
+    if (!d) {
+      const s = videoTrack && videoTrack.getSettings ? videoTrack.getSettings() : {};
+      res.textContent = s.width ? Math.min(s.width, s.height) + 'p' : '—';
+      fps.textContent = s.frameRate ? Math.round(s.frameRate) : '—';
+      rede.textContent = '—'; lat.textContent = '—'; $('#lCam').textContent = 'Atraso';
+      $('#lRedeC').classList.remove('warn'); return;
+    }
+    res.textContent = d.w ? Math.min(d.w, d.h) + 'p' : '—';
+    fps.textContent = d.fps ? Math.round(d.fps) : '—';
+    rede.textContent = d.bps > 0 ? (d.bps / 1e6).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + ' Mb' : '—';
+    lat.textContent = d.rtt != null ? d.rtt + ' ms' : '—';
+    const g = d.cam && d.cam.grau;
+    $('#lCam').textContent = g === 'relay' ? 'Relay' : g === 'internet' ? 'Internet' : 'Atraso';
+    $('#lRedeC').classList.toggle('warn', d.tipo === 'warn');
+    $('#lLatC').classList.toggle('warn', g === 'relay' || g === 'internet');
+  }
+  setInterval(() => { if (rodando && !peers.size) leituras(null); }, 1500);
+  const chips = document.querySelectorAll('.zoom .z');
+  chips.forEach((c) => { if (c.id !== 'btZoomReset') c.addEventListener('click', () => { el.zoom.value = c.dataset.z; el.zoom.dispatchEvent(new Event('input')); }); });
+  function marcarZoom() {
+    const v = parseFloat(el.zoomVal.textContent) || 1;
+    chips.forEach((c) => c.classList.toggle('on', Math.abs(parseFloat(c.dataset.z) - v) < 0.05));
+  }
+  new MutationObserver(marcarZoom).observe(el.zoomVal, { childList: true, characterData: true, subtree: true });
+  marcarZoom();
+  const espelharTxt = () => { $('#zoomTxt').textContent = el.zoomVal.textContent; $('#lLente').textContent = el.subCamera.textContent; };
+  new MutationObserver(espelharTxt).observe(el.zoomVal, { childList: true, characterData: true, subtree: true });
+  new MutationObserver(espelharTxt).observe(el.subCamera, { childList: true, characterData: true, subtree: true });
+  espelharTxt();
+  const detalhes = () => el.controles.classList.toggle('detalhes');
+  $('#leituras').addEventListener('click', detalhes);
+  $('#btX').addEventListener('click', fecharFolha);
+  $('#btLinkObs').addEventListener('click', () => copiar(linkObs()));
+
+  // ganchos para o teste automatizado
+  window.__nhvcam = { peers, reiniciarIce, salaCompleta, estado: () => S, sala: () => salaEq, tiles };
+
+  pintarSala();
+  pintarBotoes();
+  pill(el.stSinal, 'Sinal: parado', '');
+  pill(el.stObs, 'Toque em Iniciar câmera', '');
+})();
+</script>
+</body>
+</html>
