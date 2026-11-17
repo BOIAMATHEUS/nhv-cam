@@ -8,220 +8,190 @@
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;600&display=swap" rel="stylesheet">
+<link rel="apple-touch-icon" href="icon-180.png">
 <style>
 @font-face{font-family:'Zalando';src:url('fonts/ZalandoSans.woff2') format('woff2');font-weight:200 900;font-stretch:75% 125%;font-display:swap}
-:root{--papel:#f4efe7;--papel2:#ebe4d8;--tinta:#15120f;--tinta2:#5f574d;--tinta3:#968c80;--linha:rgba(21,18,15,.1);--lima:#b9e33b;--ok:#3fae4f;--warn:#e0901c;--err:#e5372b;
-  --vidro:rgba(255,255,255,.55);--vidro-borda:rgba(255,255,255,.8);--sombra:0 1px 0 rgba(255,255,255,.9) inset,0 16px 40px -18px rgba(70,50,30,.28),0 2px 6px rgba(70,50,30,.05);--px:'Pixelify Sans',ui-monospace,monospace}
+:root{--papel:#f4efe7;--papel2:#ebe4d8;--tinta:#15120f;--tinta2:#5f574d;--tinta3:#968c80;--linha:rgba(21,18,15,.09);--lima:#b9e33b;--ok:#3fae4f;--warn:#e0901c;--err:#e5372b;
+  --vidro:rgba(255,255,255,.55);--vidro-borda:rgba(255,255,255,.85);--sombra:0 1px 0 rgba(255,255,255,.9) inset,0 18px 44px -20px rgba(70,50,30,.3),0 2px 6px rgba(70,50,30,.05);--px:'Pixelify Sans',ui-monospace,monospace}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html{background:var(--papel)}
 body{margin:0;min-height:100vh;color:var(--tinta);font:15px/1.45 'Zalando',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;
-  background:radial-gradient(50% 40% at 100% 0%,rgba(185,227,59,.4),transparent 70%),radial-gradient(45% 40% at 0% 100%,rgba(232,170,120,.32),transparent 70%),radial-gradient(35% 30% at 20% 20%,rgba(255,255,255,.85),transparent 70%),var(--papel);background-attachment:fixed}
-button{font:inherit;color:inherit;border:0;cursor:pointer;border-radius:16px;padding:11px 16px;background:rgba(255,255,255,.75);font-weight:600;font-size:14px;transition:background .15s,transform .1s;border:1px solid rgba(255,255,255,.95)}
+  background:radial-gradient(45% 40% at 100% 0%,rgba(185,227,59,.38),transparent 70%),radial-gradient(40% 40% at 10% 100%,rgba(232,170,120,.3),transparent 70%),radial-gradient(30% 30% at 30% 10%,rgba(255,255,255,.85),transparent 70%),var(--papel);background-attachment:fixed}
+button{font:inherit;color:inherit;cursor:pointer;border-radius:14px;padding:10px 15px;background:rgba(255,255,255,.8);font-weight:600;font-size:14px;transition:background .15s,transform .1s;border:1px solid rgba(255,255,255,.95)}
 button:hover{background:#fff}
 button:active{transform:scale(.97)}
 button.p{background:var(--tinta);color:var(--papel);border-color:var(--tinta)}
-button.p:hover{background:#2a2420}
-button.x{background:none;border:0;color:var(--tinta3);padding:2px 6px;font-size:11px}
-select,input{font:inherit;color:inherit;background:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.95);border-radius:14px;padding:10px 12px;font-size:14px}
-.vidro,.topo,.card,.bloco,.ajuda{background:var(--vidro);backdrop-filter:blur(24px) saturate(1.6);-webkit-backdrop-filter:blur(24px) saturate(1.6);border:1px solid var(--vidro-borda);box-shadow:var(--sombra)}
-.topo{position:sticky;top:14px;z-index:5;display:flex;align-items:center;gap:12px;margin:14px 28px 0;padding:10px 10px 10px 22px;border-radius:26px;flex-wrap:wrap}
-.marca{display:flex;align-items:center;gap:10px;font:500 20px/1 var(--px);margin-right:auto}
-.marca i{width:10px;height:10px;border-radius:50%;background:var(--err);box-shadow:0 0 0 5px rgba(229,55,43,.15)}
-.marca span{color:var(--tinta3)}
-.equipe{display:flex;align-items:center;gap:8px;background:var(--tinta);border-radius:18px;padding:5px 5px 5px 16px;color:var(--papel)}
-.equipe small{font-size:12px;color:rgba(244,239,231,.6)}
-.equipe input{width:86px;background:none;border:0;padding:7px 0;font:500 18px/1 var(--px);color:var(--lima);border-radius:0}
-.equipe button{padding:9px 13px;font-size:13px;background:rgba(255,255,255,.12);color:var(--papel);border-color:transparent}
-.equipe button:hover{background:rgba(255,255,255,.2)}
-main{padding:22px 28px 6px}
-.grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(236px,1fr));gap:18px;align-items:start}
-.card{border-radius:32px;padding:10px;display:flex;flex-direction:column;gap:10px;min-width:0}
-.previa{position:relative;width:100%;aspect-ratio:9/16;background:#1b1714;border-radius:24px;overflow:hidden}
+button.p:hover{background:#2b2520}
+button.ic{width:40px;height:40px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:13px}
+button svg,a svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+select,input{font:inherit;color:inherit;background:rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.95);border-radius:13px;padding:10px 12px;font-size:14px}
+.vidro{background:var(--vidro);backdrop-filter:blur(24px) saturate(1.6);-webkit-backdrop-filter:blur(24px) saturate(1.6);border:1px solid var(--vidro-borda);box-shadow:var(--sombra)}
+
+/* estrutura de app: barra lateral + conteúdo */
+.app{display:grid;grid-template-columns:260px minmax(0,1fr);gap:20px;padding:20px;min-height:100vh}
+.lado{position:sticky;top:20px;height:calc(100vh - 40px);border-radius:32px;padding:22px 16px 16px;display:flex;flex-direction:column;gap:6px}
+.logo{display:flex;align-items:center;gap:12px;padding:0 8px 22px}
+.logo img{width:42px;height:42px;border-radius:13px;box-shadow:0 8px 18px -8px rgba(90,110,20,.6)}
+.logo b{display:block;font-size:19px;font-weight:800;letter-spacing:-.02em;line-height:1}
+.logo small{display:block;font:500 12px/1 var(--px);color:var(--tinta3);margin-top:5px}
+.nav a{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;color:var(--tinta2);text-decoration:none;font-weight:600;font-size:15px;transition:background .15s}
+.nav a:hover{background:rgba(255,255,255,.6)}
+.nav a.on{background:var(--tinta);color:var(--papel)}
+.nav a.on svg{color:var(--lima)}
+.nav a .n{margin-left:auto;font-size:12px;background:rgba(21,18,15,.08);padding:3px 8px;border-radius:999px}
+.nav a.on .n{background:rgba(255,255,255,.14)}
+.lado .pe{margin-top:auto;display:flex;flex-direction:column;gap:10px}
+.equipe{background:var(--tinta);color:var(--papel);border-radius:22px;padding:14px 16px}
+.equipe small{display:block;font:500 12px/1 var(--px);color:rgba(244,239,231,.55)}
+.equipe .linhaEq{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px}
+.equipe input{width:100%;min-width:0;background:none;border:0;padding:0;font:800 24px/1 'Zalando',sans-serif;letter-spacing:.02em;color:var(--lima);border-radius:0}
+.equipe button{background:rgba(255,255,255,.12);border-color:transparent;color:var(--papel);padding:7px 10px;font-size:12px;flex:none}
+.equipe button:hover{background:rgba(255,255,255,.22)}
+.sinal{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--tinta2);padding:4px 8px}
+.sinal i{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 4px rgba(63,174,79,.15)}
+
+.conteudo{min-width:0;padding:6px 8px 40px}
+.cab{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin:4px 4px 22px;flex-wrap:wrap}
+.cab h1{margin:0;font-size:44px;font-weight:800;letter-spacing:-.04em;line-height:1}
+.cab p{margin:8px 0 0;color:var(--tinta2);font-size:16px}
+.cab p b{color:var(--tinta)}
+.cab .acoes{display:flex;gap:8px}
+.vista[hidden]{display:none}
+
+/* mosaico de câmeras */
+.grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(188px,1fr));gap:16px;align-items:start}
+.card{border-radius:30px;padding:9px;display:flex;flex-direction:column;gap:9px;min-width:0;background:var(--vidro);backdrop-filter:blur(24px) saturate(1.6);-webkit-backdrop-filter:blur(24px) saturate(1.6);border:1px solid var(--vidro-borda);box-shadow:var(--sombra);transition:transform .2s}
+.card[data-estado="ok"]{box-shadow:0 0 0 3px var(--lima),var(--sombra)}
+.previa{position:relative;width:100%;aspect-ratio:9/16;background:#1b1714;border-radius:22px;overflow:hidden}
 .previa iframe{width:100%;height:100%;border:0;display:block;background:#1b1714}
-.previa .pausada{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--tinta3);font:500 15px/1 var(--px);text-align:center;padding:12px;background:var(--papel2)}
-.previa .pausada[hidden]{display:none}
-.previa .sobre{position:absolute;left:10px;right:10px;bottom:10px;display:flex;pointer-events:none}
-.card h2{margin:0;font:500 15px/1 var(--px);color:var(--tinta);background:rgba(255,255,255,.82);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:9px 13px;border-radius:999px;pointer-events:auto;white-space:nowrap}
-.estado{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--tinta2);padding:2px 6px;min-height:20px;line-height:1.3}
+.previa .pausada{position:absolute;inset:0;display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center;color:var(--tinta3);font:500 15px/1 var(--px);text-align:center;padding:12px;background:var(--papel2);z-index:3}
+.previa .espera{position:absolute;inset:0;z-index:2;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:18px;text-align:center;background:linear-gradient(180deg,#fbf8f2,#efe8dc)}
+.card:not([data-estado="ok"]) .previa .espera{display:flex}
+.espera .cod{background:#fff;padding:10px;border-radius:20px;line-height:0;box-shadow:0 12px 26px -14px rgba(0,0,0,.35)}
+.espera .cod img,.espera .cod canvas{width:120px!important;height:120px!important}
+.espera b{font-size:16px;font-weight:800;letter-spacing:-.01em;line-height:1.2}
+.espera small{display:block;font-size:13px;color:var(--tinta2);margin-top:4px}
+.espera .passo{font:500 12px/1 var(--px);color:var(--tinta);background:var(--lima);padding:6px 10px;border-radius:999px}
+.previa .sobre{position:absolute;left:10px;right:10px;top:10px;display:flex;justify-content:space-between;align-items:center;pointer-events:none;z-index:4}
+.card h2{margin:0;font-size:14px;font-weight:800;color:var(--tinta);background:rgba(255,255,255,.92);padding:8px 12px;border-radius:999px;white-space:nowrap}
+.card:not([data-estado="ok"]) h2{background:var(--tinta);color:var(--papel)}
+.aoVivo{display:none;font-size:12px;font-weight:800;color:#fff;background:var(--err);padding:7px 11px;border-radius:999px;align-items:center;gap:6px}
+.aoVivo::before{content:"";width:6px;height:6px;border-radius:50%;background:#fff}
+.card[data-estado="ok"] .aoVivo{display:inline-flex}
+.estado{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--tinta2);padding:2px 8px;min-height:20px;line-height:1.3}
+.estado span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .estado i{width:8px;height:8px;border-radius:50%;background:var(--tinta3);display:inline-block;flex:none}
 .estado.ok i{background:var(--ok);box-shadow:0 0 0 4px rgba(63,174,79,.15)}.estado.warn i{background:var(--warn)}.estado.err i{background:var(--err)}
 .estado.ok span{color:var(--tinta);font-weight:600}
-.acoesCard{display:grid;grid-template-columns:1fr auto;gap:6px}
-.btPrevia{font-size:13px;padding:11px 14px}
-details.mais{border-top:1px solid var(--linha);padding-top:2px;margin:0 4px}
-details.mais summary{list-style:none;cursor:pointer;font-size:13px;color:var(--tinta2);padding:8px 2px;display:flex;justify-content:space-between;font-weight:500}
-details.mais summary::after{content:"+";font-family:var(--px);font-size:16px}
-details.mais[open] summary::after{content:"−"}
-details.mais summary::-webkit-details-marker{display:none}
-.qr{display:flex;gap:12px;align-items:center;margin:6px 0 10px}
-.qr .cod{background:#fff;padding:8px;border-radius:16px;line-height:0;flex:none;box-shadow:0 6px 14px -8px rgba(0,0,0,.25)}
-.qr .cod img,.qr .cod canvas{width:92px!important;height:92px!important}
-.qr small{color:var(--tinta2);font-size:12px;line-height:1.4}
-.linha{margin-top:8px}
-.linha label{display:block;font:500 12px/1 var(--px);color:var(--tinta3);margin-bottom:6px}
-.copiar{display:flex;gap:6px}
-.copiar input{flex:1;min-width:0;font-size:12px;padding:9px 10px}
-.copiar button{padding:9px 13px;font-size:13px}
-.opcoes{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
-.opcoes select{font-size:13px;padding:9px 10px;flex:1;min-width:0}
-.extra{display:flex;align-items:center;gap:8px;margin-top:18px;color:var(--tinta2);font-size:13px;flex-wrap:wrap}
-.extra input{width:210px;font-size:13px}
-.extra #salasAtivas{font:500 13px/1 var(--px)}
-.baixo{display:grid;grid-template-columns:1.1fr 1fr;gap:18px;padding:18px 28px 0}
-.bloco{border-radius:32px;padding:26px;min-width:0}
-.bloco h3{margin:0 0 4px;font-size:24px;font-weight:800;letter-spacing:-.03em}
-.bloco>p{margin:6px 0 18px;color:var(--tinta2);font-size:15px;max-width:60ch}
-.bloco>p b{color:var(--tinta)}
-.bloco small{color:var(--tinta2);display:block;margin-top:12px;font-size:12px;line-height:1.5}
-.bloco small code,.ajuda code{font:12px ui-monospace,monospace;background:rgba(255,255,255,.8);padding:2px 6px;border-radius:7px;color:var(--tinta)}
-#salaCard .estado{padding:0;margin-bottom:14px}
-label.chk{display:flex;align-items:center;gap:8px;color:var(--tinta2);font-size:14px}
-label.chk input{accent-color:var(--tinta);width:17px;height:17px}
-.tiles{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
-.tiles:empty{display:none}
-.tile{position:relative;width:110px;aspect-ratio:9/16;border-radius:16px;overflow:hidden;background:#000;box-shadow:0 0 0 3px #fff}
-.tile video{width:100%;height:100%;object-fit:cover;display:block}
-.tile span{position:absolute;left:0;right:0;bottom:0;font-size:12px;font-weight:600;padding:3px 6px;background:linear-gradient(transparent,rgba(0,0,0,.7));color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ajudaBox{padding:18px 28px 40px}
-.ajuda{border-radius:32px;color:var(--tinta2);font-size:14px}
-.ajuda>summary{list-style:none;cursor:pointer;padding:22px 26px;font-size:20px;font-weight:800;letter-spacing:-.02em;color:var(--tinta);display:flex;justify-content:space-between;align-items:center}
-.ajuda>summary::-webkit-details-marker{display:none}
-.ajuda>summary::after{content:"+";font:500 22px/1 var(--px);color:var(--tinta);background:var(--lima);width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center}
-.ajuda[open]>summary::after{content:"−"}
-.ajuda .colunas{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;padding:0 26px 26px}
-.ajuda h3{margin:0 0 8px;color:var(--tinta);font:500 16px/1.2 var(--px)}
-.ajuda ol,.ajuda ul{margin:0;padding-left:18px}
-.ajuda li{margin:5px 0;line-height:1.45}
-.ajuda b{color:var(--tinta)}
-@media (max-width:900px){.baixo{grid-template-columns:1fr}}
-@media (max-width:560px){.topo{margin:10px 12px 0}main,.baixo,.ajudaBox{padding-left:12px;padding-right:12px}.grade{grid-template-columns:1fr 1fr;gap:10px}}
-.extra #salasAtivas,.equipe input{font-family:'Zalando',system-ui,sans-serif;font-weight:700}
-.card h2{font-family:'Zalando',system-ui,sans-serif;font-weight:800;font-size:14px}
-[hidden]{display:none!important}
+.acoesCard{display:grid;grid-template-columns:1fr auto auto;gap:6px}
+.acoesCard .btObs{display:flex;align-items:center;justify-content:center;gap:8px}
+.card .ocultos{display:none}
+
+/* guia do OBS */
+.passos{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px}
+.passo-c{border-radius:30px;padding:24px;min-height:220px;display:flex;flex-direction:column;gap:10px}
+.passo-c .num{width:44px;height:44px;border-radius:14px;background:var(--tinta);color:var(--lima);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px}
+.passo-c h3{margin:6px 0 0;font-size:21px;font-weight:800;letter-spacing:-.02em;line-height:1.15}
+.passo-c p{margin:0;color:var(--tinta2);font-size:14px}
+.passo-c .tag{align-self:flex-start;font:500 13px/1 var(--px);background:var(--lima);padding:7px 10px;border-radius:999px;margin-top:auto}
+.links{margin-top:18px;border-radius:30px;padding:10px}
+.links .ln{display:grid;grid-template-columns:110px minmax(0,1fr) auto;align-items:center;gap:12px;padding:10px 12px;border-bottom:1px solid var(--linha)}
+.links .ln:last-child{border-bottom:0}
+.links .ln b{font-size:16px;font-weight:800}
+.links .ln code{font:13px ui-monospace,monospace;color:var(--tinta2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dicas{margin-top:18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.dica{border-radius:26px;padding:20px 22px}
+.dica h4{margin:0 0 6px;font-size:16px;font-weight:800}
+.dica p{margin:0;color:var(--tinta2);font-size:14px}
+
+/* equipe */
+.eqGrande{border-radius:32px;padding:30px;display:grid;grid-template-columns:1.2fr 1fr;gap:30px;align-items:center}
+.eqGrande .chave{font-size:72px;font-weight:800;letter-spacing:.02em;line-height:1;background:var(--tinta);color:var(--lima);border-radius:26px;padding:26px 30px;text-align:center}
+.eqGrande h3{margin:0 0 8px;font-size:24px;font-weight:800;letter-spacing:-.02em}
+.eqGrande p{margin:0 0 16px;color:var(--tinta2)}
+.extra{display:flex;align-items:center;gap:8px;margin-top:18px;flex-wrap:wrap;border-radius:26px;padding:16px 18px}
+.extra span.t{font-weight:700;margin-right:6px}
+.extra #salasAtivas{color:var(--tinta2)}
+.extra input{width:220px}
+
+.ajuda{display:none}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(10px);background:var(--tinta);color:var(--papel);padding:12px 18px;border-radius:16px;font-weight:600;opacity:0;transition:.2s;pointer-events:none;z-index:50}
+.toast.on{opacity:1;transform:translateX(-50%)}
+@media (max-width:1000px){.eqGrande{grid-template-columns:1fr}}
+@media (max-width:820px){.app{grid-template-columns:1fr;padding:12px}.lado{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;padding:12px;border-radius:24px}.logo{padding:0 8px 0 0}.nav{display:flex;gap:4px}.nav a{padding:9px 12px}.nav a span.t{display:none}.lado .pe{display:none}.cab h1{font-size:32px}.grade{grid-template-columns:1fr 1fr;gap:10px}}
 </style>
 </head>
 <body>
-<header class="topo">
-  <div class="marca"><i></i>vira cam <span>painel</span></div>
-  <div class="equipe"><small>Equipe</small><input id="inChave" autocapitalize="off" spellcheck="false" aria-label="Chave da equipe"><button id="btNovaChave">Gerar nova</button></div>
-  <button id="btTodas">Pausar todas as prévias</button>
-</header>
-<main>
-  <div class="grade" id="main"><i id="ajuda" hidden></i></div>
-  <div class="extra" hidden>Câmeras: <span id="salasAtivas"></span> <input id="novaSala" placeholder="outra câmera (ex.: cam6)" autocapitalize="off" spellcheck="false"> <button id="btNova">Adicionar</button></div>
-</main>
-<div class="baixo" hidden>
-  <section class="bloco" id="salaCard">
-    <h3>Sala da equipe</h3>
-    <p>Quem toca em <b>Sala</b> no celular vê e ouve os outros na hora, como numa chamada. É assim que uma convidada entra de longe, e o OBS continua pegando cada câmera separada.</p>
-    <div class="estado"><i></i><span>PC fora da sala</span></div>
-    <div class="opcoes" style="align-items:center;gap:14px"><button class="p" id="btSalaPc">Entrar na sala com este PC</button><label class="chk"><input type="checkbox" id="chkFalar" checked> usar o microfone do PC (com fone)</label></div>
-    <div id="salaPcTiles" class="tiles"></div>
-  </section>
-  <section class="bloco">
-    <h3>Duas câmeras numa fonte só</h3>
-    <p>Uma fonte Navegador do OBS (1080 x 1920) com duas câmeras juntas, para a collab.</p>
-    <div class="opcoes" style="margin-top:0">
-      <select id="colA" title="Câmera A"></select>
-      <select id="colB" title="Câmera B"></select>
-      <select id="colLayout" title="Layout"><option value="dividido">A em cima, B embaixo</option><option value="pip">A inteira, B no canto</option><option value="lado">Lado a lado</option></select>
+<div class="app">
+  <aside class="lado vidro">
+    <div class="logo"><img src="icon-192.png" alt=""><div><b>Vira Cam</b><small>painel do OBS</small></div></div>
+    <nav class="nav">
+      <a href="#cameras" data-v="cameras" class="on"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/></svg><span class="t">Câmeras</span><span class="n" id="navN">0/5</span></a>
+      <a href="#obs" data-v="obs"><svg viewBox="0 0 24 24"><rect x="2.5" y="4" width="19" height="13" rx="2.5"/><path d="M8 21h8M12 17v4"/><path d="M10 8.5l4 2-4 2z"/></svg><span class="t">Ligar no OBS</span></a>
+      <a href="#equipe" data-v="equipe"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19a5.5 5.5 0 0111 0"/><circle cx="17" cy="9" r="2.6"/><path d="M15.5 14.2a4.6 4.6 0 016 4.3"/></svg><span class="t">Equipe</span></a>
+    </nav>
+    <div class="pe">
+      <div class="equipe"><small>chave da equipe</small><div class="linhaEq"><input id="inChave" autocapitalize="off" spellcheck="false" aria-label="Chave da equipe"><button id="btNovaChave">Nova</button></div></div>
+      <div class="sinal"><i></i>Sinal pelo Wi-Fi, direto</div>
     </div>
-    <div class="copiar" style="margin-top:8px"><input readonly id="inCollab"><button class="p" id="btCollab">Copiar</button></div>
-    <small>Use no lugar das duas fontes separadas. Para escrever os nomes na tela, acrescente <code>&amp;na=Sanny&amp;nb=Convidada</code> ao link.</small>
-  </section>
+  </aside>
+
+  <div class="conteudo">
+    <section class="vista" id="v-cameras">
+      <div class="cab"><div><h1>Câmeras</h1><p id="resumo">Aponte o iPhone para o QR de uma câmera para conectar.</p></div>
+        <div class="acoes"><button id="btTodas">Pausar todas as prévias</button></div></div>
+      <div class="grade" id="main"><i id="ajuda" class="ajuda"></i></div>
+    </section>
+
+    <section class="vista" id="v-obs" hidden>
+      <div class="cab"><div><h1>Ligar no OBS</h1><p>Uma vez por câmera. Depois disso o OBS reconecta sozinho em toda live.</p></div></div>
+      <div class="passos">
+        <div class="passo-c vidro"><span class="num">1</span><h3>Adicione uma fonte Navegador</h3><p>No OBS, em Fontes, clique em + e escolha <b>Navegador</b>. Dê o nome da câmera, por exemplo CAM 1.</p><span class="tag">fontes · + · navegador</span></div>
+        <div class="passo-c vidro"><span class="num">2</span><h3>Cole o link da câmera</h3><p>Copie abaixo o link da câmera e cole no campo URL.</p><span class="tag">URL</span></div>
+        <div class="passo-c vidro"><span class="num">3</span><h3>1080 x 1920</h3><p>Largura 1080 e altura 1920. Deixe <b>desmarcado</b> "Desligar a fonte quando não estiver visível".</p><span class="tag">largura · altura</span></div>
+        <div class="passo-c vidro"><span class="num">4</span><h3>Som, se precisar</h3><p>Se for usar o microfone do celular, marque "Controlar áudio via OBS" na fonte.</p><span class="tag">opcional</span></div>
+      </div>
+      <div class="links vidro" id="links"></div>
+      <div class="dicas">
+        <div class="dica vidro"><h4>Na hora da live</h4><p>iPhone em Modo Avião com Wi-Fi ligado, carregador na tomada e Safari na frente. Pause as prévias deste painel depois de conferir.</p></div>
+        <div class="dica vidro"><h4>Se o Wi-Fi oscilar</h4><p>A câmera reconecta sozinha em segundos e o OBS segura o último quadro, sem texto na tela.</p></div>
+        <div class="dica vidro"><h4>Imagem não chega?</h4><p>Libere o OBS no Firewall do Windows para redes privadas e confira se celular e PC estão no mesmo Wi-Fi.</p></div>
+      </div>
+    </section>
+
+    <section class="vista" id="v-equipe" hidden>
+      <div class="cab"><div><h1>Equipe</h1><p>A chave separa as suas câmeras de qualquer outra tela.</p></div></div>
+      <div class="eqGrande vidro">
+        <div class="chave" id="chaveGrande">-----</div>
+        <div><h3>Chave da equipe</h3><p>Vai junto no QR e no link do OBS. Trocar a chave desconecta todo mundo: celulares e fontes do OBS precisam abrir os links novos.</p><button class="p" id="btNovaChave2">Gerar chave nova</button></div>
+      </div>
+      <div class="extra vidro"><span class="t">Câmeras</span><span id="salasAtivas"></span> <input id="novaSala" placeholder="outra câmera (ex.: cam6)" autocapitalize="off" spellcheck="false"> <button id="btNova">Adicionar</button></div>
+    </section>
+  </div>
 </div>
-<div class="ajudaBox"><details class="ajuda"><summary>Como montar e manter no ar</summary><div class="colunas">
-    <div>
-      <h3>No OBS</h3>
-      <ol>
-        <li>Fontes, botão +, <b>Navegador</b>.</li>
-        <li>URL: o <b>link para o OBS</b> da câmera (copie acima).</li>
-        <li>Largura <b>1080</b>, altura <b>1920</b>. FPS: deixe o padrão ou marque 60 se a câmera estiver em 60.</li>
-        <li>Deixe <b>desmarcado</b> "Desligar a fonte quando não estiver visível" (senão ela reconecta a cada troca de cena).</li>
-        <li><b>Som:</b> por padrão o celular não manda áudio e a fonte é muda. Se for usar o microfone do celular, toque em Áudio no celular e marque "Controlar áudio via OBS" na fonte. Para silenciar na hora, toque em Áudio de novo (fica "mudo", sem interromper a imagem) ou use o mute no mixer do OBS.</li>
-      </ol>
-    </div>
-    <div>
-      <h3>No iPhone</h3>
-      <ol>
-        <li>Leia o QR (ou abra o link) no <b>Safari</b>.</li>
-        <li>Escolha qual CAM (1 a 5) é aquele celular e toque em <b>Ligar câmera</b>. Permita a câmera.</li>
-        <li>Pinça dá zoom, arrastar move o enquadramento, toque duplo volta ao 1x.</li>
-        <li>Feche Camo e Iriun antes: eles seguram a câmera.</li>
-        <li>Mantenha o Safari aberto em primeiro plano e o celular na vertical.</li>
-      </ol>
-    </div>
-    <div>
-      <h3>Live de horas: checklist</h3>
-      <ul>
-        <li><b>Modo Avião com Wi-Fi ligado</b> em cada iPhone: ligação ou Siri mudam a câmera no Safari sem aviso (bug conhecido do WebKit; o celular religa sozinho, e Config tem "Religar a câmera"). Não Perturbe e Siri desligada por cima. Se for usar Acesso Pessoal por USB, Modo Avião não dá: fique com Não Perturbe.</li>
-        <li><b>Acesso Guiado</b> (triplo clique no botão lateral) prende o iPhone no Safari: nem toque errado, nem Central de Notificações, nem troca de app. Trocar de app ou bloquear a tela pausa a câmera.</li>
-        <li><b>Bloqueio de orientação</b> em retrato (Central de Controle) antes de pôr no tripé.</li>
-        <li><b>Carregador de 20 W na tomada</b>, não na porta do PC (com Acesso Pessoal ligado, o cabo no PC pode desviar a transmissão para o 4G). Acesso Pessoal desligado. Modo de Baixo Consumo desligado (ele força a tela a apagar em 30 s). Feche os outros apps. Tire a capa: se esquentar, o iOS baixa os fps e pode desligar a câmera; nesse caso caia para 720p em Qualidade.</li>
-        <li>No celular, Config: <b>Manter a tela ligada</b> ativo. No iOS 17 ou mais novo o Safari já segura a tela enquanto a câmera está ligada; por garantia, Ajustes, Tela e Brilho, Bloqueio Automático, Nunca. Use <b>Escurecer</b> no tripé.</li>
-        <li>Mesma <b>chave da equipe</b> em tudo; pause as prévias deste painel depois de conferir.</li>
-        <li>Se o Wi-Fi oscilar, a conexão se recupera sozinha (reinício de ICE em 5 s, recomeço completo em 12 s) e o OBS segura o último quadro, sem texto na tela.</li>
-        <li>Não recarregue as fontes do OBS no ar; "Desligar a fonte quando não estiver visível" desmarcado.</li>
-      </ul>
-    </div>
-    <div>
-      <h3>Por cabo (USB)</h3>
-      <ul>
-        <li>O Safari não manda vídeo pelo USB (a Apple não implementa WebUSB; só apps como Camo fazem isso, com driver). Para um site, o cabo só serve como <b>rede</b>. Duas formas:</li>
-        <li><b>O cabo que funciona: adaptador USB-C (ou Lightning) para Ethernet</b> no iPhone, ligado no roteador. O iPhone entra na rede de casa por cabo, sem plano de dados e sem mexer no Windows; o iOS passa a usar o cabo como rota principal e a linha de estatísticas mostra "direto na rede local". É o que o VDO.Ninja recomenda. Adaptador com entrada de energia carrega junto.</li>
-        <li><b>Acesso Pessoal por USB: não use na live.</b> Ele compartilha só os dados móveis (exige plano com hotspot, app Apple Devices ou iTunes no PC) e o Safari só anuncia ao WebRTC a interface da rota padrão, que nesse caso é o 4G, não o cabo: o vídeo tende a sair pela internet (4G do iPhone até o provedor de casa e volta), com latência alta, mesmo com o cabo plugado. Ninguém documentou esse arranjo funcionando. Se testar, a linha de estatísticas precisa dizer "direto pelo Acesso Pessoal"; qualquer outra coisa é pior que o Wi-Fi.</li>
-        <li><b>Cuidado que vale mesmo sem querer USB:</b> com "Permitir Acesso a Outros" ligado, basta plugar o iPhone no PC para carregar e o Windows pode trocar a internet do PC (e a transmissão do OBS) para o 4G do celular, derrubando o Wi-Fi de casa. Durante a live: Acesso Pessoal desligado e carregador na tomada, nunca na porta do PC. Se precisar do cabo no PC, no adaptador "Apple Mobile Device Ethernet" ponha IP fixo <code>172.20.10.14</code>, máscara <code>255.255.255.240</code>, sem gateway e sem DNS, IPv6 desmarcado, e confira com <code>tracert -d 8.8.8.8</code> que o primeiro salto é o roteador de casa, não 172.20.10.1. Subir a métrica do adaptador não basta.</li>
-      </ul>
-    </div>
-    <div>
-      <h3>Roleta "Pedidos ao vivo" no OBS</h3>
-      <ol>
-        <li>Fonte Navegador com a URL do app (<code>...up.railway.app/?aba=pedidos</code>), largura <b>1080</b>, altura <b>1920</b>, "Usar FPS personalizado" 60.</li>
-        <li>No campo <b>CSS personalizado</b>, apague o que estiver lá e cole só esta linha:<br><code>@import url("https://boiamatheus.github.io/nhv-cam/obs-pedidos.css");</code></li>
-        <li>Botão direito na fonte, <b>Interagir</b>: faça o login (fica guardado 30 dias). Na mesma janela você clica no pedido, em GIRAR e fecha a foto do prêmio; a roda do mouse rola a lista.</li>
-        <li>Para o som da roleta sair na live, ligue "som" no topo da página e marque "Controlar áudio via OBS" na fonte.</li>
-        <li>Configure prêmios e cupons antes, no Chrome (abas Roleta e Cupons); no OBS só fica a lista de pedidos, o placar e a roleta.</li>
-      </ol>
-    </div>
-    <div>
-      <h3>Collab de longe (Sala)</h3>
-      <ol>
-        <li>Mande para a convidada, pelo WhatsApp, o link "Abrir no celular" de uma CAM livre (ex.: CAM 3). Ela abre no Safari, toca em <b>Iniciar câmera</b> e depois em <b>Sala</b>; em Config, <b>Rede fraca</b> poupa a internet de casa dela.</li>
-        <li>No iPhone de quem apresenta, toque em <b>Sala</b> também. Os dois se veem e se ouvem na hora; toque na vinheta para ver a pessoa grande.</li>
-        <li><b>Fone nos dois</b> (AirPods serve). Sem fone, o som do outro sai no alto-falante, entra no microfone e vira eco. Em Config, "Qual microfone" deixa o microfone do iPhone na live mesmo com o fone ligado.</li>
-        <li>No OBS: use a fonte <b>Duas câmeras numa fonte só</b> (link no alto da página) com "Controlar áudio via OBS", no lugar das fontes separadas dessas duas câmeras. O público ouve as duas pelo OBS.</li>
-        <li>A convidada não assiste à live pelo Instagram enquanto fala: chega com 10 a 20 s de atraso.</li>
-        <li>Este painel pode entrar na sala para ouvir e falar com quem está nela, fora do ar (com fone no PC).</li>
-      </ol>
-    </div>
-    <div>
-      <h3>Dicas</h3>
-      <ul>
-        <li>Celular e PC no <b>mesmo Wi-Fi</b> (de preferência 5 GHz): conexão direta, qualidade máxima. Com 5 celulares a 8 Mbps são 40 Mbps chegando no PC.</li>
-        <li><b>Por cabo:</b> veja o bloco "Por cabo (USB)". Resumo: adaptador Ethernet no iPhone; Acesso Pessoal por USB não serve para a live.</li>
-        <li>O <b>Firewall do Windows</b> precisa permitir o OBS em redes privadas: o navegador do OBS descobre o iPhone por mDNS (UDP 5353). Bloqueado, a conexão cai para "via internet" ou não fecha.</li>
-        <li>A prévia deste painel pede um segundo vídeo ao celular (meia resolução). <b>Pause as prévias durante a live</b> para poupar os iPhones e o Wi-Fi.</li>
-        <li>Uma fonte Navegador por câmera, cada uma com a sua sala (<code>?r=cam1</code> a <code>?r=cam5</code>). Troque de câmera trocando de cena ou de fonte no OBS.</li>
-        <li>Parâmetros do link: <code>&codec=h264</code>, <code>&fit=contain</code>, <code>&hud=1</code> (mostra resolução e bitrate), <code>&hud=0</code> (nunca mostra texto).</li>
-        <li>Imagem pesada no OBS: Configurações, Avançado, ligue "Aceleração de hardware da fonte Navegador".</li>
-      </ul>
-    </div>
-  </div></details></div>
+<div class="toast" id="toast"></div>
+<div hidden>
+  <section id="salaCard"><div class="estado"><i></i><span></span></div><button id="btSalaPc"></button><input type="checkbox" id="chkFalar"><div id="salaPcTiles"></div></section>
+  <select id="colA"></select><select id="colB"></select><select id="colLayout"><option value="dividido">dividido</option><option value="pip">pip</option><option value="lado">lado</option></select><input id="inCollab"><button id="btCollab"></button>
+</div>
 
 <template id="tplCard">
   <section class="card">
-    <div class="previa"><iframe allow="autoplay" title="prévia"></iframe><div class="pausada" hidden>Prévia pausada</div><div class="sobre"><h2></h2></div></div>
+    <div class="previa"><iframe allow="autoplay" title="prévia"></iframe>
+      <div class="espera"><span class="passo">aponte o iPhone</span><div class="cod"></div><div><b>Escaneie para ser esta câmera</b><small>abre no Safari, é só tocar em Ligar câmera</small></div></div>
+      <div class="pausada" hidden>Prévia pausada</div>
+      <div class="sobre"><h2></h2><span class="aoVivo">no ar</span></div>
+    </div>
     <div class="estado"><i></i><span>conectando</span></div>
-    <div class="acoesCard"><button class="p btObs">Copiar link do OBS</button><button class="btPrevia">Pausar</button></div>
-    <details class="mais"><summary>Abrir no celular e opções</summary>
-      <div class="qr"><div class="cod"></div><small>Aponte a câmera do iPhone e abra no Safari.</small></div>
-      <div class="linha"><label>Link do celular</label><div class="copiar"><input readonly class="inCel"><button class="btCel">Copiar</button></div></div>
-      <div class="linha"><label>Link do OBS (1080 x 1920)</label><div class="copiar"><input readonly class="inObs"></div></div>
-      <div class="opcoes">
-        <select class="selCodec"><option value="auto">Codec auto (H264)</option><option value="h264">H264</option><option value="vp9">VP9</option><option value="vp8">VP8</option></select>
-        <select class="selFit"><option value="cover">Preencher 9:16</option><option value="contain">Caber (barras)</option></select>
-      </div>
-    </details>
+    <div class="acoesCard">
+      <button class="p btObs"><svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2h2"/></svg>Link do OBS</button>
+      <button class="ic btCel" title="Copiar o link do celular"><svg viewBox="0 0 24 24"><rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></svg></button>
+      <button class="ic btPrevia" title="Pausar a prévia"><svg viewBox="0 0 24 24"><path d="M9 5v14M15 5v14"/></svg></button>
+    </div>
+    <div class="ocultos"><input readonly class="inObs"><input readonly class="inCel">
+      <select class="selCodec"><option value="auto">auto</option><option value="h264">H264</option><option value="vp9">VP9</option><option value="vp8">VP8</option></select>
+      <select class="selFit"><option value="cover">cover</option><option value="contain">contain</option></select></div>
   </section>
 </template>
 
@@ -257,8 +227,16 @@ label.chk input{accent-color:var(--tinta);width:17px;height:17px}
   for (const s of new URL(location.href).searchParams.getAll('r')) { const l = limpar(s); if (l && !salas.includes(l)) salas.push(l); }
   function salvarExtras() { try { localStorage.setItem(CHAVE, JSON.stringify(salas.filter((s) => !FIXAS.includes(s)))); } catch (e) {} }
 
+  const toastEl = document.getElementById('toast'); let toastT;
+  function toast(m) { toastEl.textContent = m; toastEl.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => toastEl.classList.remove('on'), 1800); }
   function copiar(t, bt) {
-    navigator.clipboard.writeText(t).then(() => { const o = bt.textContent; bt.textContent = 'Copiado'; setTimeout(() => { bt.textContent = o; }, 1200); }).catch(() => prompt('Copie:', t));
+    navigator.clipboard.writeText(t).then(() => toast('Link copiado')).catch(() => prompt('Copie:', t));
+  }
+  function contar() {
+    const todos = Array.from(document.querySelectorAll('.card[data-sala]'));
+    const ok = todos.filter((c) => c.dataset.estado === 'ok').length;
+    document.getElementById('navN').textContent = ok + '/' + todos.length;
+    document.getElementById('resumo').innerHTML = ok ? '<b>' + ok + ' de ' + todos.length + '</b> câmeras conectadas. Aponte outro iPhone para um QR para somar.' : 'Aponte o iPhone para o QR de uma câmera para conectar.';
   }
 
   function criarCard(sala) {
@@ -281,13 +259,13 @@ label.chk input{accent-color:var(--tinta);width:17px;height:17px}
     atualizar(); inCel.value = linkCel;
     n.querySelector('.btObs').addEventListener('click', (e) => copiar(linkObs(), e.currentTarget));
     n.querySelector('.btCel').addEventListener('click', (e) => copiar(linkCel, e.currentTarget));
-    try { new QRCode(n.querySelector('.cod'), { text: linkCel, width: 128, height: 128, correctLevel: QRCode.CorrectLevel.M }); } catch (e) {}
+    try { new QRCode(n.querySelector('.cod'), { text: linkCel, width: 264, height: 264, correctLevel: QRCode.CorrectLevel.M }); } catch (e) {}
 
-    const srcPrevia = comChave(base + 'view.html?r=' + encodeURIComponent(sala)) + '&preview=1&hud=1';
+    const srcPrevia = comChave(base + 'view.html?r=' + encodeURIComponent(sala)) + '&preview=1&hud=0';
     let ligada = true;
     const setPrevia = (on) => {
       ligada = on;
-      pausada.hidden = on; btPrevia.textContent = on ? 'Pausar' : 'Ligar';
+      pausada.hidden = on; btPrevia.title = on ? 'Pausar a prévia' : 'Ligar a prévia'; btPrevia.classList.toggle('p', !on);
       if (on) { iframe.src = srcPrevia; return; }
       setEstado('warn', 'prévia pausada');
       // avisa a prévia para se despedir do celular e só depois descarrega
@@ -295,7 +273,7 @@ label.chk input{accent-color:var(--tinta);width:17px;height:17px}
       setTimeout(() => { if (!ligada) iframe.src = 'about:blank'; }, 500);
     };
     btPrevia.addEventListener('click', () => setPrevia(!ligada));
-    const setEstado = (tipo, texto) => { estado.className = 'estado ' + tipo; estado.querySelector('span').textContent = texto; };
+    const setEstado = (tipo, texto) => { estado.className = 'estado ' + tipo; estado.querySelector('span').textContent = texto; n.dataset.estado = tipo; contar(); };
     setPrevia(true);
     cards.set(sala, { iframe, setEstado, setPrevia, ligada: () => ligada });
     main.insertBefore(n, ajuda);
@@ -340,7 +318,7 @@ label.chk input{accent-color:var(--tinta);width:17px;height:17px}
     if (salaPc) { salaPc.sair(); salaPc = null; }
     if (micPc) { micPc.getTracks().forEach((t) => t.stop()); micPc = null; }
     tilesPc.innerHTML = '';
-    btSalaPc.textContent = 'Entrar na sala com este PC';
+    btSalaPc.textContent = 'Entrar na sala';
     pintarSalaPc();
   }
   btSalaPc.addEventListener('click', async () => {
@@ -393,6 +371,33 @@ label.chk input{accent-color:var(--tinta);width:17px;height:17px}
 
   salas.forEach(criarCard);
   pintarAtivas();
+  contar();
+  // links prontos no guia do OBS
+  const links = document.getElementById('links');
+  function pintarLinks() {
+    links.innerHTML = '';
+    for (const s of salas) {
+      const url = comChave(base + 'view.html?r=' + encodeURIComponent(s));
+      const d = document.createElement('div'); d.className = 'ln';
+      const b = document.createElement('b'); b.textContent = /^cam[1-9]$/.test(s) ? 'CAM ' + s.slice(3) : s;
+      const c = document.createElement('code'); c.textContent = url;
+      const bt = document.createElement('button'); bt.className = 'p'; bt.textContent = 'Copiar link'; bt.addEventListener('click', () => copiar(url, bt));
+      d.append(b, c, bt); links.append(d);
+    }
+  }
+  pintarLinks();
+  document.getElementById('btNova').addEventListener('click', pintarLinks);
+  // chave em destaque na tela Equipe
+  document.getElementById('chaveGrande').textContent = chave;
+  document.getElementById('btNovaChave2').addEventListener('click', () => document.getElementById('btNovaChave').click());
+  // vistas
+  function mostrar(v) {
+    if (!['cameras', 'obs', 'equipe'].includes(v)) v = 'cameras';
+    document.querySelectorAll('.vista').forEach((e) => { e.hidden = e.id !== 'v-' + v; });
+    document.querySelectorAll('.nav a').forEach((a) => a.classList.toggle('on', a.dataset.v === v));
+  }
+  window.addEventListener('hashchange', () => mostrar(location.hash.slice(1)));
+  mostrar(location.hash.slice(1));
 })();
 </script>
 </body>
