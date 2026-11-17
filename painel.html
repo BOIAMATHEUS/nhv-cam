@@ -7,152 +7,175 @@
 <meta name="description" content="Painel do PC: prévia das câmeras, link do OBS e QR para abrir no celular.">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="apple-touch-icon" href="icon-180.png">
 <style>
-@font-face{font-family:'Zalando';src:url('fonts/ZalandoSans.woff2') format('woff2');font-weight:200 900;font-stretch:75% 125%;font-display:swap}
-:root{--papel:#f4efe7;--papel2:#ebe4d8;--tinta:#15120f;--tinta2:#5f574d;--tinta3:#968c80;--linha:rgba(21,18,15,.09);--lima:#b9e33b;--ok:#3fae4f;--warn:#e0901c;--err:#e5372b;
-  --vidro:rgba(255,255,255,.55);--vidro-borda:rgba(255,255,255,.85);--sombra:0 1px 0 rgba(255,255,255,.9) inset,0 18px 44px -20px rgba(70,50,30,.3),0 2px 6px rgba(70,50,30,.05);--px:'Pixelify Sans',ui-monospace,monospace}
+:root{--bg:#0f0e0e;--cinza:#4b4a4b;--red:#fe2e4b;--ink:#fff;--ink2:rgba(255,255,255,.66);--ink3:rgba(255,255,255,.42);--linha:rgba(255,255,255,.09);--ok:#3ddc84;--warn:#ffb340;--err:#fe2e4b;
+  --gl:linear-gradient(140deg,rgba(255,255,255,.14),rgba(255,255,255,.035) 60%);--glb:rgba(255,255,255,.16);--glsh:inset 0 1px 0 rgba(255,255,255,.2),0 24px 50px -24px rgba(0,0,0,.75);
+  --font:"Helvetica Neue",Helvetica,Inter,Arial,sans-serif}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-html{background:var(--papel)}
-body{margin:0;min-height:100vh;color:var(--tinta);font:15px/1.45 'Zalando',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;
-  background:radial-gradient(45% 40% at 100% 0%,rgba(185,227,59,.38),transparent 70%),radial-gradient(40% 40% at 10% 100%,rgba(232,170,120,.3),transparent 70%),radial-gradient(30% 30% at 30% 10%,rgba(255,255,255,.85),transparent 70%),var(--papel);background-attachment:fixed}
-button{font:inherit;color:inherit;cursor:pointer;border-radius:14px;padding:10px 15px;background:rgba(255,255,255,.8);font-weight:600;font-size:14px;transition:background .15s,transform .1s;border:1px solid rgba(255,255,255,.95)}
-button:hover{background:#fff}
+html{background:var(--bg)}
+body{margin:0;min-height:100vh;color:var(--ink);font:400 15px/1.45 var(--font);letter-spacing:-.01em;-webkit-font-smoothing:antialiased;
+  background:radial-gradient(55% 60% at -5% 65%,rgba(254,46,75,.55),transparent 70%),radial-gradient(45% 40% at 105% -5%,rgba(150,24,48,.5),transparent 70%),linear-gradient(160deg,#2b1317 0%,#160f11 45%,#0f0e0e 100%);background-attachment:fixed}
+button{font:inherit;color:inherit;letter-spacing:inherit;cursor:pointer;border-radius:999px;padding:11px 18px;background:var(--gl);font-weight:500;font-size:14px;transition:background .15s,transform .1s,border-color .15s;border:1px solid var(--glb);box-shadow:inset 0 1px 0 rgba(255,255,255,.18)}
+button:hover{border-color:rgba(255,255,255,.32)}
 button:active{transform:scale(.97)}
-button.p{background:var(--tinta);color:var(--papel);border-color:var(--tinta)}
-button.p:hover{background:#2b2520}
-button.ic{width:40px;height:40px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:13px}
-button svg,a svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
-select,input{font:inherit;color:inherit;background:rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.95);border-radius:13px;padding:10px 12px;font-size:14px}
-.vidro{background:var(--vidro);backdrop-filter:blur(24px) saturate(1.6);-webkit-backdrop-filter:blur(24px) saturate(1.6);border:1px solid var(--vidro-borda);box-shadow:var(--sombra)}
+button.p{background:#fff;color:#0f0e0e;border-color:#fff;box-shadow:none}
+button.r{background:var(--red);border-color:rgba(255,255,255,.25);box-shadow:0 12px 28px -12px rgba(254,46,75,.9),inset 0 1px 0 rgba(255,255,255,.3)}
+button.ic{width:42px;height:42px;padding:0;display:inline-flex;align-items:center;justify-content:center}
+button svg,a svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+select,input{font:inherit;color:#fff;background:rgba(255,255,255,.08);border:1px solid var(--glb);border-radius:999px;padding:10px 16px;font-size:14px}
+select option{color:#000}
+.vidro{background:var(--gl);border:1px solid var(--glb);box-shadow:var(--glsh);backdrop-filter:blur(30px) saturate(1.4);-webkit-backdrop-filter:blur(30px) saturate(1.4)}
 
-/* estrutura de app: barra lateral + conteúdo */
-.app{display:grid;grid-template-columns:260px minmax(0,1fr);gap:20px;padding:20px;min-height:100vh}
-.lado{position:sticky;top:20px;height:calc(100vh - 40px);border-radius:32px;padding:22px 16px 16px;display:flex;flex-direction:column;gap:6px}
-.logo{display:flex;align-items:center;gap:12px;padding:0 8px 22px}
-.logo img{width:42px;height:42px;border-radius:13px;box-shadow:0 8px 18px -8px rgba(90,110,20,.6)}
-.logo b{display:block;font-size:19px;font-weight:800;letter-spacing:-.02em;line-height:1}
-.logo small{display:block;font:500 12px/1 var(--px);color:var(--tinta3);margin-top:5px}
-.nav a{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;color:var(--tinta2);text-decoration:none;font-weight:600;font-size:15px;transition:background .15s}
-.nav a:hover{background:rgba(255,255,255,.6)}
-.nav a.on{background:var(--tinta);color:var(--papel)}
-.nav a.on svg{color:var(--lima)}
-.nav a .n{margin-left:auto;font-size:12px;background:rgba(21,18,15,.08);padding:3px 8px;border-radius:999px}
-.nav a.on .n{background:rgba(255,255,255,.14)}
-.lado .pe{margin-top:auto;display:flex;flex-direction:column;gap:10px}
-.equipe{background:var(--tinta);color:var(--papel);border-radius:22px;padding:14px 16px}
-.equipe small{display:block;font:500 12px/1 var(--px);color:rgba(244,239,231,.55)}
-.equipe .linhaEq{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px}
-.equipe input{width:100%;min-width:0;background:none;border:0;padding:0;font:800 24px/1 'Zalando',sans-serif;letter-spacing:.02em;color:var(--lima);border-radius:0}
-.equipe button{background:rgba(255,255,255,.12);border-color:transparent;color:var(--papel);padding:7px 10px;font-size:12px;flex:none}
-.equipe button:hover{background:rgba(255,255,255,.22)}
-.sinal{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--tinta2);padding:4px 8px}
-.sinal i{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 4px rgba(63,174,79,.15)}
+.app{display:grid;grid-template-columns:268px minmax(0,1fr);gap:24px;padding:20px;min-height:100vh}
+.lado{position:sticky;top:20px;height:calc(100vh - 40px);border-radius:34px;padding:22px 14px 14px;display:flex;flex-direction:column;gap:4px}
+.logo{display:flex;align-items:center;gap:12px;padding:0 10px 26px}
+.logo img{width:40px;height:40px;border-radius:12px;box-shadow:0 10px 24px -8px rgba(254,46,75,.9)}
+.logo b{display:block;font-size:18px;font-weight:600;letter-spacing:-.03em;line-height:1}
+.logo small{display:block;font-size:12px;color:var(--ink3);margin-top:4px}
+.nav .sec{font-size:12px;color:var(--ink3);padding:14px 14px 6px}
+.nav a{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:999px;color:var(--ink2);text-decoration:none;font-weight:500;font-size:15px;transition:background .15s,color .15s;border:1px solid transparent}
+.nav a:hover{color:#fff;background:rgba(255,255,255,.05)}
+.nav a.on{background:rgba(255,255,255,.12);border-color:var(--glb);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.2)}
+.nav a .n{margin-left:auto;font-size:12px;background:rgba(255,255,255,.1);padding:3px 9px;border-radius:999px;color:#fff}
+.nav a.on .n{background:var(--red)}
+.lado .pe{margin-top:auto;display:flex;flex-direction:column;gap:8px}
+.equipe{border-radius:24px;padding:14px 16px;background:rgba(0,0,0,.25);border:1px solid var(--linha)}
+.equipe small{display:block;font-size:12px;color:var(--ink3)}
+.equipe .linhaEq{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px}
+.equipe input{width:100%;min-width:0;background:none;border:0;padding:0;font-size:22px;font-weight:600;letter-spacing:.01em;color:#fff;border-radius:0}
+.equipe button{padding:6px 12px;font-size:12px;flex:none}
+.sinal{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink3);padding:4px 10px}
+.sinal i{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 4px rgba(61,220,132,.14)}
 
-.conteudo{min-width:0;padding:6px 8px 40px}
-.cab{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin:4px 4px 22px;flex-wrap:wrap}
-.cab h1{margin:0;font-size:44px;font-weight:800;letter-spacing:-.04em;line-height:1}
-.cab p{margin:8px 0 0;color:var(--tinta2);font-size:16px}
-.cab p b{color:var(--tinta)}
+.conteudo{min-width:0;padding:10px 8px 40px}
+.cab{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin:8px 6px 28px;flex-wrap:wrap}
+.cab .ol{font-size:13px;color:var(--ink3);margin-bottom:10px}
+.cab h1{margin:0;font-size:56px;font-weight:500;letter-spacing:-.05em;line-height:1;background:linear-gradient(90deg,#fff 0%,#ffd0d7 60%,#ff6b80 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.cab p{margin:12px 0 0;color:var(--ink2);font-size:16px}
+.cab p b{color:#fff;font-weight:600}
 .cab .acoes{display:flex;gap:8px}
-.vista[hidden]{display:none}
 
-/* mosaico de câmeras */
-.grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(188px,1fr));gap:16px;align-items:start}
-.card{border-radius:30px;padding:9px;display:flex;flex-direction:column;gap:9px;min-width:0;background:var(--vidro);backdrop-filter:blur(24px) saturate(1.6);-webkit-backdrop-filter:blur(24px) saturate(1.6);border:1px solid var(--vidro-borda);box-shadow:var(--sombra);transition:transform .2s}
-.card[data-estado="ok"]{box-shadow:0 0 0 3px var(--lima),var(--sombra)}
-.previa{position:relative;width:100%;aspect-ratio:9/16;background:#1b1714;border-radius:22px;overflow:hidden}
-.previa iframe{width:100%;height:100%;border:0;display:block;background:#1b1714}
-.previa .pausada{position:absolute;inset:0;display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center;color:var(--tinta3);font:500 15px/1 var(--px);text-align:center;padding:12px;background:var(--papel2);z-index:3}
-.previa .espera{position:absolute;inset:0;z-index:2;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:18px;text-align:center;background:linear-gradient(180deg,#fbf8f2,#efe8dc)}
+.grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:16px;align-items:start}
+.card{border-radius:30px;padding:8px;display:flex;flex-direction:column;gap:8px;min-width:0;background:var(--gl);border:1px solid var(--glb);box-shadow:var(--glsh);backdrop-filter:blur(30px) saturate(1.4);-webkit-backdrop-filter:blur(30px) saturate(1.4)}
+.card[data-estado="ok"]{border-color:rgba(254,46,75,.7);box-shadow:0 0 0 1px rgba(254,46,75,.5),0 24px 50px -20px rgba(254,46,75,.45)}
+.previa{position:relative;width:100%;aspect-ratio:9/16;background:#000;border-radius:23px;overflow:hidden}
+.previa iframe{width:100%;height:100%;border:0;display:block;background:#000}
+.previa .pausada{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--ink3);font-size:14px;text-align:center;padding:12px;background:#151214;z-index:3}
+.previa .espera{position:absolute;inset:0;z-index:2;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:16px;text-align:center;background:radial-gradient(90% 60% at 50% 30%,rgba(254,46,75,.22),transparent 70%),#141113}
 .card:not([data-estado="ok"]) .previa .espera{display:flex}
-.espera .cod{background:#fff;padding:10px;border-radius:20px;line-height:0;box-shadow:0 12px 26px -14px rgba(0,0,0,.35)}
-.espera .cod img,.espera .cod canvas{width:120px!important;height:120px!important}
-.espera b{font-size:16px;font-weight:800;letter-spacing:-.01em;line-height:1.2}
-.espera small{display:block;font-size:13px;color:var(--tinta2);margin-top:4px}
-.espera .passo{font:500 12px/1 var(--px);color:var(--tinta);background:var(--lima);padding:6px 10px;border-radius:999px}
+.espera .cod{background:#fff;padding:9px;border-radius:18px;line-height:0;box-shadow:0 16px 30px -14px rgba(0,0,0,.8)}
+.espera .cod img,.espera .cod canvas{width:112px!important;height:112px!important}
+.espera b{font-size:15px;font-weight:600;line-height:1.25}
+.espera small{display:block;font-size:12px;color:var(--ink3);margin-top:5px}
+.espera .passo{font-size:12px;color:var(--ink2);border:1px solid var(--glb);padding:6px 11px;border-radius:999px}
 .previa .sobre{position:absolute;left:10px;right:10px;top:10px;display:flex;justify-content:space-between;align-items:center;pointer-events:none;z-index:4}
-.card h2{margin:0;font-size:14px;font-weight:800;color:var(--tinta);background:rgba(255,255,255,.92);padding:8px 12px;border-radius:999px;white-space:nowrap}
-.card:not([data-estado="ok"]) h2{background:var(--tinta);color:var(--papel)}
-.aoVivo{display:none;font-size:12px;font-weight:800;color:#fff;background:var(--err);padding:7px 11px;border-radius:999px;align-items:center;gap:6px}
+.card h2{margin:0;font-size:13px;font-weight:600;color:#fff;background:rgba(15,14,14,.55);border:1px solid rgba(255,255,255,.18);padding:7px 12px;border-radius:999px;white-space:nowrap}
+.aoVivo{display:none;font-size:11px;font-weight:600;color:#fff;background:var(--red);padding:7px 11px;border-radius:999px;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:.03em}
 .aoVivo::before{content:"";width:6px;height:6px;border-radius:50%;background:#fff}
 .card[data-estado="ok"] .aoVivo{display:inline-flex}
-.estado{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--tinta2);padding:2px 8px;min-height:20px;line-height:1.3}
+.estado{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink3);padding:2px 10px;min-height:20px;line-height:1.3}
 .estado span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.estado i{width:8px;height:8px;border-radius:50%;background:var(--tinta3);display:inline-block;flex:none}
-.estado.ok i{background:var(--ok);box-shadow:0 0 0 4px rgba(63,174,79,.15)}.estado.warn i{background:var(--warn)}.estado.err i{background:var(--err)}
-.estado.ok span{color:var(--tinta);font-weight:600}
+.estado i{width:7px;height:7px;border-radius:50%;background:var(--ink3);display:inline-block;flex:none}
+.estado.ok i{background:var(--ok)}.estado.warn i{background:var(--warn)}.estado.err i{background:var(--err)}
+.estado.ok span{color:#fff}
 .acoesCard{display:grid;grid-template-columns:1fr auto auto;gap:6px}
-.acoesCard .btObs{display:flex;align-items:center;justify-content:center;gap:8px}
+.acoesCard .btObs{white-space:nowrap;min-width:0}
+.espera .passo{display:none}
+.acoesCard .btObs{display:flex;align-items:center;justify-content:center;gap:8px;padding:11px 10px;font-size:13px}
 .card .ocultos{display:none}
 
-/* guia do OBS */
-.passos{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px}
-.passo-c{border-radius:30px;padding:24px;min-height:220px;display:flex;flex-direction:column;gap:10px}
-.passo-c .num{width:44px;height:44px;border-radius:14px;background:var(--tinta);color:var(--lima);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px}
-.passo-c h3{margin:6px 0 0;font-size:21px;font-weight:800;letter-spacing:-.02em;line-height:1.15}
-.passo-c p{margin:0;color:var(--tinta2);font-size:14px}
-.passo-c .tag{align-self:flex-start;font:500 13px/1 var(--px);background:var(--lima);padding:7px 10px;border-radius:999px;margin-top:auto}
-.links{margin-top:18px;border-radius:30px;padding:10px}
-.links .ln{display:grid;grid-template-columns:110px minmax(0,1fr) auto;align-items:center;gap:12px;padding:10px 12px;border-bottom:1px solid var(--linha)}
+.passos{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.passo-c{border-radius:32px;padding:26px;min-height:230px;display:flex;flex-direction:column;gap:10px}
+.passo-c .num{font-size:15px;color:var(--ink3);font-weight:500}
+.passo-c h3{margin:8px 0 0;font-size:24px;font-weight:500;letter-spacing:-.035em;line-height:1.1}
+.passo-c p{margin:0;color:var(--ink2);font-size:14px}
+.passo-c p b{color:#fff;font-weight:600}
+.passo-c .tag{align-self:flex-start;font-size:12px;color:#fff;border:1px solid var(--glb);padding:7px 12px;border-radius:999px;margin-top:auto}
+.bloco-t{font-size:13px;color:var(--ink3);margin:34px 8px 12px}
+.links{border-radius:32px;padding:8px}
+.links .ln{display:grid;grid-template-columns:90px minmax(0,1fr) auto;align-items:center;gap:14px;padding:12px 14px;border-bottom:1px solid var(--linha)}
 .links .ln:last-child{border-bottom:0}
-.links .ln b{font-size:16px;font-weight:800}
-.links .ln code{font:13px ui-monospace,monospace;color:var(--tinta2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.dicas{margin-top:18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
-.dica{border-radius:26px;padding:20px 22px}
-.dica h4{margin:0 0 6px;font-size:16px;font-weight:800}
-.dica p{margin:0;color:var(--tinta2);font-size:14px}
+.links .ln b{font-size:15px;font-weight:600}
+.links .ln code{font:13px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--ink3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dicas{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.dica{border-radius:28px;padding:22px 24px}
+.dica h4{margin:0 0 6px;font-size:16px;font-weight:600}
+.dica p{margin:0;color:var(--ink2);font-size:14px}
 
-/* equipe */
-.eqGrande{border-radius:32px;padding:30px;display:grid;grid-template-columns:1.2fr 1fr;gap:30px;align-items:center}
-.eqGrande .chave{font-size:72px;font-weight:800;letter-spacing:.02em;line-height:1;background:var(--tinta);color:var(--lima);border-radius:26px;padding:26px 30px;text-align:center}
-.eqGrande h3{margin:0 0 8px;font-size:24px;font-weight:800;letter-spacing:-.02em}
-.eqGrande p{margin:0 0 16px;color:var(--tinta2)}
-.extra{display:flex;align-items:center;gap:8px;margin-top:18px;flex-wrap:wrap;border-radius:26px;padding:16px 18px}
-.extra span.t{font-weight:700;margin-right:6px}
-.extra #salasAtivas{color:var(--tinta2)}
-.extra input{width:220px}
-
+/* ajustes e conta: listas agrupadas, como ajustes de sistema */
+.duas{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:18px;align-items:start}
+.grupo{border-radius:30px;padding:6px 22px}
+.grupo h3{margin:18px 0 4px;font-size:13px;font-weight:500;color:var(--ink3)}
+.item{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:16px 0;border-bottom:1px solid var(--linha)}
+.item:last-child{border-bottom:0}
+.item label,.item .t{font-size:15px;font-weight:500}
+.item small{display:block;color:var(--ink3);font-size:13px;margin-top:3px;font-weight:400;max-width:42ch}
+.item select{flex:none;min-width:150px}
+.item input[type=checkbox]{-webkit-appearance:none;appearance:none;width:50px;height:30px;border-radius:999px;background:rgba(255,255,255,.16);position:relative;flex:none;cursor:pointer;transition:background .2s;margin:0;padding:0;border:0}
+.item input[type=checkbox]::after{content:"";position:absolute;top:2px;left:2px;width:26px;height:26px;border-radius:50%;background:#fff;transition:transform .2s}
+.item input[type=checkbox]:checked{background:var(--red)}
+.item input[type=checkbox]:checked::after{transform:translateX(20px)}
+.perfil{border-radius:34px;padding:30px;display:flex;align-items:center;gap:24px;margin-bottom:18px;flex-wrap:wrap}
+.perfil .av{width:84px;height:84px;border-radius:26px;background:url(icon-512.png) center/cover;box-shadow:0 16px 34px -12px rgba(254,46,75,.85)}
+.perfil h2{margin:0;font-size:34px;font-weight:500;letter-spacing:-.04em}
+.perfil p{margin:6px 0 0;color:var(--ink2)}
+.perfil .plano{margin-left:auto;text-align:right}
+.perfil .plano b{display:inline-block;font-size:13px;font-weight:600;background:rgba(255,255,255,.12);border:1px solid var(--glb);padding:7px 13px;border-radius:999px}
+.perfil .plano small{display:block;color:var(--ink3);font-size:13px;margin-top:8px}
+.aparelho{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--linha)}
+.aparelho:last-child{border-bottom:0}
+.aparelho .ic{width:40px;height:40px;border-radius:13px;background:rgba(255,255,255,.08);border:1px solid var(--glb);display:flex;align-items:center;justify-content:center;flex:none}
+.aparelho .ic svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:1.6}
+.aparelho b{display:block;font-size:15px;font-weight:500}
+.aparelho small{display:block;color:var(--ink3);font-size:12px;margin-top:2px}
+.aparelho .st{margin-left:auto;font-size:12px;padding:5px 10px;border-radius:999px;border:1px solid var(--glb);color:var(--ink2);white-space:nowrap}
+.aparelho .st.ok{background:rgba(61,220,132,.12);border-color:rgba(61,220,132,.4);color:var(--ok)}
+.vazio{color:var(--ink3);font-size:14px;padding:16px 0}
+.chaveG{font-size:44px;font-weight:600;letter-spacing:.02em}
 .ajuda{display:none}
-.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(10px);background:var(--tinta);color:var(--papel);padding:12px 18px;border-radius:16px;font-weight:600;opacity:0;transition:.2s;pointer-events:none;z-index:50}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(10px);background:#fff;color:#0f0e0e;padding:12px 20px;border-radius:999px;font-weight:500;opacity:0;transition:.2s;pointer-events:none;z-index:50}
 .toast.on{opacity:1;transform:translateX(-50%)}
-@media (max-width:1000px){.eqGrande{grid-template-columns:1fr}}
-@media (max-width:820px){.app{grid-template-columns:1fr;padding:12px}.lado{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;padding:12px;border-radius:24px}.logo{padding:0 8px 0 0}.nav{display:flex;gap:4px}.nav a{padding:9px 12px}.nav a span.t{display:none}.lado .pe{display:none}.cab h1{font-size:32px}.grade{grid-template-columns:1fr 1fr;gap:10px}}
+@media (max-width:820px){.app{grid-template-columns:1fr;padding:12px}.lado{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;padding:12px;border-radius:28px}.logo{padding:0 8px 0 0}.nav{display:flex;gap:4px;flex-wrap:wrap}.nav .sec{display:none}.nav a{padding:9px 12px}.nav a span.t{display:none}.lado .pe{display:none}.cab h1{font-size:40px}.grade{grid-template-columns:1fr 1fr;gap:10px}.duas{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <div class="app">
   <aside class="lado vidro">
-    <div class="logo"><img src="icon-192.png" alt=""><div><b>Vira Cam</b><small>painel do OBS</small></div></div>
+    <div class="logo"><img src="icon-192.png" alt=""><div><b>Vira Cam</b><small>Painel do OBS</small></div></div>
     <nav class="nav">
+      <div class="sec">Transmissão</div>
       <a href="#cameras" data-v="cameras" class="on"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/></svg><span class="t">Câmeras</span><span class="n" id="navN">0/5</span></a>
       <a href="#obs" data-v="obs"><svg viewBox="0 0 24 24"><rect x="2.5" y="4" width="19" height="13" rx="2.5"/><path d="M8 21h8M12 17v4"/><path d="M10 8.5l4 2-4 2z"/></svg><span class="t">Ligar no OBS</span></a>
-      <a href="#equipe" data-v="equipe"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19a5.5 5.5 0 0111 0"/><circle cx="17" cy="9" r="2.6"/><path d="M15.5 14.2a4.6 4.6 0 016 4.3"/></svg><span class="t">Equipe</span></a>
+      <div class="sec">Conta</div>
+      <a href="#ajustes" data-v="ajustes"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg><span class="t">Ajustes</span></a>
+      <a href="#conta" data-v="conta"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20a7 7 0 0114 0"/></svg><span class="t">Conta</span></a>
+      <a href="#equipe" data-v="equipe" hidden><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19a5.5 5.5 0 0111 0"/><circle cx="17" cy="9" r="2.6"/><path d="M15.5 14.2a4.6 4.6 0 016 4.3"/></svg><span class="t">Equipe</span></a>
     </nav>
     <div class="pe">
-      <div class="equipe"><small>chave da equipe</small><div class="linhaEq"><input id="inChave" autocapitalize="off" spellcheck="false" aria-label="Chave da equipe"><button id="btNovaChave">Nova</button></div></div>
-      <div class="sinal"><i></i>Sinal pelo Wi-Fi, direto</div>
+      <div class="equipe"><small>Equipe</small><div class="linhaEq"><input id="inChave" autocapitalize="off" spellcheck="false" aria-label="Chave da equipe"><button id="btNovaChave">Trocar</button></div></div>
+      <div class="sinal"><i></i>Direto pelo Wi-Fi, sem servidor de vídeo</div>
     </div>
   </aside>
 
   <div class="conteudo">
     <section class="vista" id="v-cameras">
-      <div class="cab"><div><h1>Câmeras</h1><p id="resumo">Aponte o iPhone para o QR de uma câmera para conectar.</p></div>
+      <div class="cab"><div><div class="ol">Transmissão</div><h1>Câmeras</h1><p id="resumo">Aponte o iPhone para o QR de uma câmera para conectar.</p></div>
         <div class="acoes"><button id="btTodas">Pausar todas as prévias</button></div></div>
       <div class="grade" id="main"><i id="ajuda" class="ajuda"></i></div>
     </section>
 
     <section class="vista" id="v-obs" hidden>
-      <div class="cab"><div><h1>Ligar no OBS</h1><p>Uma vez por câmera. Depois disso o OBS reconecta sozinho em toda live.</p></div></div>
+      <div class="cab"><div><div class="ol">Configuração única</div><h1>Ligar no OBS</h1><p>Uma vez por câmera. Depois disso o OBS reconecta sozinho em toda live.</p></div></div>
       <div class="passos">
-        <div class="passo-c vidro"><span class="num">1</span><h3>Adicione uma fonte Navegador</h3><p>No OBS, em Fontes, clique em + e escolha <b>Navegador</b>. Dê o nome da câmera, por exemplo CAM 1.</p><span class="tag">fontes · + · navegador</span></div>
-        <div class="passo-c vidro"><span class="num">2</span><h3>Cole o link da câmera</h3><p>Copie abaixo o link da câmera e cole no campo URL.</p><span class="tag">URL</span></div>
-        <div class="passo-c vidro"><span class="num">3</span><h3>1080 x 1920</h3><p>Largura 1080 e altura 1920. Deixe <b>desmarcado</b> "Desligar a fonte quando não estiver visível".</p><span class="tag">largura · altura</span></div>
-        <div class="passo-c vidro"><span class="num">4</span><h3>Som, se precisar</h3><p>Se for usar o microfone do celular, marque "Controlar áudio via OBS" na fonte.</p><span class="tag">opcional</span></div>
+        <div class="passo-c vidro"><span class="num">01</span><h3>Adicione uma fonte Navegador</h3><p>No OBS, em Fontes, clique em + e escolha <b>Navegador</b>. Dê o nome da câmera, por exemplo CAM 1.</p><span class="tag">fontes · + · navegador</span></div>
+        <div class="passo-c vidro"><span class="num">02</span><h3>Cole o link da câmera</h3><p>Copie abaixo o link da câmera e cole no campo URL.</p><span class="tag">URL</span></div>
+        <div class="passo-c vidro"><span class="num">03</span><h3>1080 x 1920</h3><p>Largura 1080 e altura 1920. Deixe <b>desmarcado</b> "Desligar a fonte quando não estiver visível".</p><span class="tag">largura · altura</span></div>
+        <div class="passo-c vidro"><span class="num">04</span><h3>Som, se precisar</h3><p>Se for usar o microfone do celular, marque "Controlar áudio via OBS" na fonte.</p><span class="tag">opcional</span></div>
       </div>
-      <div class="links vidro" id="links"></div>
+      <div class="bloco-t">Links das câmeras</div><div class="links vidro" id="links"></div><div class="bloco-t">Na hora da live</div>
       <div class="dicas">
         <div class="dica vidro"><h4>Na hora da live</h4><p>iPhone em Modo Avião com Wi-Fi ligado, carregador na tomada e Safari na frente. Pause as prévias deste painel depois de conferir.</p></div>
         <div class="dica vidro"><h4>Se o Wi-Fi oscilar</h4><p>A câmera reconecta sozinha em segundos e o OBS segura o último quadro, sem texto na tela.</p></div>
@@ -160,6 +183,33 @@ select,input{font:inherit;color:inherit;background:rgba(255,255,255,.8);border:1
       </div>
     </section>
 
+
+    <section class="vista" id="v-ajustes" hidden>
+      <div class="cab"><div><div class="ol">Conta</div><h1>Ajustes</h1><p>Valem para os links do OBS e para as prévias deste painel.</p></div></div>
+      <div class="duas">
+        <div class="grupo vidro"><h3>Imagem no OBS</h3>
+          <div class="item"><div><label for="ajFit">Ajuste na fonte</label><small>Preencher corta as sobras; Caber mostra a imagem inteira com barras.</small></div><select id="ajFit"><option value="cover">Preencher 9:16</option><option value="contain">Caber</option></select></div>
+          <div class="item"><div><label for="ajCodec">Codec</label><small>H264 usa o chip do iPhone e é o que o OBS decodifica melhor.</small></div><select id="ajCodec"><option value="auto">Automático (H264)</option><option value="h264">H264</option><option value="vp9">VP9</option><option value="vp8">VP8</option></select></div>
+        </div>
+        <div class="grupo vidro"><h3>Este painel</h3>
+          <div class="item"><div><label for="ajPrev">Abrir com as prévias pausadas</label><small>Poupa o Wi-Fi e a bateria dos iPhones durante a live.</small></div><input type="checkbox" id="ajPrev"></div>
+          <div class="item"><div><span class="t">Câmeras</span><small id="ajSalas"></small></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="vista" id="v-conta" hidden>
+      <div class="cab"><div><div class="ol">Conta</div><h1>Conta</h1><p>Sem login: a equipe é a chave. Quem tem a chave entra.</p></div></div>
+      <div class="perfil vidro"><div class="av"></div><div><h2 id="ctNome">Equipe</h2><p>Chave <b id="ctChave">-----</b> · vai no QR e no link do OBS</p></div>
+        <div class="plano"><b>Gratuito</b><small>até 5 câmeras · vídeo direto, sem servidor</small></div></div>
+      <div class="duas">
+        <div class="grupo vidro"><h3>Aparelhos conectados agora</h3><div id="ctAparelhos"><div class="vazio">Nenhum iPhone conectado.</div></div></div>
+        <div class="grupo vidro"><h3>Equipe</h3>
+          <div class="item"><div><label for="ctNomeIn">Nome da equipe</label><small>Aparece só neste painel.</small></div><input id="ctNomeIn" placeholder="ex.: NHV Lives" maxlength="24" style="width:180px"></div>
+          <div class="item"><div><span class="t">Trocar a chave</span><small>Desconecta todo mundo: celulares e fontes do OBS precisam abrir os links novos.</small></div><button class="r" id="btNovaChave2">Trocar chave</button></div>
+        </div>
+      </div>
+    </section>
     <section class="vista" id="v-equipe" hidden>
       <div class="cab"><div><h1>Equipe</h1><p>A chave separa as suas câmeras de qualquer outra tela.</p></div></div>
       <div class="eqGrande vidro">
@@ -185,7 +235,7 @@ select,input{font:inherit;color:inherit;background:rgba(255,255,255,.8);border:1
     </div>
     <div class="estado"><i></i><span>conectando</span></div>
     <div class="acoesCard">
-      <button class="p btObs"><svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2h2"/></svg>Link do OBS</button>
+      <button class="p btObs"><svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2h2"/></svg>OBS</button>
       <button class="ic btCel" title="Copiar o link do celular"><svg viewBox="0 0 24 24"><rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></svg></button>
       <button class="ic btPrevia" title="Pausar a prévia"><svg viewBox="0 0 24 24"><path d="M9 5v14M15 5v14"/></svg></button>
     </div>
@@ -195,10 +245,10 @@ select,input{font:inherit;color:inherit;background:rgba(255,255,255,.8);border:1
   </section>
 </template>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="vendor/supabase.min.js"></script>
 <script src="config.js"></script>
 <script src="core.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="vendor/qrcode.min.js"></script>
 <script>
 (() => {
   'use strict';
@@ -389,10 +439,46 @@ select,input{font:inherit;color:inherit;background:rgba(255,255,255,.8);border:1
   document.getElementById('btNova').addEventListener('click', pintarLinks);
   // chave em destaque na tela Equipe
   document.getElementById('chaveGrande').textContent = chave;
+  document.getElementById('ctChave').textContent = chave;
+  const AJ = 'viracam.painel.ajustes';
+  let aj = {}; try { aj = JSON.parse(localStorage.getItem(AJ)) || {}; } catch (e) {}
+  const salvarAj = () => { try { localStorage.setItem(AJ, JSON.stringify(aj)); } catch (e) {} };
+  const ajFit = document.getElementById('ajFit'), ajCodec = document.getElementById('ajCodec'), ajPrev = document.getElementById('ajPrev');
+  function aplicarAj() {
+    document.querySelectorAll('.card[data-sala]').forEach((c) => {
+      const f = c.querySelector('.selFit'), k = c.querySelector('.selCodec');
+      f.value = aj.fit || 'cover'; k.value = aj.codec || 'auto';
+      f.dispatchEvent(new Event('change')); k.dispatchEvent(new Event('change'));
+    });
+  }
+  ajFit.value = aj.fit || 'cover'; ajCodec.value = aj.codec || 'auto'; ajPrev.checked = !!aj.prev;
+  ajFit.addEventListener('change', () => { aj.fit = ajFit.value; salvarAj(); aplicarAj(); toast('Links do OBS atualizados'); });
+  ajCodec.addEventListener('change', () => { aj.codec = ajCodec.value; salvarAj(); aplicarAj(); toast('Links do OBS atualizados'); });
+  ajPrev.addEventListener('change', () => { aj.prev = ajPrev.checked; salvarAj(); });
+  aplicarAj();
+  if (aj.prev) document.getElementById('btTodas').click();
+  document.getElementById('ajSalas').textContent = salas.join(', ');
+  
+  const ctNomeIn = document.getElementById('ctNomeIn');
+  ctNomeIn.value = aj.nome || ''; document.getElementById('ctNome').textContent = aj.nome || 'Sua equipe';
+  ctNomeIn.addEventListener('input', () => { aj.nome = ctNomeIn.value.trim(); salvarAj(); document.getElementById('ctNome').textContent = aj.nome || 'Sua equipe'; });
+  function pintarAparelhos() {
+    const box = document.getElementById('ctAparelhos'); box.innerHTML = '';
+    const ligados = Array.from(document.querySelectorAll('.card[data-sala]')).filter((c) => c.dataset.estado === 'ok');
+    if (!ligados.length) { box.innerHTML = '<div class="vazio">Nenhum iPhone conectado agora.</div>'; return; }
+    for (const c of ligados) {
+      const d = document.createElement('div'); d.className = 'aparelho';
+      d.innerHTML = '<span class="ic"><svg viewBox="0 0 24 24"><rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></svg></span><div><b></b><small></small></div><span class="st ok">no ar</span>';
+      d.querySelector('b').textContent = c.querySelector('h2').textContent + ' · iPhone';
+      d.querySelector('small').textContent = c.querySelector('.estado span').textContent.replace(/^celular conectado · /, '');
+      box.append(d);
+    }
+  }
+  setInterval(pintarAparelhos, 2000); pintarAparelhos();
   document.getElementById('btNovaChave2').addEventListener('click', () => document.getElementById('btNovaChave').click());
   // vistas
   function mostrar(v) {
-    if (!['cameras', 'obs', 'equipe'].includes(v)) v = 'cameras';
+    if (!['cameras', 'obs', 'equipe', 'ajustes', 'conta'].includes(v)) v = 'cameras';
     document.querySelectorAll('.vista').forEach((e) => { e.hidden = e.id !== 'v-' + v; });
     document.querySelectorAll('.nav a').forEach((a) => a.classList.toggle('on', a.dataset.v === v));
   }
