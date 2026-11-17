@@ -18,119 +18,236 @@
 // com a mesma sala e chave, para o link errado não deixar a fonte sem imagem.
 if (/\bOBS\//.test(navigator.userAgent)) location.replace('view.html' + location.search);
 </script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#0b0b0c;--panel:#141416;--panel2:#1c1c1f;--line:#2a2a2f;--text:#f3f0ea;--muted:#9b978f;--accent:#c98a3c;--accent2:#e8b56e;--ok:#4cc38a;--warn:#e9b949;--err:#e5484d}
+:root{--bg:#0a0a0b;--panel:#151517;--panel2:#1f1f22;--line:rgba(255,255,255,.08);--text:#f2f2f2;--muted:#8a8f98;--dim:#5c6068;--gold:#f2c14e;--ok:#34d27b;--warn:#f5a623;--err:#ff3b30;--vidro:rgba(14,14,16,.6);--mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:15px/1.35 -apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,"Segoe UI",Roboto,sans-serif;overscroll-behavior:none;-webkit-user-select:none;user-select:none}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:16px/1.35 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;overscroll-behavior:none;-webkit-user-select:none;user-select:none;-webkit-font-smoothing:antialiased}
 body{height:100dvh;display:flex;flex-direction:column;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 button,select,input{font:inherit;color:inherit}
-button{border:0;background:none;cursor:pointer}
-#palco{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:10px 12px 6px;position:relative}
-#quadro{position:relative;background:#000;border-radius:18px;overflow:hidden;touch-action:none;box-shadow:0 0 0 1px var(--line)}
+button{border:0;background:none;cursor:pointer;padding:0}
+svg{stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.mono{font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em}
+
+/* barra de cima: botões redondos e o rótulo da câmera no meio */
+#barra{display:grid;grid-template-columns:44px 44px 1fr 44px 44px;align-items:center;gap:8px;padding:10px 14px 8px}
+.redondo{width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;color:var(--text);transition:background .15s,color .15s,border-color .15s}
+.redondo svg{width:19px;height:19px}
+.redondo.on{border-color:var(--gold);color:var(--gold);background:rgba(242,193,78,.08)}
+#rotCam{justify-self:center;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:112px;height:48px;padding:0 16px;border-radius:14px;border:1px solid rgba(255,255,255,.14);line-height:1.15}
+#rotCam b{font:600 15px/1 var(--mono);letter-spacing:.06em;color:var(--gold)}
+#rotCam small{font:500 10px/1 var(--mono);letter-spacing:.1em;color:var(--dim);margin-top:5px;text-transform:uppercase}
+
+/* visor */
+#palco{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:4px 14px;position:relative}
+#quadro{position:relative;background:#000;border-radius:26px;overflow:hidden;touch-action:none;box-shadow:0 0 0 1px rgba(255,255,255,.1)}
 #preview{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform-origin:50% 50%;will-change:transform;background:#000}
+.canto{position:absolute;width:18px;height:18px;border-color:rgba(255,255,255,.75);border-style:solid;border-width:0;z-index:3;pointer-events:none}
+.canto.a{top:16px;left:16px;border-top-width:2px;border-left-width:2px}.canto.b{top:16px;right:16px;border-top-width:2px;border-right-width:2px}
+.canto.c{bottom:16px;left:16px;border-bottom-width:2px;border-left-width:2px}.canto.d{bottom:16px;right:16px;border-bottom-width:2px;border-right-width:2px}
 #guia{position:absolute;inset:0;pointer-events:none}
 #guia[hidden]{display:none}
-#guia .faixa{position:absolute;left:0;right:0;background:rgba(229,72,77,.16);display:flex;align-items:center;justify-content:center}
-#guia .faixa.topo{top:0;height:13.02%;border-bottom:1px dashed rgba(229,72,77,.8);align-items:flex-end;justify-content:flex-end;padding:0 8px 5px}
-#guia .faixa.base{bottom:0;height:21.88%;border-top:1px dashed rgba(229,72,77,.8);align-items:flex-start;padding-top:6px}
-#guia .faixa span{font-size:12px;font-weight:600;color:#fff;background:rgba(0,0,0,.45);padding:3px 9px;border-radius:999px}
-#guia i{position:absolute;background:rgba(255,255,255,.26)}
+#guia .faixa{position:absolute;left:0;right:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center}
+#guia .faixa.topo{top:0;height:13.02%;border-bottom:1px solid rgba(242,193,78,.6);align-items:flex-end;padding-bottom:6px}
+#guia .faixa.base{bottom:0;height:21.88%;border-top:1px solid rgba(242,193,78,.6);align-items:flex-start;padding-top:8px}
+#guia .faixa.topo span{display:none}
+#guia .faixa span{font:500 10px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--gold)}
+#guia i{position:absolute;background:rgba(255,255,255,.22)}
 #guia .v1{left:33.33%;top:0;bottom:0;width:1px}#guia .v2{left:66.66%;top:0;bottom:0;width:1px}
 #guia .h1{top:33.33%;left:0;right:0;height:1px}#guia .h2{top:66.66%;left:0;right:0;height:1px}
 #colegas{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:flex-end;gap:6px;padding:8px;pointer-events:none}
 #colegas:empty{display:none}
-.colega{position:relative;width:34%;aspect-ratio:9/16;border-radius:12px;overflow:hidden;background:#000;box-shadow:0 0 0 1px rgba(255,255,255,.3),0 4px 14px rgba(0,0,0,.5);pointer-events:auto;flex:none}
+.colega{position:relative;width:34%;aspect-ratio:9/16;border-radius:14px;overflow:hidden;background:#000;box-shadow:0 0 0 1px rgba(255,255,255,.25);pointer-events:auto;flex:none}
 .colega video{width:100%;height:100%;object-fit:cover;display:block;background:#000}
-.colega .rot{position:absolute;left:6px;bottom:6px;font-size:12px;font-weight:700;color:#fff;background:rgba(0,0,0,.55);padding:3px 8px;border-radius:999px;pointer-events:none}
-.colega .tocar{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55);color:#fff;font-weight:700;font-size:13px;text-align:center;padding:10px}
+.colega .rot{position:absolute;left:6px;bottom:6px;font-size:12px;font-weight:600;color:#fff;background:var(--vidro);padding:3px 8px;border-radius:999px;pointer-events:none}
+.colega .tocar{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55);color:#fff;font-weight:600;font-size:13px;text-align:center;padding:10px}
 .colega.semsom .tocar{display:flex}
 .colega.grande{position:absolute;inset:0;width:100%;height:100%;border-radius:0;box-shadow:none;z-index:3}
-.colega.grande .rot{left:10px;bottom:10px;font-size:14px}
-#topo{position:absolute;left:0;right:0;top:0;padding:10px;display:flex;flex-wrap:wrap;gap:6px;pointer-events:none;z-index:4}
-.pill{font-size:12px;font-weight:600;letter-spacing:.2px;padding:6px 10px;border-radius:999px;background:rgba(10,10,12,.62);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:#fff;display:inline-flex;align-items:center;gap:6px;max-width:100%}
+
+/* estado dentro do visor: chip no topo, no centro */
+#topo{position:absolute;left:0;right:0;top:0;padding:14px 44px;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;z-index:4}
+.pill{font:600 11px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;padding:9px 13px 9px 11px;border-radius:999px;background:var(--vidro);backdrop-filter:blur(14px) saturate(1.4);-webkit-backdrop-filter:blur(14px) saturate(1.4);color:#fff;display:inline-flex;align-items:center;gap:8px;max-width:100%}
 .pill[hidden]{display:none}
-.pill i{width:8px;height:8px;border-radius:50%;background:var(--muted);display:inline-block;flex:none}
-.pill.ok i{background:var(--ok);box-shadow:0 0 0 3px rgba(76,195,138,.25)}.pill.warn i{background:var(--warn)}.pill.err i{background:var(--err)}
-.pill.big{font-size:14px;padding:8px 12px}
-#salaTiles{position:absolute;left:10px;bottom:10px;display:flex;gap:6px;z-index:4;max-width:calc(100% - 20px);overflow-x:auto;scrollbar-width:none}
+.pill i{width:7px;height:7px;border-radius:50%;background:var(--muted);display:inline-block;flex:none}
+.pill.ok i{background:var(--ok)}.pill.warn i{background:var(--warn)}.pill.err i{background:var(--err)}
+.pill.big{font-size:12px;padding:10px 15px 10px 13px}
+.pill.big.ok{background:var(--err)}
+.pill.big.ok i{background:#fff;animation:pulso 1.6s ease-in-out infinite}
+@keyframes pulso{50%{opacity:.3}}
+#stSinal:not(.err){display:none}
+
+/* sala */
+#salaTiles{position:absolute;left:14px;bottom:44px;display:flex;gap:6px;z-index:4;max-width:calc(100% - 28px);overflow-x:auto;scrollbar-width:none}
 #salaTiles:empty{display:none}
-#salaTiles.oculto{opacity:0;pointer-events:none;width:1px;height:1px;overflow:hidden} /* escondido, mas o som continua tocando */
-.tile{position:relative;flex:none;width:84px;aspect-ratio:9/16;border-radius:10px;overflow:hidden;background:#000;box-shadow:0 0 0 1px rgba(255,255,255,.3)}
+#salaTiles.oculto{opacity:0;pointer-events:none;width:1px;height:1px;overflow:hidden}
+.tile{position:relative;flex:none;width:72px;aspect-ratio:9/16;border-radius:12px;overflow:hidden;background:#000;box-shadow:0 0 0 1px rgba(255,255,255,.3)}
 .tile video{width:100%;height:100%;object-fit:cover;display:block}
-.tile span{position:absolute;left:0;right:0;bottom:0;font-size:12px;font-weight:600;padding:3px 5px;background:rgba(0,0,0,.55);color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile span{position:absolute;left:0;right:0;bottom:0;font-size:11px;font-weight:600;padding:3px 6px;background:linear-gradient(transparent,rgba(0,0,0,.75));color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tile.grande{display:none}
 .tile.audio{display:flex;align-items:center;justify-content:center;background:rgba(20,20,22,.92)}
 .tile.audio video{display:none}
-.tile.audio span{position:static;background:none;white-space:normal;text-align:center;padding:6px;color:var(--accent2)}
+.tile.audio span{position:static;background:none;white-space:normal;text-align:center;padding:6px}
 #salaGrande{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:2;background:#000}
 #salaGrande[hidden]{display:none}
-#quadro.grande #preview{inset:auto;top:10px;right:10px;width:28%;height:auto;aspect-ratio:9/16;border-radius:10px;z-index:3;box-shadow:0 0 0 1px rgba(255,255,255,.35);transform:none!important}
-#quadro.grande #guia{display:none}
-#quadro.grande #topo{z-index:5;right:30%}
-#inicio{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:22px 18px;background:linear-gradient(180deg,rgba(11,11,12,.2) 0%,rgba(11,11,12,.92) 50%,#0b0b0c 100%)}
-#inicio h1{font-size:30px;line-height:1.05;margin:0 0 6px;font-weight:700;letter-spacing:-.4px}
-#inicio p{margin:0 0 14px;color:var(--muted)}
-#inicio .rot{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
-#chaveInfo{margin-top:8px;font-size:12px;color:var(--muted)}
-#chaveInfo b{color:var(--text);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
-.seg{display:flex;background:var(--panel2);border-radius:14px;padding:4px;gap:4px}
-.seg button{flex:1;padding:9px 4px 7px;border-radius:10px;font-weight:600;color:var(--muted);display:flex;flex-direction:column;align-items:center;line-height:1}
-.seg button b{font-size:22px;font-weight:700;margin-bottom:3px}
-.seg button span{font-size:12px;letter-spacing:.6px}
-.seg button.on{background:var(--accent);color:#1a1206}
-.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px;border-radius:14px;font-weight:700;font-size:17px;background:var(--accent);color:#1a1206;margin-top:14px}
-.btn:active{transform:scale(.99)}
-.btn:disabled{opacity:.6}
-.btn.sec{background:var(--panel2);color:var(--text);font-weight:600;font-size:15px;padding:13px}
-.link{margin-top:14px;font-size:12px;color:var(--muted)}
-.link code{display:block;margin-top:6px;padding:10px 12px;border-radius:10px;background:var(--panel2);color:var(--text);font-size:12px;word-break:break-all;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
-#controles{padding:4px 12px 10px;display:none;flex-direction:column;gap:8px}
+#quadro.grande #preview{inset:auto;top:14px;right:14px;width:28%;height:auto;aspect-ratio:9/16;border-radius:12px;z-index:3;box-shadow:0 0 0 1px rgba(255,255,255,.35);transform:none!important}
+#quadro.grande #guia,#quadro.grande .canto{display:none}
+#quadro.grande #topo{z-index:5;right:30%;align-items:flex-start;padding-left:14px}
+
+/* controles de baixo */
+#controles{padding:10px 14px 6px;display:none;flex-direction:column;gap:10px}
 #controles.on{display:flex}
-.info{display:flex;flex-wrap:wrap;gap:6px;padding:0 2px}
-.info:not(:has(.pill:not([hidden]))){display:none}
-.info .pill{background:var(--panel);border:1px solid var(--line)}
-.zoom{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:4px 12px}
-.zoom .lbl{font-size:12px;color:var(--muted);font-weight:600}
-.zoom .val{font-variant-numeric:tabular-nums;font-weight:700;min-width:44px;text-align:right}
-.zoom .modo{display:none;gap:2px;background:var(--panel2);border-radius:8px;padding:2px}
-.zoom .modo.on{display:flex}
-.zoom .modo button{padding:6px 8px;border-radius:6px;font-size:12px;font-weight:700;color:var(--muted)}
-.zoom .modo button.on{background:var(--accent);color:#1a1206}
-.zoom .reset{padding:7px 10px;border-radius:8px;background:var(--panel2);font-size:12px;font-weight:700}
-input[type=range]{flex:1;min-width:0;-webkit-appearance:none;appearance:none;height:38px;background:transparent;margin:0}
-input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:var(--line)}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:#fff;margin-top:-11px;box-shadow:0 2px 8px rgba(0,0,0,.5)}
-.acoes{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-.acao{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 4px 7px;border-radius:12px;background:var(--panel);border:1px solid var(--line);font-size:12px;font-weight:600;color:var(--muted);min-height:58px;width:100%;text-align:center}
-.acao svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
-.acao.on{color:var(--accent2);border-color:rgba(201,138,60,.55);background:rgba(201,138,60,.1)}
+.leituras{display:grid;grid-template-columns:repeat(4,1fr);align-items:center;background:var(--panel);border-radius:18px;padding:11px 4px;cursor:pointer}
+.leituras div{display:flex;flex-direction:column;align-items:center;gap:5px;border-left:1px solid var(--line);min-width:0}
+.leituras div:first-child{border-left:0}
+.leituras b{font:600 15px/1 var(--mono);letter-spacing:.02em;white-space:nowrap;font-variant-numeric:tabular-nums}
+.leituras small{font:500 9px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.leituras .warn b{color:var(--warn)}
+.info{display:none;flex-wrap:wrap;gap:6px}
+#controles.detalhes .info:has(.pill:not([hidden])),#controles .info:has(#stFonte:not([hidden])){display:flex}
+#controles:not(.detalhes) .info .pill:not(#stFonte){display:none}
+.info .pill{background:var(--panel);text-transform:none;letter-spacing:0;font-weight:500;line-height:1.3;backdrop-filter:none;-webkit-backdrop-filter:none}
+.zoom{display:flex;align-items:center;gap:8px;background:var(--panel);border-radius:18px;padding:6px 8px 6px 16px}
+.zoom .lbl{font:500 9px/1 var(--mono);letter-spacing:.12em;color:var(--dim);flex:1}
+.zoom .z{min-width:46px;height:36px;border-radius:11px;font:600 13px/1 var(--mono);color:var(--muted);border:1px solid transparent}
+.zoom .z.on{border-color:var(--gold);color:var(--gold)}
+.zoom input[type=range]{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.zoom .val{display:none}
+.base{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:6px 6px 2px}
+.base .esq{justify-self:start}.base .dir{justify-self:end}
+.acao{display:flex;flex-direction:column;align-items:center;gap:6px;font:500 9px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.acao .bola{width:54px;height:54px;border-radius:50%;background:var(--panel2);display:flex;align-items:center;justify-content:center;color:var(--text);transition:background .15s,color .15s}
+.acao svg{width:22px;height:22px}
+.acao.on .bola{background:var(--text);color:#000}
 .acao .corte{display:none}
-.acao.mudo{color:#f08a8e;border-color:rgba(229,72,77,.55);background:rgba(229,72,77,.1)}
+.acao.mudo .bola{background:rgba(255,59,48,.18);color:var(--err)}
+.acao.mudo{color:var(--err)}
 .acao.mudo .corte{display:block}
-.acao select{position:absolute;inset:0;opacity:0;width:100%;height:100%}
-.acao .sub{font-size:12px;font-weight:500;color:var(--muted);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acao .sub{display:none}
+#btEscuro .disparo{width:76px;height:76px;border-radius:50%;border:3px solid rgba(255,255,255,.9);padding:4px;display:block}
+#btEscuro .disparo span{display:flex;align-items:center;justify-content:center;width:100%;height:100%;border-radius:50%;background:#f2f2f2;color:#000}
+#btEscuro .disparo svg{width:24px;height:24px}
+#btSala .bola{width:auto;height:44px;padding:0 18px;border-radius:999px;background:none;border:1px solid var(--gold);color:var(--gold);font:600 12px/1 var(--mono);letter-spacing:.08em;gap:8px}
+#btSala .bola svg{width:18px;height:18px}
+#btSala.on .bola{background:var(--gold);color:#000}
+
+/* tela inicial: um cartão e um botão, como um app */
+#inicio{position:fixed;inset:0;z-index:10;display:flex;flex-direction:column;padding:calc(18px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));background:var(--bg)}
+#inicio .topo-ini{display:flex;align-items:center;justify-content:space-between;padding:4px 4px 0}
+#inicio .marca{display:flex;align-items:center;gap:9px;font:600 13px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase}
+#inicio .marca i{width:8px;height:8px;border-radius:50%;background:var(--err);box-shadow:0 0 0 4px rgba(255,59,48,.18)}
+#inicio .versao{font:500 10px/1 var(--mono);letter-spacing:.12em;color:var(--dim);text-transform:uppercase}
+#inicio .cartao-ini{flex:1;margin-top:18px;border-radius:28px;background:radial-gradient(120% 70% at 50% 0%,#22201b 0%,#121213 60%);border:1px solid rgba(255,255,255,.08);padding:28px 20px 22px;display:flex;flex-direction:column;justify-content:flex-end;position:relative;overflow:hidden}
+#inicio .cartao-ini .canto{border-color:rgba(242,193,78,.55)}
+#inicio .eti{align-self:flex-start;font:500 10px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--gold);border:1px solid rgba(242,193,78,.4);border-radius:999px;padding:7px 11px;margin-bottom:16px}
+#inicio h1{font-size:32px;line-height:1.05;margin:0 0 10px;font-weight:700;letter-spacing:-.025em}
+#inicio p{margin:0 0 24px;color:var(--muted);font-size:15px;max-width:32ch}
+.seg{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.seg button{aspect-ratio:1;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);font:600 22px/1 var(--mono);color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;transition:background .15s,color .15s,border-color .15s}
+.seg button span{font:500 9px/1 var(--mono);letter-spacing:.12em;color:var(--dim)}
+.seg button.on{border-color:var(--gold);color:var(--gold);background:rgba(242,193,78,.08)}
+.seg button.on span{color:var(--gold)}
+#chaveInfo{margin-top:16px;font-size:13px;color:var(--muted);display:flex;align-items:center;gap:9px;line-height:1.35}
+#chaveInfo b{color:var(--text);font:600 13px/1 var(--mono);letter-spacing:.06em}
+#chaveInfo::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--warn);flex:none}
+#chaveInfo.ok::before{background:var(--ok)}
+.rodape-ini{display:flex;align-items:center;gap:14px;padding:16px 4px 0}
+.rodape-ini .obs{display:flex;flex-direction:column;gap:5px;text-align:left;flex:none}
+.rodape-ini .obs b{font-size:15px;font-weight:600}
+.rodape-ini .obs small{font:500 9px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:56px;padding:14px 18px;border-radius:18px;font-weight:700;font-size:17px;background:#f2f2f2;color:#000}
+.rodape-ini .btn{flex:1}
+.btn:active{transform:scale(.985)}
+.btn:disabled{opacity:.55}
+.btn.sec{background:var(--panel2);color:var(--text);font-weight:600;font-size:15px;min-height:50px}
+#linkObs{display:none}
+
+/* folha de ajustes */
 #folha{position:fixed;inset:0;display:none;z-index:20}
 #folha.on{display:block}
 #folha .fundo{position:absolute;inset:0;background:rgba(0,0,0,.6)}
-#folha .painel{position:absolute;left:0;right:0;bottom:0;max-height:88dvh;overflow:auto;background:var(--panel);border-radius:20px 20px 0 0;padding:14px 16px calc(16px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
-#folha h2{margin:4px 0 8px;font-size:17px}
-.linha{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
-.linha label{color:var(--text);font-weight:600;font-size:14px;min-width:0}
-.linha small{display:block;color:var(--muted);font-weight:400;font-size:12px;margin-top:2px;word-break:break-all}
-.linha select,.linha input[type=text]{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:9px 10px;max-width:46%;flex:none;-webkit-user-select:text;user-select:text}
-.linha input[type=checkbox]{width:22px;height:22px;accent-color:var(--accent);flex:none}
-.ajuda{margin-top:12px;padding:12px;border-radius:12px;background:var(--panel2);color:var(--muted);font-size:13px}
+#folha .painel{position:absolute;left:0;right:0;bottom:0;max-height:90dvh;overflow:auto;background:#101012;border-radius:28px 28px 0 0;border-top:1px solid rgba(255,255,255,.08);padding:8px 16px calc(20px + env(safe-area-inset-bottom));animation:sobe .22s cubic-bezier(.2,.8,.2,1)}
+@keyframes sobe{from{transform:translateY(40px);opacity:.4}}
+#folha .alca{width:38px;height:5px;border-radius:3px;background:#34343a;margin:2px auto 12px}
+#folha .cab{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+#folha h2{margin:0;font-size:22px;font-weight:700;letter-spacing:-.01em}
+#folha .x{width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;color:var(--muted)}
+#folha .x svg{width:15px;height:15px;stroke-width:2.4}
+.grupo{margin-bottom:22px}
+.grupo>h3{margin:0 0 9px 4px;font:500 10px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.cartao{background:var(--panel);border-radius:18px;padding:0 14px}
+.linha{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);min-height:54px}
+.linha:last-child{border-bottom:0}
+.linha label{color:var(--text);font-weight:500;font-size:15px;min-width:0}
+.linha small{display:block;color:var(--muted);font-weight:400;font-size:13px;margin-top:3px;line-height:1.3}
+.linha select,.linha input[type=text]{background:var(--panel2);border:0;border-radius:11px;padding:9px 10px;max-width:44%;flex:none;font-size:15px;-webkit-user-select:text;user-select:text}
+.linha input[type=checkbox]{-webkit-appearance:none;appearance:none;width:51px;height:31px;border-radius:999px;background:#39393d;position:relative;flex:none;cursor:pointer;transition:background .2s;margin:0}
+.linha input[type=checkbox]::after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.3);transition:transform .2s}
+.linha input[type=checkbox]:checked{background:var(--ok)}
+.linha input[type=checkbox]:checked::after{transform:translateX(20px)}
+.linha .modo{display:none;gap:2px;background:var(--panel2);border-radius:11px;padding:3px}
+.linha .modo.on{display:flex}
+.linha .modo button{padding:7px 10px;border-radius:8px;font-size:13px;font-weight:600;color:var(--muted)}
+.linha .modo button.on{background:var(--text);color:#000}
+.linha.so-modo{display:none}
+.linha.so-modo:has(.modo.on){display:flex}
+.linha .mini{background:var(--panel2);border-radius:11px;padding:9px 14px;font-size:15px;font-weight:600;flex:none}
+.botoes{display:flex;flex-direction:column;gap:8px}
+.ajuda{color:var(--muted);font-size:14px;line-height:1.5}
+.ajuda summary{list-style:none;cursor:pointer;color:var(--text);font-weight:500;padding:16px 14px;background:var(--panel);border-radius:18px}
+.ajuda summary::-webkit-details-marker{display:none}
+.ajuda[open] summary{margin-bottom:12px}
+.ajuda p{margin:0 4px 10px}
 .ajuda b{color:var(--text)}
-#toast{position:fixed;left:50%;bottom:calc(150px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:#fff;color:#111;padding:10px 14px;border-radius:12px;font-weight:600;font-size:13px;opacity:0;transition:.2s;z-index:30;max-width:90vw;text-align:center;pointer-events:none}
+#btFechar{margin-top:4px}
+#toast{position:fixed;left:50%;top:calc(76px + env(safe-area-inset-top));transform:translateX(-50%) translateY(-10px);background:rgba(242,242,242,.97);color:#000;padding:11px 16px;border-radius:16px;font-weight:600;font-size:14px;opacity:0;transition:.2s;z-index:30;max-width:88vw;text-align:center;pointer-events:none;box-shadow:0 8px 30px rgba(0,0,0,.45)}
 #toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 #escuro{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:#000;z-index:15;text-align:center;padding:30px}
 #escuro.on{display:flex}
-#escuro p{margin:14px 0 0;color:#7d796f;font-size:14px}
+#escuro p{margin:16px auto 0;color:#55585e;font-size:14px;max-width:30ch}
 #gire{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:var(--bg);z-index:40;font-weight:700;font-size:18px;text-align:center;padding:30px}
 @media (orientation:landscape) and (max-height:500px){#gire{display:flex}}
+
+/* ===== ajuste às referências: visor largo, chip de formato, leituras com botões nas pontas ===== */
+#barra{grid-template-columns:44px auto 1fr 44px 44px}
+.chipTop{position:relative;height:44px;min-width:64px;padding:0 14px;border-radius:999px;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font:600 12px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+.chipTop select{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
+#rotCam{justify-self:center}
+#palco{padding:2px 14px 0}
+#quadro{border-radius:28px}
+.leituras{grid-template-columns:44px 1fr 1fr 1fr 44px;padding:8px;border-radius:20px;cursor:default;gap:0}
+.leituras .redondo{width:40px;height:40px;border-color:rgba(255,255,255,.12)}
+.leituras .redondo svg{width:18px;height:18px}
+.leituras>div:nth-child(2){border-left:0}
+#controles.detalhes #leituras{border-color:var(--gold);color:var(--gold)}
+.zoom{padding:6px 14px;gap:6px;border-radius:20px}
+.zoom .lado{display:flex;flex-direction:column;gap:5px;flex:1;min-width:0}
+.zoom .lado.dir{align-items:flex-end}
+.zoom .lado small{font:500 9px/1 var(--mono);letter-spacing:.12em;color:var(--dim);text-transform:uppercase}
+.zoom .lado b{font:600 13px/1 var(--mono);color:var(--gold);text-transform:uppercase;white-space:nowrap}
+.zoom .z{min-width:42px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
+
+<header id="barra">
+  <button type="button" class="redondo" id="btCamera" aria-label="Virar a câmera">
+    <svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 00-14.3-4.9L4 8M4 4v4h4"/><path d="M4 13a8 8 0 0014.3 4.9L20 16M20 20v-4h-4"/></svg>
+    <span class="vh" id="subCamera">traseira</span>
+  </button>
+  <label class="chipTop" id="acQual"><span id="subQual">1080p</span>
+    <select id="selQual" aria-label="Qualidade"><option value="4k">4K (se o iPhone deixar)</option><option value="1080">1080p</option><option value="720">720p</option></select>
+  </label>
+  <div id="rotCam"><b id="rotCamN">CAM 1</b><small id="rotEquipe">sem equipe</small></div>
+  <button type="button" class="redondo" id="btGuia" aria-label="Guia 9:16">
+    <svg viewBox="0 0 24 24"><rect x="5" y="2.5" width="14" height="19" rx="2.5"/><path d="M5 8.5h14M5 15.5h14M9.7 2.5v19M14.3 2.5v19"/></svg>
+  </button>
+  <button type="button" class="redondo" id="btConfig" aria-label="Ajustes">
+    <svg viewBox="0 0 24 24"><circle cx="5.5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="18.5" cy="12" r="1.3"/></svg>
+  </button>
+</header>
 
 <div id="palco">
   <div id="quadro">
@@ -140,6 +257,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
       <div class="faixa base"><span>comentários e botões</span></div>
       <i class="v1"></i><i class="v2"></i><i class="h1"></i><i class="h2"></i>
     </div>
+    <i class="canto a"></i><i class="canto b"></i><i class="canto c"></i><i class="canto d"></i>
     <div id="colegas"></div>
     <video id="salaGrande" autoplay playsinline muted hidden></video>
     <div id="salaTiles"></div>
@@ -148,106 +266,120 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
       <span class="pill" id="stSinal"><i></i>Sinal</span>
       <span class="pill" id="stSala" hidden><i></i>Sala</span>
     </div>
-    <div id="inicio">
-      <h1>NHV Cam</h1>
-      <p>Câmera do celular direto no OBS, em 9:16, sem instalar nada. Até 5 celulares ao mesmo tempo.</p>
-      <div class="rot">Este celular é a</div>
-      <div class="seg" id="segSala">
-        <button type="button" data-sala="cam1"><b>1</b><span>CAM</span></button>
-        <button type="button" data-sala="cam2"><b>2</b><span>CAM</span></button>
-        <button type="button" data-sala="cam3"><b>3</b><span>CAM</span></button>
-        <button type="button" data-sala="cam4"><b>4</b><span>CAM</span></button>
-        <button type="button" data-sala="cam5"><b>5</b><span>CAM</span></button>
-      </div>
-      <div id="chaveInfo"></div>
-      <button type="button" class="btn" id="btIniciar">Iniciar câmera</button>
-      <div class="link">No OBS, fonte Navegador 1080 x 1920 com este link (toque para copiar):<code id="linkObs"></code></div>
-    </div>
   </div>
 </div>
 
 <section id="controles">
+  <div class="leituras">
+    <button type="button" class="redondo" id="btEspelho" aria-label="Espelhar"><svg viewBox="0 0 24 24"><path d="M12 3v18"/><path d="M8 7l-4 5 4 5z"/><path d="M16 7l4 5-4 5"/></svg></button>
+    <div><b id="lRes">—</b><small>Imagem</small></div>
+    <div id="lRedeC"><b id="lRede">—</b><small>Envio</small></div>
+    <div id="lLatC"><b id="lLat">—</b><small id="lCam">Atraso</small></div>
+    <span class="vh" id="lFps"></span>
+    <button type="button" class="redondo" id="leituras" aria-label="Detalhes da transmissão"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button>
+  </div>
   <div class="info">
     <span class="pill" id="stCap" hidden><i></i></span>
     <span class="pill" id="stBit" hidden><i></i></span>
     <span class="pill" id="stFonte" hidden><i></i></span>
   </div>
   <div class="zoom">
-    <span class="lbl">Zoom</span>
-    <input type="range" id="zoom" min="1" max="5" step="0.01" value="1" aria-label="Zoom">
+    <span class="lado"><small>Zoom</small><b id="zoomTxt">1.0x</b></span>
+    <button type="button" class="z" id="btZoomReset" data-z="1">1x</button>
+    <button type="button" class="z" data-z="1.5">1.5</button>
+    <button type="button" class="z" data-z="2">2x</button>
+    <button type="button" class="z" data-z="3">3x</button>
     <span class="val" id="zoomVal">1.0x</span>
-    <div class="modo" id="zoomModo"><button type="button" data-m="digital">Digital</button><button type="button" data-m="nativo">Nativo</button></div>
-    <button type="button" class="reset" id="btZoomReset">1x</button>
+    <span class="lado dir"><small>Lente</small><b id="lLente">traseira</b></span>
+    <input type="range" id="zoom" min="1" max="5" step="0.01" value="1" aria-label="Zoom">
   </div>
-  <div class="acoes">
-    <button type="button" class="acao" id="btCamera">
-      <svg viewBox="0 0 24 24"><path d="M4 8h3l2-2h6l2 2h3v11H4z"/><circle cx="12" cy="13" r="3.5"/><path d="M17.5 3.5L20 6l-2.5 2.5M6.5 20.5L4 18l2.5-2.5"/></svg>
-      Virar<span class="sub" id="subCamera">traseira</span>
+  <div class="base">
+    <button type="button" class="acao esq" id="btAudio">
+      <span class="bola"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/><path class="corte" d="M4 3l16 18"/></svg></span>
+      Microfone<span class="sub" id="subAudio">off</span>
     </button>
-    <div class="acao" id="acQual">
-      <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10v4M7 12h3M10 10v4M14 10h2.2a2 2 0 010 4H14z"/></svg>
-      Qualidade<span class="sub" id="subQual">1080p</span>
-      <select id="selQual" aria-label="Qualidade">
-        <option value="4k">4K (se o iPhone deixar)</option>
-        <option value="1080">1080p</option>
-        <option value="720">720p</option>
-      </select>
-    </div>
-    <button type="button" class="acao" id="btEspelho">
-      <svg viewBox="0 0 24 24"><path d="M12 3v18M8 7l-4 5 4 5M16 7l4 5-4 5"/></svg>
-      Espelhar
+    <button type="button" class="acao" id="btEscuro" aria-label="Apagar a tela para o tripé">
+      <span class="disparo"><span><svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 019.5 4a8 8 0 1010.5 10.5z"/></svg></span></span>
+      Apagar tela
     </button>
-    <button type="button" class="acao" id="btAudio">
-      <svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/><path class="corte" d="M4 3l16 18"/></svg>
-      Áudio<span class="sub" id="subAudio">off</span>
-    </button>
-    <button type="button" class="acao" id="btSala">
-      <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19a5.5 5.5 0 0111 0"/><circle cx="17" cy="9" r="2.6"/><path d="M15.5 14.2a4.6 4.6 0 016 4.3"/></svg>
-      Sala<span class="sub" id="subSala">off</span>
-    </button>
-    <button type="button" class="acao" id="btGuia">
-      <svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 9h16M4 15h16M10 3v18M14 3v18"/></svg>
-      Guia 9:16
-    </button>
-    <button type="button" class="acao" id="btEscuro">
-      <svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 019.5 4a8 8 0 1010.5 10.5z"/></svg>
-      Escurecer
-    </button>
-    <button type="button" class="acao" id="btConfig">
-      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>
-      Config
+    <button type="button" class="acao dir" id="btSala">
+      <span class="bola"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19a5.5 5.5 0 0111 0"/><circle cx="17" cy="9" r="2.6"/><path d="M15.5 14.2a4.6 4.6 0 016 4.3"/></svg>Sala</span>
+      <span id="subSala">desligada</span>
     </button>
   </div>
 </section>
 
+<div id="inicio">
+  <div class="topo-ini"><span class="marca"><i></i>NHV Cam</span><span class="versao">câmera para o OBS</span></div>
+  <div class="cartao-ini">
+    <i class="canto a"></i><i class="canto b"></i>
+    <span class="eti">Até 5 celulares · 9:16</span>
+    <h1>Qual câmera é este celular?</h1>
+    <p>Escolha o número e ligue. A imagem vai direto para o OBS pelo Wi-Fi, sem instalar nada.</p>
+    <div class="seg" id="segSala">
+      <button type="button" data-sala="cam1"><b>1</b><span>CAM</span></button>
+      <button type="button" data-sala="cam2"><b>2</b><span>CAM</span></button>
+      <button type="button" data-sala="cam3"><b>3</b><span>CAM</span></button>
+      <button type="button" data-sala="cam4"><b>4</b><span>CAM</span></button>
+      <button type="button" data-sala="cam5"><b>5</b><span>CAM</span></button>
+    </div>
+    <div id="chaveInfo"></div>
+  </div>
+  <div class="rodape-ini">
+    <button type="button" class="obs" id="btLinkObs"><b>Link do OBS</b><small>toque para copiar</small></button>
+    <button type="button" class="btn" id="btIniciar">Ligar câmera</button>
+  </div>
+  <code id="linkObs"></code>
+</div>
+
 <div id="folha">
   <div class="fundo" id="folhaFundo"></div>
   <div class="painel">
-    <h2>Configurações</h2>
-    <div class="linha"><label>Sala<small>cam1 a cam5, ou outro nome</small></label><input type="text" id="cfgSala" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
-    <div class="linha"><label>Chave da equipe<small>Vem no QR do painel; impede que outra tela puxe a câmera</small></label><input type="text" id="cfgChave" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="sem chave"></div>
-    <div class="linha"><label>Bitrate<small>8 Mbps já é ótimo em 1080p; acima disso pesa no Wi-Fi com vários celulares</small></label>
-      <select id="cfgBitrate"><option value="4">4 Mbps</option><option value="6">6 Mbps</option><option value="8">8 Mbps</option><option value="12">12 Mbps</option><option value="20">20 Mbps</option><option value="30">30 Mbps</option></select></div>
-    <div class="linha"><label>Quadros por segundo</label>
-      <select id="cfgFps"><option value="30">30 fps</option><option value="60">60 fps</option></select></div>
-    <div class="linha"><label>Codec<small>H264 usa o chip do iPhone</small></label>
-      <select id="cfgCodec"><option value="auto">Auto (H264)</option><option value="h264">H264</option><option value="vp9">VP9</option><option value="vp8">VP8</option><option value="av1">AV1</option></select></div>
-    <div class="linha"><label>Ajuste no OBS<small>Preencher corta sobras; Caber deixa barras</small></label>
-      <select id="cfgFit"><option value="cover">Preencher</option><option value="contain">Caber</option></select></div>
-    <div class="linha"><label>Microfone do celular<small>Desligado, a fonte do OBS fica sem som. Ligado, o botão Áudio alterna o mudo na hora</small></label><input type="checkbox" id="cfgMic"></div>
-    <div class="linha"><label>Qual microfone<small>Com fone Bluetooth ligado, dá para manter o microfone do iPhone na live</small></label><select id="cfgMicSel"><option value="">Padrão do iPhone</option></select></div>
-    <div class="linha"><label>Lente<small>Traseira, frontal, ultra wide ou teleobjetiva, conforme o iPhone. O botão Virar alterna frontal e traseira</small></label><select id="cfgLente"></select></div>
-    <div class="linha"><label>Seu nome na sala<small>Aparece nos outros celulares quando a Sala está ligada</small></label><input type="text" id="cfgNome" placeholder="ex.: Sanny" maxlength="18" autocapitalize="words"></div>
-    <div class="linha"><label>Ouvir a sala neste celular<small>Desligue se o som dos outros estiver voltando pelo microfone (eco). Você continua sendo vista e ouvida</small></label><input type="checkbox" id="cfgOuvir" checked></div>
-    <div class="linha"><label>Ver os outros neste celular<small>Desligue para a prévia ficar só com a sua câmera. Você continua vista, ouvida e ouvindo; no OBS nada muda</small></label><input type="checkbox" id="cfgVer" checked></div>
-    <div class="linha"><label>Manter a tela ligada<small id="cfgWakeSt">Pede ao iPhone para não apagar a tela (iOS 16.4 ou mais novo)</small></label><input type="checkbox" id="cfgWake" checked></div>
-    <div class="linha"><label>Inverter largura e altura<small>Use se a imagem chegar deitada no OBS</small></label><input type="checkbox" id="cfgSwap"></div>
-    <div class="linha"><label>Link do OBS<small id="cfgLink"></small></label><button type="button" class="btn sec" style="width:auto;margin:0;padding:9px 12px" id="btCopiar">Copiar</button></div>
-    <button type="button" class="btn sec" id="btRedeFraca">Rede fraca: 720p e 4 Mbps (um toque)</button>
-    <button type="button" class="btn sec" id="btReligar">Religar a câmera (se travou depois de ligação ou Siri)</button>
-    <button type="button" class="btn sec" id="btReconectar">Reconectar o sinal</button>
-    <button type="button" class="btn" id="btFechar">Fechar</button>
-    <div class="ajuda"><b>Como usar.</b> No OBS, adicione uma fonte Navegador com o link acima, largura 1080 e altura 1920. Celular e PC no mesmo Wi-Fi conectam direto. Pinça na imagem dá zoom, arrastar move o enquadramento, toque duplo volta ao 1x. O Guia 9:16 mostra onde o Instagram cobre a imagem na live. Escurecer apaga a prévia para o celular ficar no tripé sem brilhar (a câmera continua). A linha acima do zoom mostra por onde o vídeo passa (direto, internet ou relay) e a latência. <b>Sala:</b> liga uma chamada entre os celulares da mesma chave, inclusive quem está longe: cada um vê e ouve os outros na hora, toque numa pessoa para vê-la grande, e o OBS continua pegando cada câmera separada. Use fone para não dar eco; quem está longe, toque em Rede fraca. <b>Para a live:</b> Modo Avião com Wi-Fi ligado (ligação derruba a câmera), bloqueio de orientação em retrato, carregador na tomada, Safari em primeiro plano.</div>
+    <div class="alca"></div>
+    <div class="cab"><h2>Ajustes</h2><button type="button" class="x" id="btX" aria-label="Fechar"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+
+    <div class="grupo"><h3>Imagem</h3><div class="cartao">
+      <div class="linha"><label>Lente<small>O botão de virar alterna frontal e traseira</small></label><select id="cfgLente"></select></div>
+      <div class="linha"><label>Quadros por segundo</label><select id="cfgFps"><option value="30">30 fps</option><option value="60">60 fps</option></select></div>
+      <div class="linha so-modo"><label>Tipo de zoom</label><div class="modo" id="zoomModo"><button type="button" data-m="digital">Digital</button><button type="button" data-m="nativo">Nativo</button></div></div>
+      <div class="linha"><label>No OBS<small>Preencher corta sobras; Caber deixa barras</small></label><select id="cfgFit"><option value="cover">Preencher</option><option value="contain">Caber</option></select></div>
+      <div class="linha"><label>Inverter largura e altura<small>Se a imagem chegar deitada no OBS</small></label><input type="checkbox" id="cfgSwap"></div>
+    </div></div>
+
+    <div class="grupo"><h3>Som</h3><div class="cartao">
+      <div class="linha"><label>Microfone deste celular<small>Ligado, o botão Microfone alterna o mudo na hora</small></label><input type="checkbox" id="cfgMic"></div>
+      <div class="linha"><label>Qual microfone</label><select id="cfgMicSel"><option value="">Padrão do iPhone</option></select></div>
+    </div></div>
+
+    <div class="grupo"><h3>Sala da equipe</h3><div class="cartao">
+      <div class="linha"><label>Seu nome na sala</label><input type="text" id="cfgNome" placeholder="ex.: Sanny" maxlength="18" autocapitalize="words"></div>
+      <div class="linha"><label>Ouvir a sala aqui<small>Desligue se der eco. Você continua sendo ouvida</small></label><input type="checkbox" id="cfgOuvir" checked></div>
+      <div class="linha"><label>Ver os outros aqui<small>Desligue para a prévia ficar só com a sua câmera</small></label><input type="checkbox" id="cfgVer" checked></div>
+    </div></div>
+
+    <div class="grupo"><h3>Conexão</h3><div class="cartao">
+      <div class="linha"><label>Câmera<small>cam1 a cam5, ou outro nome</small></label><input type="text" id="cfgSala" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
+      <div class="linha"><label>Chave da equipe<small>Vem no QR do painel</small></label><input type="text" id="cfgChave" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="sem chave"></div>
+      <div class="linha"><label>Envio<small>6 a 8 Mbps é ótimo em 1080p</small></label><select id="cfgBitrate"><option value="4">4 Mbps</option><option value="6">6 Mbps</option><option value="8">8 Mbps</option><option value="12">12 Mbps</option><option value="20">20 Mbps</option><option value="30">30 Mbps</option></select></div>
+      <div class="linha"><label>Codec<small>H264 usa o chip do iPhone</small></label><select id="cfgCodec"><option value="auto">Auto (H264)</option><option value="h264">H264</option><option value="vp9">VP9</option><option value="vp8">VP8</option><option value="av1">AV1</option></select></div>
+      <div class="linha"><label>Manter a tela ligada<small id="cfgWakeSt">Pede ao iPhone para não apagar a tela</small></label><input type="checkbox" id="cfgWake" checked></div>
+      <div class="linha"><label>Link do OBS<small id="cfgLink"></small></label><button type="button" class="mini" id="btCopiar">Copiar</button></div>
+    </div></div>
+
+    <div class="grupo"><h3>Se algo travar</h3><div class="botoes">
+      <button type="button" class="btn sec" id="btRedeFraca">Rede fraca: 720p e 4 Mbps</button>
+      <button type="button" class="btn sec" id="btReligar">Religar a câmera</button>
+      <button type="button" class="btn sec" id="btReconectar">Reconectar o sinal</button>
+    </div></div>
+
+    <div class="grupo"><details class="ajuda"><summary>Como usar</summary>
+      <p><b>No OBS:</b> fonte Navegador com o link acima, largura 1080 e altura 1920. Celular e PC no mesmo Wi-Fi conectam direto.</p>
+      <p><b>No celular:</b> pinça na imagem dá zoom, arrastar move o enquadramento, toque duplo volta ao 1x. A faixa de números mostra a imagem que está saindo; toque nela para ver os detalhes.</p>
+      <p><b>Sala:</b> liga uma chamada entre os celulares da mesma chave, inclusive quem está longe. Toque numa pessoa para vê-la grande. Use fone para não dar eco.</p>
+      <p><b>Para a live:</b> Modo Avião com Wi-Fi ligado, bloqueio de orientação em retrato, carregador na tomada, Safari na frente.</p>
+    </details></div>
+
+    <button type="button" class="btn" id="btFechar">Pronto</button>
   </div>
 </div>
 
@@ -323,12 +455,14 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
   /* ---------- quadro 9:16 ---------- */
   function ajustarQuadro() {
     const r = el.palco.getBoundingClientRect();
-    const w = r.width - 24, h = r.height - 16;
+    const w = r.width - 28, h = r.height - 6;
     let qw, qh;
-    if (w / h > 9 / 16) { qh = h; qw = h * 9 / 16; } else { qw = w; qh = w * 16 / 9; }
+    if (!el.guia.hidden) { if (w / h > 9 / 16) { qh = h; qw = h * 9 / 16; } else { qw = w; qh = w * 16 / 9; } }
+    else { qw = w; qh = Math.min(h, w * 16 / 9); } // visor largo como no app Câmera; o Guia mostra o 9:16 inteiro
     el.quadro.style.width = Math.max(0, qw) + 'px'; el.quadro.style.height = Math.max(0, qh) + 'px';
   }
   new ResizeObserver(ajustarQuadro).observe(el.palco);
+  new MutationObserver(ajustarQuadro).observe(el.guia, { attributes: true, attributeFilter: ['hidden'] });
   ajustarQuadro();
 
   /* ---------- tela inicial ---------- */
@@ -338,8 +472,11 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
     $('#cfgLink').textContent = linkObs();
     const ci = $('#chaveInfo');
     ci.innerHTML = '';
-    if (S.chave) { ci.append('Chave da equipe: '); const b = document.createElement('b'); b.textContent = S.chave; ci.append(b); }
-    else ci.textContent = 'Sem chave da equipe: abra pelo QR do painel para ganhar uma (evita que outra tela puxe a câmera).';
+    ci.classList.toggle('ok', !!S.chave);
+    if (S.chave) { ci.append('Equipe '); const b = document.createElement('b'); b.textContent = S.chave; ci.append(b); ci.append(' conectada pelo QR do painel'); }
+    else ci.textContent = 'Sem chave da equipe. Abra pelo QR do painel para outra tela não puxar a câmera.';
+    $('#rotCamN').textContent = rotuloCam(S.sala);
+    $('#rotEquipe').textContent = S.chave ? 'equipe ' + S.chave : 'sem equipe';
   }
   document.querySelectorAll('#segSala button').forEach((b) => b.addEventListener('click', () => { S.sala = b.dataset.sala; salvar(); pintarSala(); }));
   $('#linkObs').addEventListener('click', () => copiar(linkObs()));
@@ -351,8 +488,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
     acordar(); // primeiro de tudo, ainda dentro do gesto de toque (o Safari pode exigir)
     try {
       await abrirCamera();
-    } catch (e) { mostrarErro(e); b.disabled = false; b.textContent = 'Iniciar câmera'; return; }
-    el.inicio.style.display = 'none'; el.controles.classList.add('on'); rodando = true;
+    } catch (e) { mostrarErro(e); b.disabled = false; b.textContent = 'Ligar câmera'; return; }
+    el.inicio.style.display = 'none'; el.controles.classList.add('on'); document.body.classList.add('ao-vivo'); rodando = true;
     try { await conectarSinal(); } catch (e) { mostrarErro(e); }
     if (S.colab) entrarSalaEq().catch((e) => { console.warn('sala', e); toast('A sala não abriu: ' + ((e && e.message) || e), 4000); });
   });
@@ -654,7 +791,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
   }
   el.salaGrande.addEventListener('click', () => mostrarGrande(null));
   function pintarSalaEq() {
-    if (!salaEq) { el.stSala.hidden = true; el.subSala.textContent = 'off'; return; }
+    if (!salaEq) { el.stSala.hidden = true; el.subSala.textContent = 'desligada'; return; }
     const m = salaEq.membros();
     const nomes = m.map((x) => rotuloMembro(x.meta) + (x.estado === 'connected' ? '' : ' (conectando)'));
     if (salaEq.status !== 'SUBSCRIBED') pill(el.stSala, 'Sala: conectando', 'warn');
@@ -835,7 +972,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
     let alvo = null;
     for (const p of peers.values()) if (p.pc.connectionState === 'connected' && !p.preview) { alvo = p; break; }
     if (!alvo) for (const p of peers.values()) if (p.pc.connectionState === 'connected') { alvo = p; break; }
-    if (!alvo) { el.stBit.hidden = true; el.stFonte.hidden = true; el.stCap.hidden = !videoTrack; return; }
+    if (!alvo) { el.stBit.hidden = true; el.stFonte.hidden = true; el.stCap.hidden = !videoTrack; leituras(null); return; }
     // a fonte do OBS está no tamanho certo? (o OBS manda o tamanho que deu à página)
     let fonteErrada = null;
     for (const p of peers.values()) if (!p.preview && p.rx && p.rx.vw && p.rx.fonteOk === false) { fonteErrada = p.rx; break; }
@@ -870,6 +1007,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
       if (rtt != null) partes.push(rtt + ' ms');
       if (cam.grau === 'relay' || cam.grau === 'internet') tipo = 'warn';
       pill(el.stBit, partes.join(' · '), tipo);
+      leituras({ w: out.frameWidth, h: out.frameHeight, fps: out.framesPerSecond, bps, rtt, cam, tipo });
       el.stCap.hidden = true; // o pill de estatísticas já traz a resolução que está saindo
     } catch (e) {}
   }, 1000);
@@ -965,6 +1103,43 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
     setTimeout(() => { if (!videoTrack || videoTrack.readyState === 'ended' || videoTrack.muted) { tentativasReligar = 0; religar('Voltou para a página'); } }, 1200);
   });
   window.addEventListener('pagehide', () => { if (sig) for (const id of peers.keys()) sig.enviar('bye', {}, id); if (salaEq) salaEq.sair(); });
+
+  /* ---------- leituras, zoom em atalhos e detalhes (interface) ---------- */
+  function leituras(d) {
+    const res = $('#lRes'), fps = $('#lFps'), rede = $('#lRede'), lat = $('#lLat');
+    if (!d) {
+      const s = videoTrack && videoTrack.getSettings ? videoTrack.getSettings() : {};
+      res.textContent = s.width ? Math.min(s.width, s.height) + 'p' : '—';
+      fps.textContent = s.frameRate ? Math.round(s.frameRate) : '—';
+      rede.textContent = '—'; lat.textContent = '—'; $('#lCam').textContent = 'Atraso';
+      $('#lRedeC').classList.remove('warn'); return;
+    }
+    res.textContent = d.w ? Math.min(d.w, d.h) + 'p' : '—';
+    fps.textContent = d.fps ? Math.round(d.fps) : '—';
+    rede.textContent = d.bps > 0 ? (d.bps / 1e6).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + ' Mb' : '—';
+    lat.textContent = d.rtt != null ? d.rtt + ' ms' : '—';
+    const g = d.cam && d.cam.grau;
+    $('#lCam').textContent = g === 'relay' ? 'Relay' : g === 'internet' ? 'Internet' : 'Atraso';
+    $('#lRedeC').classList.toggle('warn', d.tipo === 'warn');
+    $('#lLatC').classList.toggle('warn', g === 'relay' || g === 'internet');
+  }
+  setInterval(() => { if (rodando && !peers.size) leituras(null); }, 1500);
+  const chips = document.querySelectorAll('.zoom .z');
+  chips.forEach((c) => { if (c.id !== 'btZoomReset') c.addEventListener('click', () => { el.zoom.value = c.dataset.z; el.zoom.dispatchEvent(new Event('input')); }); });
+  function marcarZoom() {
+    const v = parseFloat(el.zoomVal.textContent) || 1;
+    chips.forEach((c) => c.classList.toggle('on', Math.abs(parseFloat(c.dataset.z) - v) < 0.05));
+  }
+  new MutationObserver(marcarZoom).observe(el.zoomVal, { childList: true, characterData: true, subtree: true });
+  marcarZoom();
+  const espelharTxt = () => { $('#zoomTxt').textContent = el.zoomVal.textContent; $('#lLente').textContent = el.subCamera.textContent; };
+  new MutationObserver(espelharTxt).observe(el.zoomVal, { childList: true, characterData: true, subtree: true });
+  new MutationObserver(espelharTxt).observe(el.subCamera, { childList: true, characterData: true, subtree: true });
+  espelharTxt();
+  const detalhes = () => el.controles.classList.toggle('detalhes');
+  $('#leituras').addEventListener('click', detalhes);
+  $('#btX').addEventListener('click', fecharFolha);
+  $('#btLinkObs').addEventListener('click', () => copiar(linkObs()));
 
   // ganchos para o teste automatizado
   window.__nhvcam = { peers, reiniciarIce, salaCompleta, estado: () => S, sala: () => salaEq, tiles };

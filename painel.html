@@ -6,84 +6,121 @@
 <title>NHV Cam · Painel</title>
 <meta name="description" content="Painel do PC: prévia das câmeras, link do OBS e QR para abrir no celular.">
 <link rel="icon" type="image/png" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#0b0b0c;--panel:#141416;--panel2:#1c1c1f;--line:#2a2a2f;--text:#f3f0ea;--muted:#9b978f;--accent:#c98a3c;--ok:#4cc38a;--warn:#e9b949;--err:#e5484d}
+:root{--bg:#0a0a0b;--panel:#141416;--panel2:#1d1d20;--line:rgba(255,255,255,.08);--text:#f2f2f2;--muted:#8a8f98;--dim:#5c6068;--gold:#f2c14e;--ok:#34d27b;--warn:#f5a623;--err:#ff3b30;--mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 -apple-system,BlinkMacSystemFont,Inter,"Segoe UI",Roboto,sans-serif}
-header{padding:22px 28px 6px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
-h1{margin:0;font-size:22px;letter-spacing:-.3px}
-header p{margin:0;color:var(--muted)}
-main{padding:12px 28px 40px;display:grid;grid-template-columns:repeat(auto-fit,minmax(460px,1fr));gap:18px;align-items:start}
-.nova{grid-column:1/-1;display:flex;gap:8px;align-items:center;color:var(--muted);font-size:14px;flex-wrap:wrap}
-.nova input{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:9px 10px;color:var(--text);font:inherit}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px;display:grid;grid-template-columns:200px minmax(0,1fr);gap:16px}
-.card>div{min-width:0}
-.card h2{margin:0 0 2px;font-size:17px}
-.estado{font-size:13px;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:6px}
-.estado i{width:8px;height:8px;border-radius:50%;background:var(--muted);display:inline-block;flex:none}
-.estado.ok i{background:var(--ok)}.estado.warn i{background:var(--warn)}.estado.err i{background:var(--err)}
-.previa{position:relative;width:200px;aspect-ratio:9/16;background:#000;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;border:0;cursor:pointer;border-radius:12px;padding:10px 14px;background:var(--panel2);font-weight:600;font-size:14px;transition:background .15s}
+button:hover{background:#26262a}
+button.p{background:var(--text);color:#000}
+button.p:hover{background:#fff}
+button.x{background:none;color:var(--muted);padding:2px 6px;font-size:11px}
+select,input{font:inherit;color:inherit;background:var(--panel2);border:1px solid transparent;border-radius:12px;padding:9px 12px;font-size:14px}
+.topo{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:12px;padding:14px 28px;background:rgba(10,10,11,.85);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.marca{display:flex;align-items:center;gap:10px;font:600 13px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;margin-right:auto}
+.marca i{width:8px;height:8px;border-radius:50%;background:var(--err);box-shadow:0 0 0 4px rgba(255,59,48,.18)}
+.marca span{color:var(--dim)}
+.equipe{display:flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:5px 5px 5px 14px}
+.equipe small{font:500 10px/1 var(--mono);letter-spacing:.12em;color:var(--dim);text-transform:uppercase}
+.equipe input{width:84px;background:none;padding:6px 0;font:600 15px/1 var(--mono);letter-spacing:.06em;color:var(--gold);border-radius:0}
+.equipe button{padding:8px 12px;font-size:13px}
+main{padding:24px 28px 10px}
+.grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:16px;align-items:start}
+.card{background:var(--panel);border-radius:24px;padding:10px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.previa{position:relative;width:100%;aspect-ratio:9/16;background:#000;border-radius:16px;overflow:hidden}
 .previa iframe{width:100%;height:100%;border:0;display:block;background:#000}
-.previa .pausada{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;text-align:center;padding:12px;background:#000}
+.previa .pausada{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--dim);font:500 11px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;text-align:center;padding:12px;background:#0d0d0e}
 .previa .pausada[hidden]{display:none}
-.linha{margin-top:10px}
-.linha label{display:block;font-size:12px;color:var(--muted);font-weight:600;margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px}
+.previa .sobre{position:absolute;left:10px;right:10px;top:10px;display:flex;pointer-events:none}
+.card h2{margin:0;font:600 12px/1 var(--mono);letter-spacing:.08em;color:#fff;background:rgba(14,14,16,.62);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:8px 11px;border-radius:999px;pointer-events:auto;white-space:nowrap}
+.estado{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);padding:0 4px;min-height:18px;line-height:1.3}
+.estado i{width:7px;height:7px;border-radius:50%;background:var(--muted);display:inline-block;flex:none}
+.estado.ok i{background:var(--ok)}.estado.warn i{background:var(--warn)}.estado.err i{background:var(--err)}
+.estado.ok span{color:var(--text)}
+.acoesCard{display:grid;grid-template-columns:1fr auto;gap:6px}
+.btPrevia{font-size:13px;padding:10px 12px}
+details.mais{border-top:1px solid var(--line);padding-top:4px}
+details.mais summary{list-style:none;cursor:pointer;font-size:13px;color:var(--muted);padding:6px 4px;display:flex;justify-content:space-between}
+details.mais summary::after{content:"+";font-family:var(--mono)}
+details.mais[open] summary::after{content:"−"}
+details.mais summary::-webkit-details-marker{display:none}
+.qr{display:flex;gap:12px;align-items:center;margin:6px 0 10px}
+.qr .cod{background:#fff;padding:7px;border-radius:12px;line-height:0;flex:none}
+.qr .cod img,.qr .cod canvas{width:96px!important;height:96px!important}
+.qr small{color:var(--muted);font-size:12px;line-height:1.4}
+.linha{margin-top:8px}
+.linha label{display:block;font:500 9px/1 var(--mono);color:var(--dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:.12em}
 .copiar{display:flex;gap:6px}
-.copiar input{flex:1;min-width:0;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:9px 10px;color:var(--text);font:13px ui-monospace,SFMono-Regular,Menlo,monospace}
-button{font:inherit;color:inherit;border:0;cursor:pointer;border-radius:10px;padding:9px 12px;background:var(--panel2);font-weight:600}
-button.p{background:var(--accent);color:#1a1206}
-button.x{background:none;color:var(--muted);padding:4px 8px}
-select{font:inherit;color:inherit;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
-.opcoes{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-.qr{display:flex;gap:14px;align-items:center;margin-top:12px}
-.qr .cod{background:#fff;padding:8px;border-radius:10px;line-height:0;flex:none}
-.qr small{color:var(--muted);font-size:12px}
-.tiles{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.copiar input{flex:1;min-width:0;font:12px var(--mono);padding:9px 10px}
+.copiar button{padding:9px 12px;font-size:13px}
+.opcoes{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.opcoes select{font-size:13px;padding:8px 10px;flex:1;min-width:0}
+.extra{display:flex;align-items:center;gap:8px;margin-top:16px;color:var(--dim);font-size:13px;flex-wrap:wrap}
+.extra input{width:200px;font-size:13px}
+.extra #salasAtivas{font-family:var(--mono);font-size:12px}
+.baixo{display:grid;grid-template-columns:1.1fr 1fr;gap:16px;padding:16px 28px 0}
+.bloco{background:var(--panel);border-radius:24px;padding:22px;min-width:0}
+.bloco h3{margin:0 0 4px;font-size:18px;letter-spacing:-.01em}
+.bloco>p{margin:6px 0 16px;color:var(--muted);font-size:14px;max-width:62ch}
+.bloco>p b{color:var(--text)}
+.bloco small{color:var(--muted);display:block;margin-top:10px;font-size:12px;line-height:1.5}
+.bloco small code,.ajuda code{font:12px var(--mono);background:var(--panel2);padding:2px 6px;border-radius:6px;color:var(--text)}
+#salaCard .estado{padding:0;margin-bottom:12px}
+label.chk{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:14px}
+label.chk input{accent-color:var(--ok);width:16px;height:16px}
+.tiles{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
 .tiles:empty{display:none}
-.tile{position:relative;width:120px;aspect-ratio:9/16;border-radius:10px;overflow:hidden;background:#000;border:1px solid var(--line)}
+.tile{position:relative;width:110px;aspect-ratio:9/16;border-radius:12px;overflow:hidden;background:#000}
 .tile video{width:100%;height:100%;object-fit:cover;display:block}
-.tile span{position:absolute;left:0;right:0;bottom:0;font-size:12px;font-weight:600;padding:3px 6px;background:rgba(0,0,0,.6);color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#salaCard{grid-column:1/-1;grid-template-columns:1fr}
-#salaCard p{margin:6px 0 10px;color:var(--muted)}
-#salaCard p b{color:var(--text)}
-#salaCard label.chk{display:flex;align-items:center;gap:6px;color:var(--muted)}
-#salaCard small{color:var(--muted);display:block;margin-top:6px}
-#salaCard small code{font:12px ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--panel2);padding:2px 6px;border-radius:6px;color:var(--text)}
-.ajuda{grid-column:1/-1;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px 20px;color:var(--muted);font-size:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}
-.ajuda h3{margin:0 0 8px;color:var(--text);font-size:15px}
-.ajuda ol,.ajuda ul{margin:0;padding-left:20px}
-.ajuda li{margin:4px 0}
+.tile span{position:absolute;left:0;right:0;bottom:0;font-size:12px;font-weight:600;padding:3px 6px;background:linear-gradient(transparent,rgba(0,0,0,.75));color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ajudaBox{padding:16px 28px 40px}
+.ajuda{background:var(--panel);border-radius:24px;color:var(--muted);font-size:14px}
+.ajuda>summary{list-style:none;cursor:pointer;padding:20px 22px;font-size:16px;font-weight:600;color:var(--text);display:flex;justify-content:space-between}
+.ajuda>summary::-webkit-details-marker{display:none}
+.ajuda>summary::after{content:"+";font-family:var(--mono);color:var(--muted)}
+.ajuda[open]>summary::after{content:"−"}
+.ajuda .colunas{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:22px;padding:0 22px 22px}
+.ajuda h3{margin:0 0 8px;color:var(--text);font:600 10px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase}
+.ajuda ol,.ajuda ul{margin:0;padding-left:18px}
+.ajuda li{margin:5px 0;line-height:1.45}
 .ajuda b{color:var(--text)}
-.ajuda code{font:12px ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--panel2);padding:2px 6px;border-radius:6px;color:var(--text)}
-@media (max-width:560px){main{grid-template-columns:1fr;padding:12px 16px 30px}.card{grid-template-columns:1fr}.previa{width:100%;max-width:240px}header{padding:18px 16px 4px}}
-@media (max-width:1000px){main{grid-template-columns:1fr}}
+@media (max-width:900px){.baixo{grid-template-columns:1fr}}
+@media (max-width:560px){.topo,main,.baixo,.ajudaBox{padding-left:16px;padding-right:16px}.grade{grid-template-columns:1fr 1fr;gap:10px}}
 </style>
 </head>
 <body>
-<header><h1>NHV Cam · painel</h1><p>Até 5 celulares como câmera no OBS. Prévia, link do OBS e QR para abrir no celular.</p></header>
-<main id="main">
-  <div class="nova">Chave da equipe: <input id="inChave" autocapitalize="off" spellcheck="false" style="width:110px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace"> <button id="btNovaChave">Gerar nova</button> <span>Vai no QR e no link do OBS. Só quem tem a chave entra nas câmeras; troque a chave e todo mundo precisa reabrir.</span></div>
-  <div class="nova">Salas: <span id="salasAtivas"></span> <input id="novaSala" placeholder="outra sala (ex.: cam6)" autocapitalize="off" spellcheck="false"> <button id="btNova">Adicionar</button> <button id="btTodas">Pausar todas as prévias</button></div>
-  <section class="card" id="salaCard">
-    <div>
-      <h2>Sala da equipe e collab de longe</h2>
-      <div class="estado"><i></i><span>PC fora da sala</span></div>
-      <p>Quem tocar em <b>Sala</b> no celular (com esta chave) passa a ver e ouvir os outros celulares da equipe na hora, como numa chamada, enquanto o OBS continua pegando cada câmera separada. É assim que uma convidada entra de longe: ela abre o link de uma CAM livre, toca em Iniciar câmera e em Sala. Fone nos celulares, senão dá eco.</p>
-      <div class="opcoes"><button class="p" id="btSalaPc">Entrar na sala com este PC (ouvir e falar; use fone)</button><label class="chk"><input type="checkbox" id="chkFalar" checked> microfone do PC</label></div>
-      <div id="salaPcTiles" class="tiles"></div>
-      <div class="linha"><label>Duas câmeras numa fonte só do OBS (Navegador, 1080 x 1920)</label>
-        <div class="opcoes" style="margin-top:0">
-          <select id="colA" title="Câmera A"></select>
-          <select id="colB" title="Câmera B"></select>
-          <select id="colLayout" title="Layout"><option value="dividido">Dividido: A em cima, B embaixo</option><option value="pip">A inteira, B pequena no canto</option><option value="lado">Lado a lado</option></select>
-        </div>
-        <div class="copiar" style="margin-top:8px"><input readonly id="inCollab"><button class="p" id="btCollab">Copiar</button></div>
-        <small>Use esta fonte no lugar das fontes separadas dessas duas câmeras (cada fonte a mais é um vídeo a mais que o celular manda). Para escrever os nomes na tela, acrescente <code>&amp;na=Sanny&amp;nb=Convidada</code> ao link.</small>
-      </div>
-    </div>
+<header class="topo">
+  <div class="marca"><i></i>NHV Cam <span>· painel</span></div>
+  <div class="equipe"><small>Equipe</small><input id="inChave" autocapitalize="off" spellcheck="false" aria-label="Chave da equipe"><button id="btNovaChave">Gerar nova</button></div>
+  <button id="btTodas">Pausar todas as prévias</button>
+</header>
+<main>
+  <div class="grade" id="main"><i id="ajuda" hidden></i></div>
+  <div class="extra">Câmeras: <span id="salasAtivas"></span> <input id="novaSala" placeholder="outra câmera (ex.: cam6)" autocapitalize="off" spellcheck="false"> <button id="btNova">Adicionar</button></div>
+</main>
+<div class="baixo">
+  <section class="bloco" id="salaCard">
+    <h3>Sala da equipe</h3>
+    <p>Quem toca em <b>Sala</b> no celular vê e ouve os outros na hora, como numa chamada. É assim que uma convidada entra de longe, e o OBS continua pegando cada câmera separada.</p>
+    <div class="estado"><i></i><span>PC fora da sala</span></div>
+    <div class="opcoes" style="align-items:center;gap:14px"><button class="p" id="btSalaPc">Entrar na sala com este PC</button><label class="chk"><input type="checkbox" id="chkFalar" checked> usar o microfone do PC (com fone)</label></div>
+    <div id="salaPcTiles" class="tiles"></div>
   </section>
-  <section class="ajuda" id="ajuda">
-    <h2 style="grid-column:1/-1;margin:0;font-size:17px;color:var(--text)">Como montar e manter no ar</h2>
+  <section class="bloco">
+    <h3>Duas câmeras numa fonte só</h3>
+    <p>Uma fonte Navegador do OBS (1080 x 1920) com duas câmeras juntas, para a collab.</p>
+    <div class="opcoes" style="margin-top:0">
+      <select id="colA" title="Câmera A"></select>
+      <select id="colB" title="Câmera B"></select>
+      <select id="colLayout" title="Layout"><option value="dividido">A em cima, B embaixo</option><option value="pip">A inteira, B no canto</option><option value="lado">Lado a lado</option></select>
+    </div>
+    <div class="copiar" style="margin-top:8px"><input readonly id="inCollab"><button class="p" id="btCollab">Copiar</button></div>
+    <small>Use no lugar das duas fontes separadas. Para escrever os nomes na tela, acrescente <code>&amp;na=Sanny&amp;nb=Convidada</code> ao link.</small>
+  </section>
+</div>
+<div class="ajudaBox"><details class="ajuda"><summary>Como montar e manter no ar</summary><div class="colunas">
     <div>
       <h3>No OBS</h3>
       <ol>
@@ -98,7 +135,7 @@ select{font:inherit;color:inherit;background:var(--panel2);border:1px solid var(
       <h3>No iPhone</h3>
       <ol>
         <li>Leia o QR (ou abra o link) no <b>Safari</b>.</li>
-        <li>Escolha qual CAM (1 a 5) é aquele celular e toque em <b>Iniciar câmera</b>. Permita a câmera.</li>
+        <li>Escolha qual CAM (1 a 5) é aquele celular e toque em <b>Ligar câmera</b>. Permita a câmera.</li>
         <li>Pinça dá zoom, arrastar move o enquadramento, toque duplo volta ao 1x.</li>
         <li>Feche Camo e Iriun antes: eles seguram a câmera.</li>
         <li>Mantenha o Safari aberto em primeiro plano e o celular na vertical.</li>
@@ -159,26 +196,22 @@ select{font:inherit;color:inherit;background:var(--panel2);border:1px solid var(
         <li>Imagem pesada no OBS: Configurações, Avançado, ligue "Aceleração de hardware da fonte Navegador".</li>
       </ul>
     </div>
-  </section>
-</main>
+  </div></details></div>
 
 <template id="tplCard">
   <section class="card">
-    <div>
-      <div class="previa"><iframe allow="autoplay" title="prévia"></iframe><div class="pausada" hidden>Prévia pausada</div></div>
-      <div class="opcoes"><button class="btPrevia">Pausar prévia</button></div>
-    </div>
-    <div>
-      <h2></h2>
-      <div class="estado"><i></i><span>conectando</span></div>
-      <div class="linha"><label>Link para o OBS (fonte Navegador, 1080 x 1920)</label><div class="copiar"><input readonly class="inObs"><button class="p btObs">Copiar</button></div></div>
+    <div class="previa"><iframe allow="autoplay" title="prévia"></iframe><div class="pausada" hidden>Prévia pausada</div><div class="sobre"><h2></h2></div></div>
+    <div class="estado"><i></i><span>conectando</span></div>
+    <div class="acoesCard"><button class="p btObs">Copiar link do OBS</button><button class="btPrevia">Pausar</button></div>
+    <details class="mais"><summary>Abrir no celular e opções</summary>
+      <div class="qr"><div class="cod"></div><small>Aponte a câmera do iPhone e abra no Safari.</small></div>
+      <div class="linha"><label>Link do celular</label><div class="copiar"><input readonly class="inCel"><button class="btCel">Copiar</button></div></div>
+      <div class="linha"><label>Link do OBS (1080 x 1920)</label><div class="copiar"><input readonly class="inObs"></div></div>
       <div class="opcoes">
         <select class="selCodec"><option value="auto">Codec auto (H264)</option><option value="h264">H264</option><option value="vp9">VP9</option><option value="vp8">VP8</option></select>
         <select class="selFit"><option value="cover">Preencher 9:16</option><option value="contain">Caber (barras)</option></select>
       </div>
-      <div class="linha"><label>Abrir no celular</label><div class="copiar"><input readonly class="inCel"><button class="btCel">Copiar</button></div></div>
-      <div class="qr"><div class="cod"></div><small>Aponte a câmera do iPhone para o QR e abra no Safari. Depois toque em Iniciar câmera.</small></div>
-    </div>
+    </details>
   </section>
 </template>
 
@@ -225,7 +258,7 @@ select{font:inherit;color:inherit;background:var(--panel2);border:1px solid var(
     const estado = n.querySelector('.estado'), inObs = n.querySelector('.inObs'), inCel = n.querySelector('.inCel');
     const selCodec = n.querySelector('.selCodec'), selFit = n.querySelector('.selFit');
     const rotulo = /^cam[1-5]$/.test(sala) ? 'CAM ' + sala.slice(3) : sala.toUpperCase();
-    n.querySelector('h2').textContent = rotulo + ' (sala ' + sala + ')';
+    n.querySelector('h2').textContent = rotulo;
     if (!FIXAS.includes(sala)) {
       const x = document.createElement('button'); x.className = 'x'; x.textContent = 'Remover'; x.title = 'Tirar do painel';
       n.querySelector('h2').append(' ', x);
@@ -244,7 +277,7 @@ select{font:inherit;color:inherit;background:var(--panel2);border:1px solid var(
     let ligada = true;
     const setPrevia = (on) => {
       ligada = on;
-      pausada.hidden = on; btPrevia.textContent = on ? 'Pausar prévia' : 'Ligar prévia';
+      pausada.hidden = on; btPrevia.textContent = on ? 'Pausar' : 'Ligar';
       if (on) { iframe.src = srcPrevia; return; }
       setEstado('warn', 'prévia pausada');
       // avisa a prévia para se despedir do celular e só depois descarrega
@@ -297,7 +330,7 @@ select{font:inherit;color:inherit;background:var(--panel2);border:1px solid var(
     if (salaPc) { salaPc.sair(); salaPc = null; }
     if (micPc) { micPc.getTracks().forEach((t) => t.stop()); micPc = null; }
     tilesPc.innerHTML = '';
-    btSalaPc.textContent = 'Entrar na sala com este PC (ouvir e falar; use fone)';
+    btSalaPc.textContent = 'Entrar na sala com este PC';
     pintarSalaPc();
   }
   btSalaPc.addEventListener('click', async () => {
