@@ -60,9 +60,7 @@ svg{stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-l
 #guia[hidden]{display:none}
 #guia .faixa{position:absolute;left:0;right:0;background:rgba(244,239,231,.32);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center}
 #guia .faixa.topo{top:0;height:13.02%;border-bottom:2px dashed rgba(185,227,59,.95)}
-#guia .faixa.topo span{display:none}
 #guia .faixa.base{bottom:0;height:21.88%;border-top:2px dashed rgba(185,227,59,.95);align-items:flex-start;padding-top:10px}
-#guia .faixa span{font:500 12px/1 var(--px);color:var(--tinta);background:var(--lima);padding:6px 10px;border-radius:999px}
 #guia i{position:absolute;background:rgba(255,255,255,.35)}
 #guia .v1{left:33.33%;top:0;bottom:0;width:1px}#guia .v2{left:66.66%;top:0;bottom:0;width:1px}
 #guia .h1{top:33.33%;left:0;right:0;height:1px}#guia .h2{top:66.66%;left:0;right:0;height:1px}
@@ -268,6 +266,42 @@ body.ao-vivo #controles.detalhes #leituras{background:var(--tinta)}
 body.ao-vivo .pill{background:rgba(255,255,255,.88)}
 body.ao-vivo .pill.big.ok{background:var(--err)}
 @media (min-width:900px){body.ao-vivo #controles{background:linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,.42))}}
+
+/* ===== guia: esboço da live por cima da imagem ===== */
+#barra{grid-template-columns:46px auto 1fr 46px}
+#guia .faixa{position:absolute;left:0;right:0;background:none;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;display:flex;border:0!important;padding:0 12px}
+#guia .faixa.topo{top:0;height:13.02%;align-items:flex-end;gap:7px;padding-bottom:9px;background:linear-gradient(180deg,rgba(0,0,0,.45),rgba(0,0,0,0))}
+#guia .faixa.base{bottom:0;height:21.88%;flex-direction:column;justify-content:flex-end;align-items:stretch;gap:8px;padding-bottom:12px;background:linear-gradient(0deg,rgba(0,0,0,.5),rgba(0,0,0,0))}
+#guia .faixa.topo::after,#guia .faixa.base::before{content:"";position:absolute;left:0;right:0;height:0;border-top:1.5px dashed rgba(185,227,59,.9)}
+#guia .faixa.topo::after{bottom:0}#guia .faixa.base::before{top:0}
+#guia .av{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.85);flex:none;box-shadow:0 0 0 2px rgba(255,255,255,.4)}
+#guia .nome{display:flex;flex-direction:column;gap:4px;width:64px}
+#guia .nome b,#guia .txt b{display:block;height:6px;border-radius:3px;background:rgba(255,255,255,.85)}
+#guia .nome b+b,#guia .txt b+b{width:70%;opacity:.6}
+#guia .vivo{font:800 10px/1 'Zalando',sans-serif;text-transform:uppercase;letter-spacing:.04em;color:#fff;background:linear-gradient(90deg,#e5372b,#f06b3a);padding:5px 7px;border-radius:5px;margin-left:2px}
+#guia .olho{font:700 11px/1 'Zalando',sans-serif;color:#fff;background:rgba(0,0,0,.35);padding:5px 7px;border-radius:5px}
+#guia .xis{margin-left:auto;width:14px;height:14px;position:relative;opacity:.9}
+#guia .xis::before,#guia .xis::after{content:"";position:absolute;left:6px;top:-1px;width:2px;height:16px;border-radius:1px;background:#fff;transform:rotate(45deg)}
+#guia .xis::after{transform:rotate(-45deg)}
+#guia .com{display:flex;align-items:center;gap:8px}
+#guia .com .av{width:22px;height:22px}
+#guia .txt{display:flex;flex-direction:column;gap:4px;width:58%}
+#guia .campo{display:flex;align-items:center;justify-content:space-between;height:34px;border-radius:999px;border:1.5px solid rgba(255,255,255,.75);padding:0 6px 0 14px;margin-top:2px}
+#guia .campo span{font:500 12px/1 'Zalando',sans-serif;color:rgba(255,255,255,.85)}
+#guia .campo .cor{width:22px;height:22px;position:relative}
+#guia .campo .cor::before{content:"";position:absolute;inset:3px;background:#fff;clip-path:path('M8 14.5C3 11 0 8.3 0 5 0 2.2 2.1 0 4.7 0 6.1 0 7.3.7 8 1.8 8.7.7 9.9 0 11.3 0 13.9 0 16 2.2 16 5c0 3.3-3 6-8 9.5z')}
+#guia .zona{position:absolute;left:50%;top:13.02%;transform:translate(-50%,10px);font:500 11px/1 var(--px);color:var(--tinta);background:var(--lima);padding:5px 9px;border-radius:999px}
+#guia i{background:rgba(255,255,255,.16)}
+.chipGuia{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);z-index:5;display:flex;align-items:center;gap:8px;height:40px;padding:0 16px 0 12px;border-radius:999px;background:rgba(255,255,255,.9);color:var(--tinta);font-size:13px;font-weight:700;box-shadow:0 8px 22px -8px rgba(0,0,0,.45);white-space:nowrap}
+.chipGuia svg{width:18px;height:18px}
+.chipGuia .des{display:none}
+.chipGuia.on{background:var(--tinta);color:var(--papel);bottom:calc(21.88% + 12px)}
+.chipGuia.on svg{color:var(--lima)}
+.chipGuia.on .lig{display:none}.chipGuia.on .des{display:inline}
+body:not(.ao-vivo) .chipGuia,#quadro.grande .chipGuia{display:none}
+#salaTiles{bottom:66px}
+#quadro:has(#guia:not([hidden])) #topo{top:13.02%;padding-top:12px}
+#quadro:has(#guia:not([hidden])) .canto,#guia .zona{display:none}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
 @media (min-width:900px){#inicio .cartao-ini{padding-bottom:150px}}
@@ -284,9 +318,6 @@ body.ao-vivo .pill.big.ok{background:var(--err)}
     <select id="selQual" aria-label="Qualidade"><option value="4k">4K (se o iPhone deixar)</option><option value="1080">1080p</option><option value="720">720p</option></select>
   </label>
   <div id="rotCam"><b id="rotCamN">CAM 1</b><small id="rotEquipe">sem equipe</small></div>
-  <button type="button" class="redondo" id="btGuia" aria-label="Guia 9:16">
-    <svg viewBox="0 0 24 24"><rect x="5" y="2.5" width="14" height="19" rx="2.5"/><path d="M5 8.5h14M5 15.5h14M9.7 2.5v19M14.3 2.5v19"/></svg>
-  </button>
   <button type="button" class="redondo" id="btConfig" aria-label="Ajustes">
     <svg viewBox="0 0 24 24"><circle cx="5.5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="18.5" cy="12" r="1.3"/></svg>
   </button>
@@ -296,10 +327,18 @@ body.ao-vivo .pill.big.ok{background:var(--err)}
   <div id="quadro">
     <video id="preview" autoplay playsinline muted></video>
     <div id="guia" hidden>
-      <div class="faixa topo"><span>cabeçalho do Instagram</span></div>
-      <div class="faixa base"><span>comentários e botões</span></div>
       <i class="v1"></i><i class="v2"></i><i class="h1"></i><i class="h2"></i>
+      <div class="faixa topo">
+        <span class="av"></span><span class="nome"><b></b><b></b></span><span class="vivo">ao vivo</span><span class="olho">128</span><span class="xis"></span>
+      </div>
+      <div class="faixa base">
+        <div class="com"><span class="av"></span><span class="txt"><b></b><b></b></span></div>
+        <div class="com"><span class="av"></span><span class="txt"><b></b><b style="width:46%"></b></span></div>
+        <div class="campo"><span>Comente...</span><i class="cor"></i></div>
+      </div>
+      <span class="zona">área livre</span>
     </div>
+    <button type="button" class="chipGuia" id="btGuia" aria-label="Ver como no Instagram"><svg viewBox="0 0 24 24"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M6 7h12M6 16.5h12"/></svg><span class="lig">Ver como no Instagram</span><span class="des">Esconder</span></button>
     <i class="canto a"></i><i class="canto b"></i><i class="canto c"></i><i class="canto d"></i>
     <div id="colegas"></div>
     <video id="salaGrande" autoplay playsinline muted hidden></video>
