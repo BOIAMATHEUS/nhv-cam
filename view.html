@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>NHV Cam · OBS</title>
+<title>Vira Cam · OBS</title>
 <meta name="description" content="Página que o OBS abre como fonte Navegador: recebe a câmera do celular por WebRTC.">
 <script>
 // Esta é a página do OBS. Aberta num celular (fora do OBS e fora do painel), vai para a página do
@@ -110,7 +110,7 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transfor
     if (pc) { try { pc.onconnectionstatechange = null; pc.ontrack = null; pc.close(); } catch (e) {} }
     pc = null; dc = null; pendentes = []; conectado = false; ultimoFrames = -1; semFrames = 0; bytesAnt = 0; tAnt = 0; negociandoDesde = 0;
   }
-  function caiu(msg) { limparPc(); setHud('NHV Cam · ' + rotulo + ' · ' + msg); estado('aguardando', msg); iniciarHello(); }
+  function caiu(msg) { limparPc(); setHud('Vira Cam · ' + rotulo + ' · ' + msg); estado('aguardando', msg); iniciarHello(); }
   function armarQueda(meu) {
     clearTimeout(timerDesc);
     timerDesc = setTimeout(() => { if (pc === meu && meu.connectionState !== 'connected') caiu('conexão caiu, reconectando'); }, DESCONECTADO_MS);
@@ -175,7 +175,7 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transfor
     if (pc !== meu) return;
     sig.enviar('answer', { sdp: { type: meu.localDescription.type, sdp: meu.localDescription.sdp } }, origem);
     drenar();
-    setHud('NHV Cam · ' + rotulo + ' · conectando ao celular');
+    setHud('Vira Cam · ' + rotulo + ' · conectando ao celular');
   }
 
   // Oferta de reinício de ICE do mesmo celular: responde na MESMA conexão (sem trocar o vídeo).
@@ -195,7 +195,7 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transfor
   function aoReceber(m) {
     if (m.role !== 'cam') return;
     if (m.kind === 'offer') {
-      const falhou = (e) => { console.warn(e); setHud('NHV Cam · ' + rotulo + ' · erro: ' + e.message); estado('erro', e.message); };
+      const falhou = (e) => { console.warn(e); setHud('Vira Cam · ' + rotulo + ' · erro: ' + e.message); estado('erro', e.message); };
       if (pc && m.from === origem && m.data.renegociar) renegociar(m).catch((e) => { console.warn('renegociação falhou, recomeçando', e); aoOferta(m).catch(falhou); });
       else aoOferta(m).catch(falhou);
     }
@@ -233,18 +233,18 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transfor
 
   (async () => {
     aplicarView();
-    setHud('NHV Cam · ' + rotulo + ' · conectando ao sinal');
+    setHud('Vira Cam · ' + rotulo + ' · conectando ao sinal');
     estado('conectando');
     try {
       sig = new Signal(sala, 'view');
-    } catch (e) { setHud('NHV Cam · ' + rotulo + ' · ' + e.message); estado('erro', e.message); return; }
+    } catch (e) { setHud('Vira Cam · ' + rotulo + ' · ' + e.message); estado('erro', e.message); return; }
     sig.onmessage = aoReceber;
     sig.onstatus = (st) => {
-      if (st === 'SUBSCRIBED') { if (!conectado) { setHud('NHV Cam · ' + rotulo + ' · aguardando o celular' + avisoFonte()); estado('aguardando'); iniciarHello(); } }
-      else if (st === 'CHANNEL_ERROR' || st === 'TIMED_OUT') { setHud('NHV Cam · ' + rotulo + ' · sinal indisponível (' + st + ')'); estado('erro', st); }
+      if (st === 'SUBSCRIBED') { if (!conectado) { setHud('Vira Cam · ' + rotulo + ' · aguardando o celular' + avisoFonte()); estado('aguardando'); iniciarHello(); } }
+      else if (st === 'CHANNEL_ERROR' || st === 'TIMED_OUT') { setHud('Vira Cam · ' + rotulo + ' · sinal indisponível (' + st + ')'); estado('erro', st); }
     };
     try { await sig.conectar(); }
-    catch (e) { setHud('NHV Cam · ' + rotulo + ' · falha no sinal: ' + ((e && e.message) || e)); estado('erro', String(e)); }
+    catch (e) { setHud('Vira Cam · ' + rotulo + ' · falha no sinal: ' + ((e && e.message) || e)); estado('erro', String(e)); }
   })();
 
   function despedir() {
