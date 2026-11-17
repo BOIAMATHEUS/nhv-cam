@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>NHV Cam · Collab</title>
-<meta name="description" content="Duas câmeras do NHV Cam numa única fonte Navegador 1080x1920 do OBS: dividido, uma pequena no canto ou lado a lado.">
+<title>Vira Cam · Collab</title>
+<meta name="description" content="Duas câmeras do Vira Cam numa única fonte Navegador 1080x1920 do OBS: dividido, uma pequena no canto ou lado a lado.">
 <style>
 html,body{margin:0;height:100%;background:#000;overflow:hidden}
 #stage{position:fixed;inset:0;background:#000}
@@ -55,7 +55,7 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden}
   function conferir() {
     const w = window.innerWidth, h = window.innerHeight;
     const ok = Math.abs(w / h - 9 / 16) < 0.01 && w >= 1080;
-    aviso.textContent = ok ? '' : 'NHV Cam collab · fonte em ' + w + 'x' + h + ': nas propriedades da fonte, largura 1080 e altura 1920';
+    aviso.textContent = ok ? '' : 'Vira Cam collab · fonte em ' + w + 'x' + h + ': nas propriedades da fonte, largura 1080 e altura 1920';
     aviso.style.display = ok ? 'none' : 'block';
   }
   window.addEventListener('resize', conferir);
